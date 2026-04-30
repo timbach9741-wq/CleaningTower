@@ -1,5 +1,7 @@
 import { initializeApp } from 'firebase/app';
+import type { FirebaseApp } from 'firebase/app';
 import { getFirestore } from 'firebase/firestore';
+import type { Firestore } from 'firebase/firestore';
 
 // Firebase 파트너 배차 시스템 설정
 const firebaseConfig = {
@@ -12,8 +14,8 @@ const firebaseConfig = {
   measurementId: "G-B7GTPZ6TQ1"
 };
 
-let app;
-let db;
+let app: FirebaseApp | undefined;
+let db: Firestore | undefined;
 
 // apiKey가 기본값이면 연동되지 않은 상태로 간주 (앱 크래시 방지)
 if (firebaseConfig.apiKey !== "YOUR_API_KEY") {

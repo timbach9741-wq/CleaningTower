@@ -1,6 +1,6 @@
 {
   "hosting": {
-    "site": "ssak-cle-home",
+    "site": "house-clean-hub",
     "public": "dist",
     "ignore": [
       "firebase.json",

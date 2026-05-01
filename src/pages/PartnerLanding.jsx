@@ -30,9 +30,9 @@ export default function PartnerLanding() {
               대한민국 1등 입주청소 플랫폼 '싹클'과 함께 확실한 매출 성장을 경험하세요.
             </p>
             <div className="flex flex-col sm:flex-row justify-center gap-4">
-              <button className="bg-amber-400 text-amber-950 font-bold py-4 px-10 rounded-full text-lg hover:bg-amber-300 hover:scale-105 transition-all shadow-[0_0_20px_rgba(251,191,36,0.4)]">
+              <Link to="/partners/register" className="inline-block bg-amber-400 text-amber-950 font-bold py-4 px-10 rounded-full text-lg hover:bg-amber-300 hover:scale-105 transition-all shadow-[0_0_20px_rgba(251,191,36,0.4)] text-center">
                 1분 만에 파트너 가입하기
-              </button>
+              </Link>
               <button className="bg-white/10 backdrop-blur-md border border-white/20 text-white font-bold py-4 px-10 rounded-full text-lg hover:bg-white/20 transition-all">
                 입점 상담 신청
               </button>
@@ -115,9 +115,9 @@ export default function PartnerLanding() {
                 </div>
                 <div className="mt-auto">
                   <div className="text-2xl font-black text-slate-900 mb-4">₩0<span className="text-base font-normal text-slate-500"> / 월</span></div>
-                  <button className="w-full bg-slate-100 text-slate-700 font-bold py-3 rounded-xl hover:bg-slate-200 transition-colors">
+                  <Link to="/partners/register" className="block w-full bg-slate-100 text-slate-700 font-bold py-3 rounded-xl hover:bg-slate-200 transition-colors text-center">
                     무료로 시작하기
-                  </button>
+                  </Link>
                 </div>
               </div>
 
@@ -177,9 +177,9 @@ export default function PartnerLanding() {
                 </div>
                 <div className="mt-auto">
                   <div className="text-2xl font-black text-slate-900 mb-4">₩99,000<span className="text-base font-normal text-slate-500"> / 월</span></div>
-                  <button className="w-full bg-blue-600 text-white font-bold py-3 rounded-xl hover:bg-blue-700 transition-colors shadow-md">
+                  <Link to="/partners/register" className="block w-full bg-blue-600 text-white font-bold py-3 rounded-xl hover:bg-blue-700 transition-colors shadow-md text-center">
                     프리미엄 가입하기
-                  </button>
+                  </Link>
                 </div>
               </div>
 
@@ -194,9 +194,9 @@ export default function PartnerLanding() {
             <p className="text-blue-100 text-lg mb-10">
               선착순 100개 파트너 한정으로 진행되는 오픈 이벤트를 놓치지 마세요.
             </p>
-            <button className="bg-white text-blue-600 font-black py-4 px-12 rounded-full text-xl hover:scale-105 transition-transform shadow-xl">
+            <Link to="/partners/register" className="inline-block bg-white text-blue-600 font-black py-4 px-12 rounded-full text-xl hover:scale-105 transition-transform shadow-xl">
               무료 혜택받고 가입하기
-            </button>
+            </Link>
           </div>
         </section>
 

@@ -14,8 +14,8 @@ export default function FlipCardSection() {
     <section className="py-24 bg-slate-50 border-t border-slate-200 overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16">
-          <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 mb-4 tracking-tight">디테일의 차이가 청소의 격을 만듭니다.</h2>
-          <p className="text-lg text-slate-600 font-medium">데스크톱에서는 마우스를 올리고, 모바일에서는 <strong className="text-blue-600">터치하여</strong> 완벽한 비포/애프터 스케일링을 확인해보세요.</p>
+          <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 mb-4 tracking-tight break-keep">디테일의 차이가 청소의 격을 만듭니다.</h2>
+          <p className="text-base sm:text-lg text-slate-600 font-medium break-keep px-2">데스크톱에서는 마우스를 올리고, 모바일에서는 <strong className="text-blue-600">터치하여</strong> 완벽한 비포/애프터 스케일링을 확인해보세요.</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
@@ -52,7 +52,7 @@ export default function FlipCardSection() {
                      <h3 className="text-lg font-bold text-white">최고급 알칼리성 세제 분해</h3>
                      <span className="bg-red-500/20 text-red-400 text-xs font-bold px-2 py-1 rounded-full border border-red-500/30">오염도: 심각</span>
                   </div>
-                  <p className="text-sm text-slate-300">누렇게 굳어버린 요리 기름때를 안전하고 깨끗하게 살균 철거했습니다.</p>
+                  <p className="text-sm text-slate-300 break-keep">누렇게 굳어버린 요리 기름때를 안전하고 깨끗하게 살균 철거했습니다.</p>
                 </div>
               </div>
 
@@ -91,7 +91,7 @@ export default function FlipCardSection() {
                      <h3 className="text-lg font-bold text-white">트랩 안쪽까지 스케일링</h3>
                      <span className="bg-red-500/20 text-red-400 text-xs font-bold px-2 py-1 rounded-full border border-red-500/30">악취 원인</span>
                   </div>
-                  <p className="text-sm text-slate-300">음식물 찌꺼기와 깊은 곳의 곰팡이/물때까지 고압 세척했습니다.</p>
+                  <p className="text-sm text-slate-300 break-keep">음식물 찌꺼기와 깊은 곳의 곰팡이/물때까지 고압 세척했습니다.</p>
                 </div>
               </div>
 
@@ -130,7 +130,7 @@ export default function FlipCardSection() {
                      <h3 className="text-lg font-bold text-white">미세먼지 완벽 제거</h3>
                      <span className="bg-red-500/20 text-red-400 text-xs font-bold px-2 py-1 rounded-full border border-red-500/30">벌레/미세먼지</span>
                   </div>
-                  <p className="text-sm text-slate-300">스팀 세척기와 전용 브러쉬를 이용해 닦기 힘든 좁은 창틀 먼지까지 제거합니다.</p>
+                  <p className="text-sm text-slate-300 break-keep">스팀 세척기와 전용 브러쉬를 이용해 닦기 힘든 좁은 창틀 먼지까지 제거합니다.</p>
                 </div>
               </div>
 

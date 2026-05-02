@@ -6,6 +6,7 @@ import StatsBannerSection from '../components/cleaning/StatsBannerSection';
 import FlipCardSection from '../components/cleaning/FlipCardSection';
 import CoreServicesSection from '../components/cleaning/CoreServicesSection';
 import PromisesSection from '../components/cleaning/PromisesSection';
+import ReviewSection from '../components/cleaning/ReviewSection';
 import FloatingCTA from '../components/cleaning/FloatingCTA';
 import Footer from '../components/cleaning/Footer';
 
@@ -28,6 +29,7 @@ export default function CleaningHome() {
       <FlipCardSection />
       <CoreServicesSection />
       <PromisesSection />
+      <ReviewSection />
       <Footer />
       <FloatingCTA onOpenQuote={openQuoteModal} />
 

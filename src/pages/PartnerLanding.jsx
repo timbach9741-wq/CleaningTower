@@ -9,7 +9,7 @@ export default function PartnerLanding() {
         주의: 사업자 페이지 전용 헤더가 필요할 수 있으나, 
         일단 기존 Header를 사용하고 나중에 분리 가능합니다. 
       */}
-      <Header onOpenQuote={() => {}} />
+      <Header onOpenQuote={() => {}} theme="dark" />
 
       <main className="pt-20 flex-grow">
         {/* 히어로 섹션 */}

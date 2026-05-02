@@ -1,5 +1,6 @@
 import React from 'react';
 import { Globe, Shield, Send } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 export default function Footer() {
   return (
@@ -23,7 +24,7 @@ export default function Footer() {
           <div className="flex flex-col gap-4">
             <h4 className="font-bold text-blue-900">회사 소개</h4>
             <ul className="flex flex-col gap-3 text-sm text-slate-500">
-              <li className="hover:text-blue-600 cursor-pointer transition-colors">파트너 지원하기</li>
+              <li><Link to="/partners/join" className="hover:text-blue-600 cursor-pointer transition-colors block">파트너스 지원하기</Link></li>
               <li className="hover:text-blue-600 cursor-pointer transition-colors">서비스 지역</li>
               <li className="hover:text-blue-600 cursor-pointer transition-colors">문의하기</li>
             </ul>

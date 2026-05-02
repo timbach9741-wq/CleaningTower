@@ -31,7 +31,7 @@ export default function HeroSection({ onOpenQuote }) {
         <div className="grid grid-cols-1 lg:grid-cols-2 items-center gap-12 lg:gap-16">
           
           {/* Left Column: Text & CTA */}
-          <div className="flex flex-col items-start text-left w-full min-w-0">
+          <div className="flex flex-col items-center text-center lg:items-start lg:text-left w-full min-w-0">
             {/* Badge */}
             <div className="inline-flex items-center gap-1.5 px-4 py-1.5 mb-6 text-sm font-bold bg-blue-100 text-blue-700 rounded-full">
               <ShieldCheck className="w-4 h-4" />
@@ -53,7 +53,7 @@ export default function HeroSection({ onOpenQuote }) {
             </p>
 
             {/* Checkpoints */}
-            <ul className="space-y-3 mb-10 flex flex-col items-start w-full">
+            <ul className="space-y-3 mb-10 flex flex-col items-center lg:items-start w-full">
               <li className="flex items-center gap-3 text-slate-700 font-medium bg-white/80 px-4 py-2.5 rounded-lg border border-slate-100 shadow-sm w-full max-w-md break-keep">
                 <CheckCircle className="w-5 h-5 text-blue-500 shrink-0" />
                 <span className="min-w-0 flex-1">당일 추가 요금 절대 없음 (계약서 명시)</span>
@@ -65,7 +65,7 @@ export default function HeroSection({ onOpenQuote }) {
             </ul>
 
             {/* CTA & Social Proof */}
-            <div className="flex flex-col gap-3 w-full max-w-md">
+            <div className="flex flex-col gap-3 w-full max-w-md mx-auto lg:mx-0">
               <button 
                 onClick={onOpenQuote}
                 className="w-full px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white text-lg font-bold rounded-xl shadow-lg shadow-blue-600/30 transition-all hover:-translate-y-1 flex items-center justify-center shrink-0"

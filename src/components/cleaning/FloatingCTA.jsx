@@ -30,8 +30,7 @@ export default function FloatingCTA({ onOpenQuote }) {
         onClick={onOpenQuote}
         className="px-6 py-4 bg-blue-600 hover:bg-blue-700 text-white text-base lg:text-lg font-bold rounded-full shadow-2xl shadow-blue-600/40 transition-transform hover:-translate-y-1 flex items-center justify-center"
       >
-        <span className="hidden sm:inline">지금 바로 5단계 간편 견적 받기</span>
-        <span className="sm:hidden">간편 견적 받기</span>
+        <span>지금 바로 5단계 간편 견적 받기</span>
       </button>
     </div>
   );

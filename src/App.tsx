@@ -9,12 +9,14 @@ import PartnerList from './pages/PartnerList';
 import PartnerLanding from './pages/PartnerLanding';
 import PartnerRegister from './pages/PartnerRegister';
 import Quote from './pages/Quote';
+import ServiceGuide from './pages/ServiceGuide';
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<CleaningHome />} />
+        <Route path="/service" element={<ServiceGuide />} />
         <Route path="/partners" element={<PartnerList />} />
         <Route path="/partners/join" element={<PartnerLanding />} />
         <Route path="/partners/register" element={<PartnerRegister />} />

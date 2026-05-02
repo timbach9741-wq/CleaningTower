@@ -7,7 +7,9 @@ import CleaningAppliance from './pages/CleaningAppliance';
 import CleaningRegular from './pages/CleaningRegular';
 import PartnerList from './pages/PartnerList';
 import PartnerLanding from './pages/PartnerLanding';
-import PartnerRegister from './pages/PartnerRegister';
+import PartnerSignup from './pages/PartnerSignup';
+import PartnerDashboard from './pages/PartnerDashboard';
+import AdminDashboard from './pages/AdminDashboard';
 import Quote from './pages/Quote';
 import ServiceGuide from './pages/ServiceGuide';
 
@@ -19,7 +21,9 @@ function App() {
         <Route path="/service" element={<ServiceGuide />} />
         <Route path="/partners" element={<PartnerList />} />
         <Route path="/partners/join" element={<PartnerLanding />} />
-        <Route path="/partners/register" element={<PartnerRegister />} />
+        <Route path="/partners/register" element={<PartnerSignup />} />
+        <Route path="/partner-dashboard" element={<PartnerDashboard />} />
+        <Route path="/admin" element={<AdminDashboard />} />
         <Route path="/cleaning/move-in" element={<CleaningMoveIn />} />
         <Route path="/cleaning/sick-building" element={<CleaningSickBuilding />} />
         <Route path="/cleaning/appliance" element={<CleaningAppliance />} />

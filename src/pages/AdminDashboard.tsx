@@ -18,12 +18,55 @@ import {
 import { db } from '../firebase';
 import { collection, onSnapshot, doc, updateDoc, addDoc } from 'firebase/firestore';
 
+export interface Order {
+  id: string;
+  type?: string;
+  date?: string;
+  time?: string;
+  location?: string;
+  house?: string;
+  size?: string;
+  options?: string[];
+  status?: string;
+  assignedTo?: string | null;
+  partnerName?: string;
+  isUrgent?: boolean;
+  cancelReason?: string;
+  businessName?: string;
+  name?: string;
+  customerName?: string;
+  realPhone?: string;
+  detail?: string;
+  completedAt?: string;
+  completionItems?: string[];
+  completionNote?: string;
+  adminReviewedCancel?: boolean;
+  price?: string;
+  cancelPenalty?: string;
+}
+
+export interface PartnerUser {
+  id: string;
+  businessType?: 'business' | 'freelancer';
+  companyName?: string;
+  managerName?: string;
+  name?: string;
+  status?: 'active' | 'pending' | 'suspended';
+  region?: string;
+  isNotificationEnabled?: boolean;
+  notificationRegions?: string[];
+  loginId?: string;
+  loginPassword?: string;
+  phone?: string;
+  createdAt?: string;
+}
+
 export default function Admin() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [quotes, setQuotes] = useState<any[]>([]);
-  const [partners, setPartners] = useState<any[]>([]);
-  const [selectedQuoteDetail, setSelectedQuoteDetail] = useState<any | null>(null);
+  const [quotes, setQuotes] = useState<Order[]>([]);
+  const [partners, setPartners] = useState<PartnerUser[]>([]);
+  const [selectedQuoteDetail, setSelectedQuoteDetail] = useState<Order | null>(null);
   const [showNotifications, setShowNotifications] = useState(false);
   
   // 파트너 수동 계정 생성 관련 상태
@@ -72,13 +115,13 @@ export default function Admin() {
     if (!db) return;
     const unsubscribe = onSnapshot(collection(db, 'quotes'), (snapshot) => {
       const data = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-      data.sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime());
+      data.sort((a: Order, b: Order) => new Date(b.date || 0).getTime() - new Date(a.date || 0).getTime());
       setQuotes(data);
     });
     
     const unsubscribePartners = onSnapshot(collection(db, 'partners'), (snapshot) => {
       const data = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-      data.sort((a: any, b: any) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
+      data.sort((a: PartnerUser, b: PartnerUser) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
       setPartners(data);
     });
 
@@ -164,7 +207,7 @@ export default function Admin() {
     }
   };
 
-  const getPlatformRevenue = (order: any) => {
+  const getPlatformRevenue = (order: Order | null) => {
     if (!order || !order.price) return { customerPrice: 0, partnerPrice: 0, platformRevenue: 0 };
     
     // 1. 고객 결제 총액 파싱
@@ -471,7 +514,7 @@ export default function Admin() {
                       <div className="p-8 text-center text-sm text-slate-400 font-medium">새로운 알림이 없습니다.</div>
                     ) : (
                       <div className="divide-y divide-slate-100">
-                        {adminNotifications.map((notif: any) => (
+                        {adminNotifications.map((notif: Order) => (
                            <div key={notif.id} className="p-5 hover:bg-slate-50 transition-colors cursor-pointer group" onClick={() => { setSelectedQuoteDetail(notif); setShowNotifications(false); }}>
                              <div className="flex items-center gap-2 mb-2">
                                <span className="bg-rose-100 text-rose-600 text-[10px] font-bold px-2 py-0.5 rounded border border-rose-200">파트너 취소</span>

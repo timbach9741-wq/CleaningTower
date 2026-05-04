@@ -1,13 +1,51 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MapPin, Calendar, CheckCircle, AlertTriangle, Phone, Home, List, User, Briefcase, Info } from 'lucide-react';
+import { MapPin, Calendar, CheckCircle, AlertTriangle, Phone, Home, List, User, Briefcase, Info, Bell } from 'lucide-react';
 import { db } from '../firebase';
 import { collection, onSnapshot, doc, updateDoc, getDocs, query, where } from 'firebase/firestore';
+import type { Unsubscribe } from 'firebase/firestore';
 import { useNavigate } from 'react-router-dom';
+
+export interface Order {
+  id: string;
+  type?: string;
+  date?: string;
+  time?: string;
+  location?: string;
+  house?: string;
+  size?: string;
+  options?: string[];
+  status?: string;
+  assignedTo?: string | null;
+  partnerName?: string;
+  isUrgent?: boolean;
+  cancelReason?: string;
+  businessName?: string;
+  name?: string;
+  customerName?: string;
+  realPhone?: string;
+  detail?: string;
+  completedAt?: string;
+  completionItems?: string[];
+  completionNote?: string;
+  cancelPenalty?: string;
+}
+
+export interface PartnerUser {
+  id: string;
+  businessType?: 'business' | 'freelancer';
+  companyName?: string;
+  managerName?: string;
+  name?: string;
+  status?: 'active' | 'pending' | 'suspended';
+  region?: string;
+  isNotificationEnabled?: boolean;
+  notificationRegions?: string[];
+}
 
 export default function Partner() {
   const [activeTab, setActiveTab] = useState<'new' | 'my' | 'profile'>('new');
-  const [selectedOrder, setSelectedOrder] = useState<any>(null);
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [showWarningModal, setShowWarningModal] = useState(false);
   const [showDetailSheet, setShowDetailSheet] = useState(false);
   const [showSettlementModal, setShowSettlementModal] = useState(false);
@@ -15,13 +53,13 @@ export default function Partner() {
   const [showLeaveModal, setShowLeaveModal] = useState(false);
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [showCompletionModal, setShowCompletionModal] = useState(true);
-  const [jobToCancel, setJobToCancel] = useState<any>(null);
-  const [jobToComplete, setJobToComplete] = useState<any>({ location: '서울 강남구 역삼동 123-45', id: 'dummy_id' });
+  const [jobToCancel, setJobToCancel] = useState<Order | null>(null);
+  const [jobToComplete, setJobToComplete] = useState<Order | null>({ location: '서울 강남구 역삼동 123-45', id: 'dummy_id' } as Order);
   const [checkedItems, setCheckedItems] = useState<string[]>([]);
   const [completionNote, setCompletionNote] = useState('');
   const [cancelReason, setCancelReason] = useState('');
-  const [quotes, setQuotes] = useState<any[]>([]);
-  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [quotes, setQuotes] = useState<Order[]>([]);
+  const [currentUser, setCurrentUser] = useState<PartnerUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [showLanding, setShowLanding] = useState(!localStorage.getItem('partnerId'));
   const [showLogin, setShowLogin] = useState(false);
@@ -30,7 +68,7 @@ export default function Partner() {
 
   useEffect(() => {
     if (!db) {
-      setIsLoading(false);
+      setTimeout(() => setIsLoading(false), 0);
       return;
     }
     const unsubscribe = onSnapshot(collection(db, 'quotes'), (snapshot) => {
@@ -39,7 +77,7 @@ export default function Partner() {
     });
     
     const loggedInId = localStorage.getItem('partnerId');
-    let unsubscribeUser: any = null;
+    let unsubscribeUser: Unsubscribe | null = null;
     
     if (loggedInId) {
       unsubscribeUser = onSnapshot(doc(db, 'partners', loggedInId), (docSnapshot) => {
@@ -52,7 +90,7 @@ export default function Partner() {
         setIsLoading(false);
       });
     } else {
-      setIsLoading(false);
+      setTimeout(() => setIsLoading(false), 0);
     }
 
     return () => {
@@ -179,7 +217,7 @@ export default function Partner() {
     }
   };
 
-  const getPartnerPrice = (order: any) => {
+  const getPartnerPrice = (order: Order | null) => {
     if (!order) return "0";
     
     // 1. 기본 평당 단가 계산
@@ -244,7 +282,7 @@ export default function Partner() {
     return roundedPrice.toLocaleString();
   };
 
-  const handleOpenDetail = (order: any) => {
+  const handleOpenDetail = (order: Order) => {
     setSelectedOrder(order);
     setShowDetailSheet(true);
   };
@@ -291,6 +329,32 @@ export default function Partner() {
     } catch (e) {
       console.error(e);
       alert("취소 처리 중 오류가 발생했습니다.");
+    }
+  };
+
+  const handleToggleNotification = async (currentStatus: boolean) => {
+    if (!db || !currentUser) return;
+    try {
+      await updateDoc(doc(db, 'partners', currentUser.id), {
+        isNotificationEnabled: !currentStatus
+      });
+    } catch (e) {
+      console.error(e);
+      alert('설정 변경 중 오류가 발생했습니다.');
+    }
+  };
+
+  const handleSaveRegions = async (value: string) => {
+    if (!db || !currentUser) return;
+    try {
+      const regionsArray = value.split(',').map(r => r.trim()).filter(r => r.length > 0);
+      await updateDoc(doc(db, 'partners', currentUser.id), {
+        notificationRegions: regionsArray
+      });
+      alert('알림 희망 지역이 저장되었습니다.');
+    } catch (e) {
+      console.error(e);
+      alert('지역 설정 저장 중 오류가 발생했습니다.');
     }
   };
 
@@ -733,6 +797,49 @@ export default function Partner() {
                   <div>
                     <p className="text-xs text-slate-500 font-bold mb-1">보증금 상태</p>
                     <p className="text-xl font-black text-emerald-600">안전</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 mb-4">
+                <div className="flex justify-between items-center mb-4">
+                  <div>
+                    <h3 className="font-black text-slate-900 flex items-center gap-1.5"><Bell size={18} className="text-blue-600"/> 새로운 오더 알림</h3>
+                    <p className="text-xs text-slate-500 mt-0.5 font-medium">내 지역에 오더가 등록되면 즉시 알림</p>
+                  </div>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input 
+                      type="checkbox" 
+                      className="sr-only peer" 
+                      checked={currentUser?.isNotificationEnabled !== false} 
+                      onChange={() => handleToggleNotification(currentUser?.isNotificationEnabled !== false)}
+                    />
+                    <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                  </label>
+                </div>
+                
+                <div className="h-px bg-slate-100 w-full mb-4"></div>
+                
+                <div className="mb-2">
+                  <h3 className="font-bold text-slate-800 text-sm mb-1 flex items-center gap-1.5"><MapPin size={16} className="text-slate-400"/> 알림 수신 희망 지역</h3>
+                  <p className="text-[11px] text-slate-400 mb-3 font-medium">설정된 지역의 오더만 알림을 받습니다.</p>
+                  <div className="flex gap-2">
+                    <input 
+                      type="text" 
+                      id="regionInput"
+                      placeholder="예: 강남구, 서초구" 
+                      defaultValue={currentUser?.notificationRegions ? currentUser.notificationRegions.join(', ') : (currentUser?.region || '')}
+                      className="flex-1 bg-slate-50 border border-slate-200 text-sm px-3 py-2.5 rounded-xl outline-none focus:border-blue-400 transition-colors font-medium"
+                    />
+                    <button 
+                      onClick={() => {
+                        const input = document.getElementById('regionInput') as HTMLInputElement;
+                        if (input) handleSaveRegions(input.value);
+                      }}
+                      className="bg-slate-900 text-white font-bold text-xs px-4 rounded-xl active:scale-[0.98] transition-transform"
+                    >
+                      저장
+                    </button>
                   </div>
                 </div>
               </div>

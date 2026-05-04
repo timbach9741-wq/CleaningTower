@@ -23,6 +23,10 @@ export default function PartnerSignup() {
     phone: '',
     region: [] as string[],
     regionDetail: '',
+    status: '',
+    loginId: '',
+    password: '',
+    createdAt: ''
   });
   const [isAgreed, setIsAgreed] = useState(false);
 
@@ -48,7 +52,7 @@ export default function PartnerSignup() {
       }
       
       // 발급된 계정 정보를 상태에 저장하여 완료 화면에서 보여줌
-      setFormData(partnerData as any);
+      setFormData(partnerData);
       setStep(4); // 완료 화면
     } catch (e) {
       console.error(e);
@@ -368,11 +372,11 @@ export default function PartnerSignup() {
                 <div className="w-full bg-slate-50 border border-slate-200 rounded-xl p-5 mb-8">
                   <div className="flex justify-between items-center border-b border-slate-200 pb-3 mb-3">
                     <span className="text-sm font-bold text-slate-500">아이디</span>
-                    <span className="text-lg font-black text-slate-900">{(formData as any).loginId}</span>
+                    <span className="text-lg font-black text-slate-900">{formData.loginId}</span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-sm font-bold text-slate-500">비밀번호</span>
-                    <span className="text-lg font-black text-blue-600">{(formData as any).password}</span>
+                    <span className="text-lg font-black text-blue-600">{formData.password}</span>
                   </div>
                 </div>
 

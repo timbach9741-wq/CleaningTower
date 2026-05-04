@@ -39,20 +39,32 @@ export default function PartnerSignup() {
       const generatedId = `clean_${Math.floor(1000 + Math.random() * 9000)}`;
       const generatedPw = Math.floor(100000 + Math.random() * 900000).toString(); // 6자리 숫자 비밀번호
 
-      const partnerData = {
-        ...formData,
-        status: 'active', // 바로 활성화 상태로 저장
+      const finalRegion = [formData.region.join('/'), formData.regionDetail.trim()].filter(Boolean).join(' ');
+
+      const firestoreData = {
+        businessType: formData.businessType,
+        companyName: formData.companyName,
+        managerName: formData.managerName,
+        name: formData.name,
+        phone: formData.phone,
+        region: finalRegion, // 배열이 아닌 문자열로 통합 저장
+        status: 'pending', // 어드민 승인 전까지 대기 상태
         loginId: generatedId,
         password: generatedPw,
         createdAt: new Date().toISOString()
       };
 
       if (db) {
-        await addDoc(collection(db, 'partners'), partnerData);
+        await addDoc(collection(db, 'partners'), firestoreData);
       }
       
       // 발급된 계정 정보를 상태에 저장하여 완료 화면에서 보여줌
-      setFormData(partnerData);
+      setFormData(prev => ({
+        ...prev,
+        status: 'pending',
+        loginId: generatedId,
+        password: generatedPw
+      }));
       setStep(4); // 완료 화면
     } catch (e) {
       console.error(e);
@@ -381,7 +393,7 @@ export default function PartnerSignup() {
                 </div>
 
                 <button 
-                  onClick={() => navigate('/partner')}
+                  onClick={() => navigate('/partner-dashboard', { state: { showLogin: true } })}
                   className="w-full py-4 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl active:scale-[0.98] transition-transform"
                 >
                   로그인 화면으로 이동

@@ -81,6 +81,11 @@ export default function Admin() {
     loginPassword: ''
   });
   
+  // 파트너 관리 탭 필터
+  const [partnerSearchTerm, setPartnerSearchTerm] = useState('');
+  const [partnerFilterStatus, setPartnerFilterStatus] = useState('전체');
+  const [partnerFilterRegion, setPartnerFilterRegion] = useState('전체');
+
   // 재무 탭 데이터 필터 상탯값
   const [financeStartDate, setFinanceStartDate] = useState('');
   const [financeEndDate, setFinanceEndDate] = useState('');
@@ -363,6 +368,38 @@ export default function Admin() {
     document.body.removeChild(link);
   };
   
+  // 파트너 탭 데이터 필터링 로직
+  const filteredPartnersList = partners.filter(p => {
+    // 1. 상태 필터
+    if (partnerFilterStatus !== '전체') {
+      if (partnerFilterStatus === 'active' && p.status !== 'active') return false;
+      if (partnerFilterStatus === 'pending' && p.status === 'active') return false;
+    }
+    
+    // 2. 지역 필터
+    if (partnerFilterRegion !== '전체') {
+      if (p.region !== partnerFilterRegion) return false;
+    }
+    
+    // 3. 검색어 필터
+    if (partnerSearchTerm) {
+      const term = partnerSearchTerm.toLowerCase();
+      const matchName = (p.name || '').toLowerCase().includes(term);
+      const matchCompany = (p.companyName || '').toLowerCase().includes(term);
+      const matchManager = (p.managerName || '').toLowerCase().includes(term);
+      const matchPhone = (p.phone || '').toLowerCase().includes(term);
+      const matchRegion = (p.region || '').toLowerCase().includes(term);
+      
+      if (!matchName && !matchCompany && !matchManager && !matchPhone && !matchRegion) {
+        return false;
+      }
+    }
+    return true;
+  });
+
+  // 파트너 고유 지역 목록 추출 (필터 드롭다운용)
+  const uniquePartnerRegions = Array.from(new Set(partners.map(p => p.region).filter(Boolean)));
+
   // 드롭다운 필터용 파트너 고유 목록 추출
   const uniquePartners = Array.from(new Set(quotes.filter(q => q.assignedTo).map(q => q.assignedTo)));
 
@@ -845,15 +882,59 @@ export default function Admin() {
                   <h2 className="text-2xl font-bold border-b border-rose-600 inline-block pb-1">본사 파트너 관리</h2>
                   <p className="text-gray-500 mt-2">본사에서 직접 업체를 선정하여 가입 권한(아이디/비밀번호)을 부여합니다.</p>
                 </div>
-                <button 
-                  onClick={() => setIsCreatePartnerModalOpen(true)}
-                  className="px-5 py-2.5 bg-slate-900 text-white font-bold rounded-lg hover:bg-slate-800 shadow-md transition-colors"
-                >
-                  + 신규 파트너 계정 발급
-                </button>
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <button 
+                    onClick={() => setIsCreatePartnerModalOpen(true)}
+                    className="px-5 py-2.5 bg-slate-900 text-white font-bold rounded-lg hover:bg-slate-800 shadow-md transition-colors whitespace-nowrap"
+                  >
+                    + 신규 파트너 계정 발급
+                  </button>
+                </div>
+              </div>
+              
+              {/* 파트너 검색 및 필터 UI */}
+              <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex flex-col md:flex-row gap-4 items-center justify-between">
+                <div className="flex flex-wrap items-center gap-4 w-full md:w-auto">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-bold text-gray-600 whitespace-nowrap">상태 필터</span>
+                    <select 
+                      value={partnerFilterStatus}
+                      onChange={(e) => setPartnerFilterStatus(e.target.value)}
+                      className="border border-gray-300 rounded-lg px-3 py-2 text-sm font-medium focus:border-blue-500 outline-none bg-gray-50 text-gray-700"
+                    >
+                      <option value="전체">전체 상태</option>
+                      <option value="active">활동 중</option>
+                      <option value="pending">입금 대기/미승인</option>
+                    </select>
+                  </div>
+                  
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-bold text-gray-600 whitespace-nowrap">지역 필터</span>
+                    <select 
+                      value={partnerFilterRegion}
+                      onChange={(e) => setPartnerFilterRegion(e.target.value)}
+                      className="border border-gray-300 rounded-lg px-3 py-2 text-sm font-medium focus:border-blue-500 outline-none bg-gray-50 text-gray-700 max-w-[150px] truncate"
+                    >
+                      <option value="전체">전체 지역</option>
+                      {uniquePartnerRegions.map(region => (
+                        <option key={region} value={region}>{region}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 w-full md:w-96 relative">
+                  <Search size={18} className="text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
+                  <input 
+                    type="text" 
+                    value={partnerSearchTerm}
+                    onChange={(e) => setPartnerSearchTerm(e.target.value)}
+                    placeholder="업체명, 담당자명, 연락처, 지역 검색..." 
+                    className="w-full border border-gray-300 rounded-lg pl-10 pr-4 py-2 text-sm font-medium focus:border-blue-500 outline-none bg-gray-50 text-gray-700 placeholder:text-gray-400"
+                  />
+                </div>
               </div>
 
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mt-2">
                 <div className="overflow-x-auto">
                   {/* 데스크탑 뷰: 파트너 테이블 */}
                   <table className="hidden lg:table w-full min-w-[900px] text-left">
@@ -870,14 +951,14 @@ export default function Admin() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100">
-                      {partners.length === 0 ? (
+                      {filteredPartnersList.length === 0 ? (
                         <tr>
-                          <td colSpan={7} className="p-12 text-center text-gray-400">
+                          <td colSpan={8} className="p-12 text-center text-gray-400">
                             등록되거나 대기 중인 파트너가 없습니다.
                           </td>
                         </tr>
                       ) : (
-                        partners.map((partner) => (
+                        filteredPartnersList.map((partner) => (
                           <tr key={partner.id} className="hover:bg-slate-50 transition-colors">
                             <td className="p-4 text-sm text-gray-500 whitespace-nowrap">
                               {new Date(partner.createdAt).toLocaleDateString()}
@@ -928,10 +1009,10 @@ export default function Admin() {
 
                   {/* 모바일 뷰: 파트너 카드 */}
                   <div className="lg:hidden divide-y divide-gray-100">
-                    {partners.length === 0 ? (
+                    {filteredPartnersList.length === 0 ? (
                       <div className="p-12 text-center text-gray-400 font-medium">대기 중인 파트너가 없습니다.</div>
                     ) : (
-                      partners.map(partner => (
+                      filteredPartnersList.map(partner => (
                         <div key={partner.id} className="p-4 flex flex-col gap-3 hover:bg-slate-50 transition-colors">
                           <div className="flex justify-between items-start">
                             <div>

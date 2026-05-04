@@ -4,7 +4,7 @@ import { MapPin, Calendar, CheckCircle, AlertTriangle, Phone, Home, List, User, 
 import { db } from '../firebase';
 import { collection, onSnapshot, doc, updateDoc, getDocs, query, where } from 'firebase/firestore';
 import type { Unsubscribe } from 'firebase/firestore';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 export interface Order {
   id: string;
@@ -52,9 +52,9 @@ export default function Partner() {
   const [showWithdrawalModal, setShowWithdrawalModal] = useState(false);
   const [showLeaveModal, setShowLeaveModal] = useState(false);
   const [showCancelModal, setShowCancelModal] = useState(false);
-  const [showCompletionModal, setShowCompletionModal] = useState(true);
+  const [showCompletionModal, setShowCompletionModal] = useState(false);
   const [jobToCancel, setJobToCancel] = useState<Order | null>(null);
-  const [jobToComplete, setJobToComplete] = useState<Order | null>({ location: '서울 강남구 역삼동 123-45', id: 'dummy_id' } as Order);
+  const [jobToComplete, setJobToComplete] = useState<Order | null>(null);
   const [checkedItems, setCheckedItems] = useState<string[]>([]);
   const [completionNote, setCompletionNote] = useState('');
   const [cancelReason, setCancelReason] = useState('');
@@ -62,9 +62,10 @@ export default function Partner() {
   const [currentUser, setCurrentUser] = useState<PartnerUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [showLanding, setShowLanding] = useState(!localStorage.getItem('partnerId'));
-  const [showLogin, setShowLogin] = useState(false);
-  const [loginForm, setLoginForm] = useState({ id: '', password: '' });
+  const location = useLocation();
   const navigate = useNavigate();
+  const [showLogin, setShowLogin] = useState(location.state?.showLogin || false);
+  const [loginForm, setLoginForm] = useState({ id: '', password: '' });
 
   useEffect(() => {
     if (!db) {
@@ -82,10 +83,12 @@ export default function Partner() {
     if (loggedInId) {
       unsubscribeUser = onSnapshot(doc(db, 'partners', loggedInId), (docSnapshot) => {
         if (docSnapshot.exists()) {
-          setCurrentUser({ id: docSnapshot.id, ...docSnapshot.data() });
+          setCurrentUser({ id: docSnapshot.id, ...docSnapshot.data() } as PartnerUser);
         } else {
+          // 문서가 없으면 로그아웃 처리
           localStorage.removeItem('partnerId');
           setShowLanding(true);
+          setShowLogin(true);
         }
         setIsLoading(false);
       });
@@ -232,7 +235,7 @@ export default function Partner() {
       unitPrice = 12000;
     }
     
-    const size = parseInt(order.size, 10) || 0;
+    const size = parseInt(order.size || '0', 10) || 0;
     let partnerPrice = unitPrice * size;
     
     // 사이청소 고정 추가금 (10만원 중 파트너 7만원)

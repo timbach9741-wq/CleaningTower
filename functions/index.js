@@ -1,25 +1,42 @@
 const functions = require('firebase-functions');
 const admin = require('firebase-admin');
-const axios = require('axios');
+const { SolapiMessageService } = require('solapi');
 
 admin.initializeApp();
 
-// 임시: 알리고/솔라피 등 실제 사용하실 알림톡 API의 정보를 여기에 입력합니다.
-// (보안을 위해 환경 변수나 Secret Manager를 사용하는 것이 좋습니다.)
+// 중요: 실제 운영 시 아래 API_KEY와 API_SECRET은 Solapi 홈페이지에서 발급받아 입력해야 합니다.
+// 발신번호(SENDER_PHONE) 역시 Solapi에 사전 등록된 번호만 사용 가능합니다.
 const API_KEY = 'YOUR_API_KEY';
 const API_SECRET = 'YOUR_API_SECRET';
 const SENDER_PHONE = '01012345678';
 
+const messageService = new SolapiMessageService(API_KEY, API_SECRET);
+
 /**
- * 카카오 알림톡/문자 발송 가상 함수 (실제 API 연동 필요)
+ * 솔라피(Solapi)를 이용한 SMS/알림톡 발송 함수
  */
 async function sendNotification(to, message) {
-  // TODO: 여기에 실제 솔라피(Solapi) 또는 알리고(Aligo) API 호출 로직을 구현하세요.
-  // axios.post('https://api.solapi.com/messages/v4/send', { ... })
-  
-  console.log(`[Notification Mock] To: ${to}`);
-  console.log(`[Notification Mock] Message: ${message}`);
-  return true;
+  if (API_KEY === 'YOUR_API_KEY') {
+    console.log(`[Notification Mock] To: ${to}`);
+    console.log(`[Notification Mock] Message: ${message}`);
+    console.log("※ 솔라피 API 키가 설정되지 않아 가상 모드로 동작합니다.");
+    return true;
+  }
+
+  try {
+    const result = await messageService.sendOne({
+      to: to.replace(/[^0-9]/g, ''), // 연락처에서 숫자만 추출
+      from: SENDER_PHONE.replace(/[^0-9]/g, ''), // 발신번호
+      text: message,
+      // 알림톡 템플릿 사용 시 아래 필드 추가 (템플릿 등록 필요)
+      // kakaoOptions: { pfId: 'YOUR_PF_ID', templateId: 'YOUR_TEMPLATE_ID' }
+    });
+    console.log(`[Notification Success] To: ${to}, Message ID: ${result.messageId}`);
+    return true;
+  } catch (error) {
+    console.error(`[Notification Error] Failed to send SMS to ${to}:`, error);
+    return false;
+  }
 }
 
 exports.notifyPartnersOnNewOrder = functions.firestore

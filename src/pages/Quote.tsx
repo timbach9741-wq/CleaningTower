@@ -1023,6 +1023,15 @@ export default function Quote() {
                     <span className="material-symbols-outlined pb-0.5">check_circle</span>
                     예약 접수하기
                   </button>
+                  <a
+                    href="http://pf.kakao.com/_xxxxxx/chat"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full bg-[#FEE500] hover:bg-[#FDD800] text-[#000000] font-bold py-4 rounded-xl text-lg shadow-sm transition-all active:scale-[0.98] flex items-center justify-center gap-2"
+                  >
+                    <svg viewBox="0 0 24 24" className="w-6 h-6 fill-current"><path d="M12 3c-5.52 0-10 3.51-10 7.84 0 2.8 1.83 5.24 4.6 6.55-.26.96-.94 3.44-.97 3.56-.03.11.02.22.11.27.09.05.21.05.3 0 .12-.06 3.65-2.48 4.2-2.87.56.09 1.15.13 1.76.13 5.52 0 10-3.51 10-7.84S17.52 3 12 3z"/></svg>
+                    카카오톡으로 문의하기
+                  </a>
                 </div>
               </motion.div>
             )}
@@ -1059,12 +1068,23 @@ export default function Quote() {
                 )}
               </AnimatePresence>
               
-              <button
-                onClick={handleNext}
-                className="w-full bg-blue-600 active:bg-blue-700 text-white font-bold py-4 rounded-xl text-lg shadow-[0_8px_16px_rgba(37,99,235,0.25)] transition-all active:scale-[0.98]"
-              >
-                {step === 4 ? '다음' : '다음 단계로'}
-              </button>
+              <div className="flex gap-2">
+                <a
+                  href="http://pf.kakao.com/_xxxxxx/chat"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-16 bg-[#FEE500] hover:bg-[#FDD800] text-[#000000] flex items-center justify-center rounded-xl shadow-sm transition-all active:scale-[0.95]"
+                  aria-label="카카오톡 문의하기"
+                >
+                  <svg viewBox="0 0 24 24" className="w-7 h-7 fill-current"><path d="M12 3c-5.52 0-10 3.51-10 7.84 0 2.8 1.83 5.24 4.6 6.55-.26.96-.94 3.44-.97 3.56-.03.11.02.22.11.27.09.05.21.05.3 0 .12-.06 3.65-2.48 4.2-2.87.56.09 1.15.13 1.76.13 5.52 0 10-3.51 10-7.84S17.52 3 12 3z"/></svg>
+                </a>
+                <button
+                  onClick={handleNext}
+                  className="flex-1 bg-blue-600 active:bg-blue-700 text-white font-bold py-4 rounded-xl text-lg shadow-[0_8px_16px_rgba(37,99,235,0.25)] transition-all active:scale-[0.98]"
+                >
+                  {step === 4 ? '다음' : '다음 단계로'}
+                </button>
+              </div>
             </div>
           </motion.div>
         )}

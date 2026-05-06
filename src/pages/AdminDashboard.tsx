@@ -16,7 +16,7 @@ import {
   FileText,
 } from 'lucide-react';
 import { db } from '../firebase';
-import { collection, onSnapshot, doc, updateDoc, addDoc } from 'firebase/firestore';
+import { collection, onSnapshot, doc, updateDoc, addDoc, deleteDoc } from 'firebase/firestore';
 
 export interface Order {
   id: string;
@@ -143,9 +143,25 @@ export default function Admin() {
 
   const handleApprovePartner = async (id: string) => {
     if (!db) return;
-    if (confirm("상태를 활동 중으로 변경하시겠습니까?")) {
+    if (confirm("해당 파트너의 상태를 '활동 중(승인)'으로 변경하시겠습니까?")) {
       await updateDoc(doc(db, 'partners', id), { status: 'active' });
-      alert("파트너가 정상적으로 승인되었습니다.");
+      alert("파트너가 정상적으로 승인(활동 재개)되었습니다.");
+    }
+  };
+
+  const handleSuspendPartner = async (id: string) => {
+    if (!db) return;
+    if (confirm("해당 파트너의 활동을 '정지'하시겠습니까?")) {
+      await updateDoc(doc(db, 'partners', id), { status: 'suspended' });
+      alert("파트너가 정지 처리되었습니다.");
+    }
+  };
+
+  const handleDeletePartner = async (id: string) => {
+    if (!db) return;
+    if (confirm("정말 이 파트너를 거절/삭제하시겠습니까?\n삭제 후에는 복구할 수 없습니다.")) {
+      await deleteDoc(doc(db, 'partners', id));
+      alert("파트너가 삭제되었습니다.");
     }
   };
 
@@ -982,24 +998,61 @@ export default function Admin() {
                               <span className={`px-2 py-1 rounded-full text-xs font-bold border ${
                                 partner.status === 'active' 
                                   ? 'bg-emerald-100 text-emerald-700 border-emerald-200' 
+                                  : partner.status === 'suspended'
+                                  ? 'bg-red-100 text-red-700 border-red-200'
                                   : 'bg-amber-100 text-amber-700 border-amber-200'
                               }`}>
-                                {partner.status === 'active' ? '활동 중' : '입금 대기'}
+                                {partner.status === 'active' ? '활동 중' : partner.status === 'suspended' ? '활동 정지' : '입금 대기'}
                               </span>
                             </td>
                             <td className="p-4 text-center">
-                              {partner.status !== 'active' ? (
-                                <button 
-                                  onClick={() => handleApprovePartner(partner.id)}
-                                  className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-2.5 rounded-lg text-xs shadow-md transition-all active:scale-[0.98]"
-                                >
-                                  상태 활성화
-                                </button>
-                              ) : (
-                                <span className="text-xs text-gray-400 font-bold bg-gray-50 px-3 py-2 rounded-lg border border-gray-100 block">
-                                  정상 활동 중
-                                </span>
-                              )}
+                              <div className="flex flex-col gap-2">
+                                {partner.status === 'pending' && (
+                                  <>
+                                    <button 
+                                      onClick={() => handleApprovePartner(partner.id)}
+                                      className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-2 rounded-lg text-xs shadow-md transition-all active:scale-[0.98]"
+                                    >
+                                      승인 (활성화)
+                                    </button>
+                                    <button 
+                                      onClick={() => handleDeletePartner(partner.id)}
+                                      className="w-full bg-red-50 hover:bg-red-100 text-red-600 font-bold py-2 rounded-lg text-xs border border-red-200 transition-all active:scale-[0.98]"
+                                    >
+                                      거절 (삭제)
+                                    </button>
+                                  </>
+                                )}
+                                {partner.status === 'active' && (
+                                  <>
+                                    <span className="text-xs text-gray-400 font-bold bg-gray-50 px-3 py-2 rounded-lg border border-gray-100 block mb-1">
+                                      정상 활동 중
+                                    </span>
+                                    <button 
+                                      onClick={() => handleSuspendPartner(partner.id)}
+                                      className="w-full bg-orange-50 hover:bg-orange-100 text-orange-600 font-bold py-2 rounded-lg text-xs border border-orange-200 transition-all active:scale-[0.98]"
+                                    >
+                                      계정 정지
+                                    </button>
+                                  </>
+                                )}
+                                {partner.status === 'suspended' && (
+                                  <>
+                                    <button 
+                                      onClick={() => handleApprovePartner(partner.id)}
+                                      className="w-full bg-emerald-50 hover:bg-emerald-100 text-emerald-600 font-bold py-2 rounded-lg text-xs border border-emerald-200 transition-all active:scale-[0.98]"
+                                    >
+                                      활동 재개
+                                    </button>
+                                    <button 
+                                      onClick={() => handleDeletePartner(partner.id)}
+                                      className="w-full bg-red-50 hover:bg-red-100 text-red-600 font-bold py-2 rounded-lg text-xs border border-red-200 transition-all active:scale-[0.98] mt-1"
+                                    >
+                                      영구 삭제
+                                    </button>
+                                  </>
+                                )}
+                              </div>
                             </td>
                           </tr>
                         ))
@@ -1031,9 +1084,11 @@ export default function Admin() {
                             <span className={`px-2 py-1 rounded-full text-xs font-bold border ${
                               partner.status === 'active' 
                                 ? 'bg-emerald-50 text-emerald-600 border-emerald-200/60' 
+                                : partner.status === 'suspended'
+                                ? 'bg-red-50 text-red-600 border-red-200/60'
                                 : 'bg-amber-50 text-amber-600 border-amber-200/60'
                             }`}>
-                              {partner.status === 'active' ? '활동 중' : '입금 대기'}
+                              {partner.status === 'active' ? '활동 중' : partner.status === 'suspended' ? '활동 정지' : '입금 대기'}
                             </span>
                           </div>
                           
@@ -1048,18 +1103,51 @@ export default function Admin() {
                             </div>
                           </div>
                           
-                          <div className="mt-1">
-                            {partner.status !== 'active' ? (
-                              <button 
-                                onClick={() => handleApprovePartner(partner.id)}
-                                className="w-full bg-slate-900 hover:bg-slate-800 text-white font-black py-3.5 rounded-xl shadow-[0_4px_12px_rgba(0,0,0,0.1)] transition-all active:scale-[0.98] active:shadow-none"
-                              >
-                                입금 확인 및 승인
-                              </button>
-                            ) : (
-                              <div className="w-full bg-slate-50 text-slate-400 font-bold py-3.5 rounded-xl text-center border border-slate-200">
-                                승인 완료된 활동 파트너
-                              </div>
+                          <div className="mt-1 flex gap-2">
+                            {partner.status === 'pending' && (
+                              <>
+                                <button 
+                                  onClick={() => handleApprovePartner(partner.id)}
+                                  className="flex-1 bg-slate-900 hover:bg-slate-800 text-white font-black py-3 rounded-xl shadow-[0_4px_12px_rgba(0,0,0,0.1)] transition-all active:scale-[0.98] active:shadow-none text-sm"
+                                >
+                                  승인
+                                </button>
+                                <button 
+                                  onClick={() => handleDeletePartner(partner.id)}
+                                  className="flex-1 bg-red-50 hover:bg-red-100 text-red-600 font-bold py-3 rounded-xl border border-red-200 transition-all active:scale-[0.98] text-sm"
+                                >
+                                  거절
+                                </button>
+                              </>
+                            )}
+                            {partner.status === 'active' && (
+                              <>
+                                <div className="flex-1 bg-slate-50 text-slate-400 font-bold py-3 rounded-xl text-center border border-slate-200 text-sm">
+                                  승인 완료
+                                </div>
+                                <button 
+                                  onClick={() => handleSuspendPartner(partner.id)}
+                                  className="flex-1 bg-orange-50 hover:bg-orange-100 text-orange-600 font-bold py-3 rounded-xl border border-orange-200 transition-all active:scale-[0.98] text-sm"
+                                >
+                                  계정 정지
+                                </button>
+                              </>
+                            )}
+                            {partner.status === 'suspended' && (
+                              <>
+                                <button 
+                                  onClick={() => handleApprovePartner(partner.id)}
+                                  className="flex-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-600 font-bold py-3 rounded-xl border border-emerald-200 transition-all active:scale-[0.98] text-sm"
+                                >
+                                  활동 재개
+                                </button>
+                                <button 
+                                  onClick={() => handleDeletePartner(partner.id)}
+                                  className="flex-1 bg-red-50 hover:bg-red-100 text-red-600 font-bold py-3 rounded-xl border border-red-200 transition-all active:scale-[0.98] text-sm"
+                                >
+                                  영구 삭제
+                                </button>
+                              </>
                             )}
                           </div>
                         </div>

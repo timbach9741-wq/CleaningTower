@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Sparkles, Menu, X } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 
-export default function Header({ onOpenQuote, theme = 'light' }) {
+export default function Header({ onOpenQuote, theme = 'light', hideQuoteButton = false }) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();
@@ -83,18 +83,20 @@ export default function Header({ onOpenQuote, theme = 'light' }) {
 
         {/* Action Button & Mobile Menu Toggle */}
         <div className="flex items-center gap-4 z-50">
-          <button 
-            onClick={onOpenQuote}
-            className={`hidden sm:flex px-5 py-2.5 rounded-full font-bold text-sm transition-all duration-300 shadow-md items-center gap-2 hover:-translate-y-0.5 ${
-              isScrolled || isMobileMenuOpen
-                ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-blue-600/30' 
-                : (theme === 'dark'
-                    ? 'bg-white/10 text-white border border-white/20 hover:bg-white/20 backdrop-blur-md shadow-none'
-                    : 'bg-white text-blue-600 hover:bg-blue-50 shadow-black/10')
-            }`}
-          >
-            지금 바로 5단계 간편 견적 받기
-          </button>
+          {!hideQuoteButton && (
+            <button 
+              onClick={onOpenQuote}
+              className={`hidden sm:flex px-5 py-2.5 rounded-full font-bold text-sm transition-all duration-300 shadow-md items-center gap-2 hover:-translate-y-0.5 ${
+                isScrolled || isMobileMenuOpen
+                  ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-blue-600/30' 
+                  : (theme === 'dark'
+                      ? 'bg-white/10 text-white border border-white/20 hover:bg-white/20 backdrop-blur-md shadow-none'
+                      : 'bg-white text-blue-600 hover:bg-blue-50 shadow-black/10')
+              }`}
+            >
+              지금 바로 5단계 간편 견적 받기
+            </button>
+          )}
           
           <button 
             className={`lg:hidden p-2 ${isScrolled || isMobileMenuOpen ? 'text-slate-800' : (theme === 'dark' ? 'text-white' : 'text-slate-800')}`}

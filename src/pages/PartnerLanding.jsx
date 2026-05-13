@@ -9,11 +9,11 @@ export default function PartnerLanding() {
         주의: 사업자 페이지 전용 헤더가 필요할 수 있으나, 
         일단 기존 Header를 사용하고 나중에 분리 가능합니다. 
       */}
-      <Header onOpenQuote={() => {}} theme="dark" />
+      <Header onOpenQuote={() => {}} theme="dark" hideQuoteButton={true} />
 
-      <main className="pt-20 flex-grow">
+      <main className="flex-grow">
         {/* 히어로 섹션 */}
-        <section className="relative bg-blue-950 text-white py-32 px-4 overflow-hidden">
+        <section className="relative bg-blue-950 text-white pt-40 pb-32 px-4 overflow-hidden">
           <div className="absolute inset-0 opacity-20 bg-[url('/images/cleaner_in_action.png')] bg-cover bg-center"></div>
           <div className="absolute inset-0 bg-gradient-to-b from-blue-950/80 to-blue-950/95"></div>
           
@@ -29,13 +29,28 @@ export default function PartnerLanding() {
               가입비 0원, 초기 세팅비 0원. <br className="hidden md:block" />
               대한민국 1등 입주청소 플랫폼 '싹클'과 함께 확실한 매출 성장을 경험하세요.
             </p>
-            <div className="flex flex-col sm:flex-row justify-center gap-4">
-              <Link to="/partners/register" className="inline-block bg-amber-400 text-amber-950 font-bold py-4 px-10 rounded-full text-lg hover:bg-amber-300 hover:scale-105 transition-all shadow-[0_0_20px_rgba(251,191,36,0.4)] text-center">
-                1분 만에 파트너 가입하기
+            <div className="flex flex-col sm:flex-row flex-wrap justify-center gap-3 md:gap-4 mt-8">
+              <Link 
+                to="/partners/register" 
+                state={{ plan: 'basic' }}
+                className="inline-block bg-white/10 backdrop-blur-md border border-white/20 text-white font-bold py-3 px-8 md:py-4 md:px-10 rounded-full text-base md:text-lg hover:bg-white/20 hover:-translate-y-1 transition-all text-center"
+              >
+                일반 파트너 가입
               </Link>
-              <button className="bg-white/10 backdrop-blur-md border border-white/20 text-white font-bold py-4 px-10 rounded-full text-lg hover:bg-white/20 transition-all">
-                입점 상담 신청
-              </button>
+              <Link 
+                to="/partners/register" 
+                state={{ plan: 'premium' }}
+                className="inline-block bg-blue-600 text-white font-bold py-3 px-8 md:py-4 md:px-10 rounded-full text-base md:text-lg hover:bg-blue-500 hover:-translate-y-1 transition-all shadow-[0_0_15px_rgba(37,99,235,0.4)] text-center"
+              >
+                프리미엄 입점 신청
+              </Link>
+              <Link 
+                to="/partners/register" 
+                state={{ plan: 'exclusive' }}
+                className="inline-block bg-gradient-to-r from-amber-400 to-yellow-500 text-amber-950 font-bold py-3 px-8 md:py-4 md:px-10 rounded-full text-base md:text-lg hover:from-amber-300 hover:to-yellow-400 hover:-translate-y-1 transition-all shadow-[0_0_20px_rgba(251,191,36,0.5)] text-center"
+              >
+                지역 독점 상담 신청
+              </Link>
             </div>
           </div>
         </section>
@@ -115,7 +130,7 @@ export default function PartnerLanding() {
                 </div>
                 <div className="mt-auto">
                   <div className="text-2xl font-black text-slate-900 mb-4">₩0<span className="text-base font-normal text-slate-500"> / 월</span></div>
-                  <Link to="/partners/register" className="block w-full bg-slate-100 text-slate-700 font-bold py-3 rounded-xl hover:bg-slate-200 transition-colors text-center">
+                  <Link to="/partners/register" state={{ plan: 'basic' }} className="block w-full bg-slate-100 text-slate-700 font-bold py-3 rounded-xl hover:bg-slate-200 transition-colors text-center">
                     무료로 시작하기
                   </Link>
                 </div>
@@ -149,9 +164,9 @@ export default function PartnerLanding() {
                 </div>
                 <div className="mt-auto">
                   <div className="text-2xl font-black text-white mb-4">상담 후 결정<span className="text-base font-normal text-slate-400 block sm:inline"> (지역별 상이)</span></div>
-                  <button className="w-full bg-gradient-to-r from-amber-400 to-yellow-500 text-amber-950 font-bold py-4 rounded-xl hover:from-amber-300 hover:to-yellow-400 transition-colors shadow-[0_0_15px_rgba(251,191,36,0.3)]">
+                  <Link to="/partners/register" state={{ plan: 'exclusive' }} className="block w-full bg-gradient-to-r from-amber-400 to-yellow-500 text-amber-950 font-bold py-4 rounded-xl hover:from-amber-300 hover:to-yellow-400 transition-colors shadow-[0_0_15px_rgba(251,191,36,0.3)] text-center">
                     지역 독점 TO 문의
-                  </button>
+                  </Link>
                 </div>
               </div>
 
@@ -177,7 +192,7 @@ export default function PartnerLanding() {
                 </div>
                 <div className="mt-auto">
                   <div className="text-2xl font-black text-slate-900 mb-4">₩99,000<span className="text-base font-normal text-slate-500"> / 월</span></div>
-                  <Link to="/partners/register" className="block w-full bg-blue-600 text-white font-bold py-3 rounded-xl hover:bg-blue-700 transition-colors shadow-md text-center">
+                  <Link to="/partners/register" state={{ plan: 'premium' }} className="block w-full bg-blue-600 text-white font-bold py-3 rounded-xl hover:bg-blue-700 transition-colors shadow-md text-center">
                     프리미엄 가입하기
                   </Link>
                 </div>

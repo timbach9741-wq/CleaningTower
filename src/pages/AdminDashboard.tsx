@@ -43,6 +43,7 @@ export interface Order {
   adminReviewedCancel?: boolean;
   price?: string;
   cancelPenalty?: string;
+  designatedPartnerName?: string;
 }
 
 export interface PartnerUser {
@@ -246,7 +247,7 @@ export default function Admin() {
       unitPrice = 12000;
     }
     
-    const size = parseInt(order.size, 10) || 0;
+    const size = parseInt(order.size || '0', 10) || 0;
     let partnerPrice = unitPrice * size;
     
     // 사이청소 고정 추가금 (10만원 중 파트너 7만원)
@@ -305,8 +306,8 @@ export default function Admin() {
     if (q.status === '취소') return false; // 기본적으로 취소건은 재무 통계에서 제외
     
     // 1. 기간 필터
-    if (financeStartDate && q.date < financeStartDate) return false;
-    if (financeEndDate && q.date > financeEndDate) return false;
+    if (financeStartDate && q.date && q.date < financeStartDate) return false;
+    if (financeEndDate && q.date && q.date > financeEndDate) return false;
     
     // 2. 파트너 필터
     if (financePartnerFilter !== '전체') {
@@ -324,8 +325,8 @@ export default function Admin() {
   // 견적 관리 탭 데이터 필터링 적용 로직
   const filteredQuotesList = quotes.filter(q => {
     if (quoteFilters.status !== '전체' && q.status !== quoteFilters.status) return false;
-    if (quoteFilters.startDate && q.date < quoteFilters.startDate) return false;
-    if (quoteFilters.endDate && q.date > quoteFilters.endDate) return false;
+    if (quoteFilters.startDate && q.date && q.date < quoteFilters.startDate) return false;
+    if (quoteFilters.endDate && q.date && q.date > quoteFilters.endDate) return false;
     return true;
   });
 
@@ -645,7 +646,7 @@ export default function Admin() {
                           <td className="px-4 lg:px-6 py-3 lg:py-4">
                             {quote.assignedTo ? (
                                <span className="inline-flex items-center px-2 py-1 rounded-full text-[10px] lg:text-xs font-bold bg-green-50 text-green-700 border border-green-200">
-                                 {quote.assignedTo} 수락함
+                                 {quote.designatedPartnerName ? `${quote.designatedPartnerName} (지정)` : `${quote.assignedTo} 수락함`}
                                </span>
                             ) : (
                                <span className={`inline-flex items-center px-2 py-1 rounded-full text-[10px] lg:text-xs font-bold border ${quote.isUrgent ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-amber-50 text-amber-700 border-amber-200'}`}>
@@ -709,7 +710,7 @@ export default function Admin() {
                           <td className="px-4 lg:px-6 py-3 lg:py-4">
                              {quote.assignedTo ? (
                                <span className="text-xs lg:text-sm font-bold text-blue-600">
-                                 {quote.assignedTo}
+                                 {quote.designatedPartnerName ? `${quote.designatedPartnerName} (지정)` : quote.assignedTo}
                                </span>
                              ) : (
                                <span className={`inline-flex items-center px-2 py-1 rounded text-[10px] lg:text-xs font-medium ${quote.isUrgent ? 'bg-rose-50 text-rose-600 font-bold border border-rose-200' : 'bg-gray-100 text-gray-500'}`}>
@@ -783,7 +784,7 @@ export default function Admin() {
                           <div>
                             <p className="text-[10px] text-gray-400 font-bold mb-0.5">배차 파트너</p>
                             {quote.assignedTo ? (
-                              <p className="text-xs font-bold text-blue-600 truncate">{quote.assignedTo}</p>
+                              <p className="text-xs font-bold text-blue-600 truncate">{quote.designatedPartnerName ? `${quote.designatedPartnerName} (지정)` : quote.assignedTo}</p>
                             ) : (
                               <p className="text-xs font-bold text-gray-400">발주 대기중</p>
                             )}
@@ -977,7 +978,7 @@ export default function Admin() {
                         filteredPartnersList.map((partner) => (
                           <tr key={partner.id} className="hover:bg-slate-50 transition-colors">
                             <td className="p-4 text-sm text-gray-500 whitespace-nowrap">
-                              {new Date(partner.createdAt).toLocaleDateString()}
+                              {new Date(partner.createdAt || Date.now()).toLocaleDateString()}
                             </td>
                             <td className="p-4 font-bold text-gray-800">
                               {partner.companyName || partner.name} {partner.managerName && <span className="text-sm font-medium text-gray-500">({partner.managerName})</span>}
@@ -1079,7 +1080,7 @@ export default function Admin() {
                                   <span className="flex items-center gap-1 text-[10px] text-slate-600 bg-slate-50 px-1.5 py-0.5 rounded font-bold border border-slate-200"><UserCheck size={10} /> 비사업자</span>
                                 )}
                               </div>
-                              <p className="text-xs text-slate-400 font-medium">가입일: {new Date(partner.createdAt).toLocaleDateString()}</p>
+                              <p className="text-xs text-slate-400 font-medium">가입일: {new Date(partner.createdAt || Date.now()).toLocaleDateString()}</p>
                             </div>
                             <span className={`px-2 py-1 rounded-full text-xs font-bold border ${
                               partner.status === 'active' 
@@ -1369,7 +1370,11 @@ export default function Admin() {
                   </div>
                   <div>
                     <p className="text-xs text-blue-600/80 font-bold mb-1">담당 배차 파트너</p>
-                    <p className="font-bold text-gray-800 text-lg">{selectedQuoteDetail.assignedTo || '대기중 (배정전)'}</p>
+                    <p className="font-bold text-gray-800 text-lg">
+                      {selectedQuoteDetail.designatedPartnerName 
+                        ? `${selectedQuoteDetail.designatedPartnerName} (지정요청)` 
+                        : (selectedQuoteDetail.assignedTo || '대기중 (배정전)')}
+                    </p>
                   </div>
                 </div>
                 

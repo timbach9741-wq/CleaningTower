@@ -1,6 +1,100 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import Header from '../components/cleaning/Header';
+import { db } from '../firebase';
+import { collection, getDocs, query, where, addDoc } from 'firebase/firestore';
+
+const PartnerDetailModal = ({ partner, onClose, quoteData }) => {
+  const navigate = useNavigate();
+  if (!partner) return null;
+
+  const handleConfirmWithPartner = async () => {
+    if (!quoteData) return;
+    try {
+      if (db) {
+        await addDoc(collection(db, 'quotes'), {
+          ...quoteData,
+          assignedTo: partner.id,
+          designatedPartnerName: partner.name
+        });
+        alert(`예약이 성공적으로 접수되었습니다.\n${partner.name} 파트너에게 견적이 전달되었습니다.`);
+        navigate('/');
+      }
+    } catch (err) {
+      console.error("Failed to save quote", err);
+      alert('접수 중 오류가 발생했습니다. 다시 시도해주세요.');
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={onClose}>
+      <div className="bg-white rounded-3xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl" onClick={e => e.stopPropagation()}>
+        <div className="p-8">
+          <div className="flex justify-between items-start mb-6">
+            <h2 className="text-2xl font-bold text-slate-900">{partner.name}</h2>
+            <button onClick={onClose} className="text-slate-400 hover:text-slate-600 text-2xl leading-none">✕</button>
+          </div>
+          <div className="aspect-video w-full rounded-2xl overflow-hidden mb-6 bg-slate-100 border border-slate-100">
+            <img src={partner.image} alt={partner.name} className="w-full h-full object-cover" />
+          </div>
+          
+          <div className="space-y-4">
+            <p className="text-slate-600 text-lg leading-relaxed">{partner.desc}</p>
+            
+            <div className="grid grid-cols-2 gap-4 mt-6">
+              <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                <p className="text-sm text-slate-500 font-bold mb-1">활동 지역</p>
+                <p className="text-slate-900 font-medium">{partner.area}</p>
+              </div>
+              <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                <p className="text-sm text-slate-500 font-bold mb-1">예상 견적</p>
+                <p className="text-blue-600 font-black text-xl">₩{partner.price}~</p>
+              </div>
+            </div>
+
+            {partner.isReal && (
+              <div className="bg-blue-50/50 border border-blue-100 p-6 rounded-2xl mt-6 shadow-sm">
+                <h3 className="font-bold text-blue-900 mb-4 text-lg">업체 상세 정보</h3>
+                <div className="space-y-3 text-sm text-slate-700">
+                  <p className="flex justify-between"><span className="text-slate-500 font-medium">업체/팀명:</span> <strong>{partner.name}</strong></p>
+                  <p className="flex justify-between"><span className="text-slate-500 font-medium">담당자:</span> <strong>매칭 후 공개</strong></p>
+                  <p className="flex justify-between"><span className="text-slate-500 font-medium">연락처:</span> <strong>안심번호 (매칭 후 안내)</strong></p>
+                  <p className="flex justify-between"><span className="text-slate-500 font-medium">투입 인원:</span> <strong>{partner.teamSize || '미정'}</strong></p>
+                  <div className="pt-2">
+                    <span className="text-slate-500 font-medium block mb-2">가능한 서비스:</span>
+                    <div className="flex flex-wrap gap-2">
+                      {partner.mainServices?.map(svc => (
+                        <span key={svc} className="bg-white shadow-sm border border-slate-200 px-3 py-1.5 rounded-lg text-slate-700 font-bold text-xs">{svc}</span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="mt-8 pt-6 border-t border-slate-100 flex gap-3">
+            {quoteData ? (
+              <button 
+                onClick={handleConfirmWithPartner}
+                className="flex-1 text-center py-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-lg active:scale-[0.98] transition-all"
+              >
+                이 업체로 예약 확정하기
+              </button>
+            ) : (
+              <Link to="/quote/move-in" state={{ selectedPartnerId: partner.id, selectedPartnerName: partner.name }} className="flex-1 text-center py-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-lg active:scale-[0.98] transition-all">
+                이 업체에게 지정 무료 견적 받기
+              </Link>
+            )}
+            <button onClick={onClose} className="px-6 py-4 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold rounded-xl transition-all">
+              닫기
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const mockPartners = [
   {
@@ -66,10 +160,52 @@ const mockPartners = [
 ];
 
 export default function PartnerList() {
-  const [sortBy, setSortBy] = useState('추천순');
+  const location = useLocation();
+  const quoteData = location.state?.quoteData || null;
 
-  const exclusivePartner = mockPartners.find(p => p.tier === 'EXCLUSIVE');
-  const restPartners = mockPartners.filter(p => p.tier !== 'EXCLUSIVE');
+  const [sortBy, setSortBy] = useState('추천순');
+  const [realPartners, setRealPartners] = useState([]);
+  const [selectedPartner, setSelectedPartner] = useState(null);
+
+  useEffect(() => {
+    const fetchPartners = async () => {
+      try {
+        const q = query(collection(db, 'partners'), where('status', '==', 'approved'));
+        const querySnapshot = await getDocs(q);
+        const fetched = querySnapshot.docs.map(doc => {
+          const data = doc.data();
+          const rawName = data.companyName || data.name || '무명 파트너';
+          const maskedName = rawName.length > 2 
+            ? rawName.substring(0, 2) + '*'.repeat(Math.max(1, rawName.length - 3)) + rawName.slice(-1)
+            : rawName[0] + '*';
+
+          return {
+            id: doc.id,
+            tier: data.plan === 'premium' ? 'PREMIUM' : data.plan === 'exclusive' ? 'EXCLUSIVE' : 'BASIC',
+            name: maskedName,
+            rating: 5.0, // 초기값
+            reviews: 0, // 초기값
+            desc: `안녕하세요. 책임감 있는 청소 약속드립니다.`,
+            tags: data.mainServices ? data.mainServices.map(s => `#${s}`) : ['#신규등록'],
+            price: '견적 협의',
+            image: '/images/living_room_cleaning.png',
+            area: data.region || '전국',
+            isReal: true,
+            ...data
+          };
+        });
+        setRealPartners(fetched);
+      } catch (error) {
+        console.error("Error fetching partners:", error);
+      }
+    };
+    fetchPartners();
+  }, []);
+
+  const allPartners = [...realPartners, ...mockPartners];
+
+  const exclusivePartner = allPartners.find(p => p.tier === 'EXCLUSIVE');
+  const restPartners = allPartners.filter(p => p.tier !== 'EXCLUSIVE');
 
   let sortedPremium = [];
   let sortedBasic = [];
@@ -196,9 +332,9 @@ export default function PartnerList() {
                   <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 text-center border border-white/20 shrink-0 w-full md:w-auto shadow-xl">
                     <div className="text-blue-100 text-sm mb-1 font-medium">예상 견적 (30평 기준)</div>
                     <div className="text-3xl font-black text-white mb-4">₩{exclusivePartner.price}~</div>
-                    <button className="w-full bg-white text-blue-900 font-bold py-3 px-6 rounded-xl hover:bg-amber-400 hover:text-amber-950 transition-all shadow-lg transform group-hover:-translate-y-1">
+                    <Link to="/quote/move-in" className="block w-full bg-white text-blue-900 font-bold py-3 px-6 rounded-xl hover:bg-amber-400 hover:text-amber-950 transition-all shadow-lg transform group-hover:-translate-y-1 text-center">
                       무료 견적 받기
-                    </button>
+                    </Link>
                   </div>
                 </div>
                 <div className="absolute top-0 right-8 bg-amber-400 text-amber-950 px-4 py-2 rounded-b-xl font-black text-sm shadow-md z-30">
@@ -252,10 +388,10 @@ export default function PartnerList() {
                             </div>
                           </div>
                           <div className="flex items-center justify-between pt-2 mt-auto">
-                            <div className="font-bold text-slate-800">₩{partner.price} <span className="text-sm font-normal text-slate-500">~</span></div>
-                            <Link to="/" className="text-blue-600 font-bold text-sm hover:underline flex items-center gap-1">
+                            <div className="font-bold text-slate-800">{partner.price === '견적 협의' ? partner.price : `₩${partner.price} ~`}</div>
+                            <button onClick={() => setSelectedPartner(partner)} className="text-blue-600 font-bold text-sm hover:underline flex items-center gap-1">
                               상세 보기 <span>&rarr;</span>
-                            </Link>
+                            </button>
                           </div>
                         </div>
                       </div>
@@ -292,10 +428,10 @@ export default function PartnerList() {
                           </div>
                         </div>
                         <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between">
-                           <div className="font-bold text-sm text-slate-700">₩{partner.price} ~</div>
-                           <Link to="/" className="text-slate-400 font-semibold text-xs hover:text-slate-800 transition-colors">
+                           <div className="font-bold text-sm text-slate-700">{partner.price === '견적 협의' ? partner.price : `₩${partner.price} ~`}</div>
+                           <button onClick={(e) => { e.stopPropagation(); setSelectedPartner(partner); }} className="text-slate-400 font-semibold text-xs hover:text-slate-800 transition-colors">
                              상세 보기
-                           </Link>
+                           </button>
                         </div>
                       </div>
                     ))}
@@ -348,10 +484,10 @@ export default function PartnerList() {
                           </div>
                         </div>
                         <div className="flex items-center justify-between pt-2 mt-auto">
-                          <div className="font-bold text-slate-800">₩{partner.price} <span className="text-sm font-normal text-slate-500">~</span></div>
-                          <Link to="/" className="text-blue-600 font-bold text-sm hover:underline flex items-center gap-1">
+                          <div className="font-bold text-slate-800">{partner.price === '견적 협의' ? partner.price : `₩${partner.price} ~`}</div>
+                          <button onClick={() => setSelectedPartner(partner)} className="text-blue-600 font-bold text-sm hover:underline flex items-center gap-1">
                             상세 보기 <span>&rarr;</span>
-                          </Link>
+                          </button>
                         </div>
                       </div>
                     </div>
@@ -369,6 +505,8 @@ export default function PartnerList() {
           </div>
         </div>
       </main>
+
+      <PartnerDetailModal partner={selectedPartner} onClose={() => setSelectedPartner(null)} quoteData={quoteData} />
     </div>
   );
 }

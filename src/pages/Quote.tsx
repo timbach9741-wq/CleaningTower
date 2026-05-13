@@ -1,5 +1,5 @@
 import { useState, type ChangeEvent } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import DaumPostcode from 'react-daum-postcode';
 import { db } from '../firebase';
@@ -48,6 +48,9 @@ const optionsList = optionCategories.flatMap(cat => cat.items);
 export default function Quote() {
   const navigate = useNavigate();
   const { type } = useParams();
+  const location = useLocation();
+  const selectedPartnerId = location.state?.selectedPartnerId || null;
+  const selectedPartnerName = location.state?.selectedPartnerName || null;
 
   // 스텝 상태 (1: 주거/면적, 2: 일정/주소, 3: 연락처/메모, 4: 결과)
   const [step, setStep] = useState(1);
@@ -183,7 +186,7 @@ export default function Quote() {
     setStep(prev => prev + 1);
   };
 
-  const handleSubmitQuote = async () => {
+  const buildQuotePayload = () => {
     const optionLabels = Object.entries(selectedOptions).map(([id, count]) => {
       const option = optionsList.find(o => o.id === id);
       if (!option) return null;
@@ -210,33 +213,49 @@ export default function Quote() {
 
     const finalDetail = memoParts.length > 0 ? memoParts.join('\n') : '특이사항 없음';
 
+    return {
+      date: cleaningDate || '미정',
+      time: cleaningTime || '시간협의',
+      name: businessName || '기본고객',
+      customerName: businessName || '기본고객',
+      type: `${cleaningType} 청소`,
+      house: houseSubType ? `${houseType} (${houseSubType})` : houseType,
+      size: size || 0,
+      location: address ? `${address} ${detailAddress}`.trim() : '주소 미상',
+      price: totalPriceIncVat.toLocaleString() + '원',
+      detail: finalDetail,
+      options: optionLabels,
+      status: '대기중',
+      realPhone: contactInfo,
+      createdAt: new Date().toISOString()
+    };
+  };
+
+  const handleSubmitQuote = async () => {
     try {
       if (db) {
+        const payload = buildQuotePayload();
         await addDoc(collection(db, 'quotes'), {
-          date: cleaningDate || '미정',
-          time: cleaningTime || '시간협의',
-          name: businessName || '기본고객',
-          customerName: businessName || '기본고객',
-          type: `${cleaningType} 청소`,
-          house: houseSubType ? `${houseType} (${houseSubType})` : houseType,
-          size: size || 0,
-          location: address ? `${address} ${detailAddress}`.trim() : '주소 미상',
-          price: totalPriceIncVat.toLocaleString() + '원',
-          detail: finalDetail,
-          options: optionLabels,
-          status: '대기중',
-          assignedTo: null,
-          realPhone: contactInfo,
-          createdAt: new Date().toISOString()
+          ...payload,
+          assignedTo: selectedPartnerId,
+          designatedPartnerName: selectedPartnerName
         });
         
-        alert('예약이 성공적으로 접수되었습니다.\n곧 파트너 배정 및 알림톡 안내가 진행됩니다.');
+        const successMsg = selectedPartnerName 
+          ? `예약이 성공적으로 접수되었습니다.\n${selectedPartnerName} 파트너에게 지정 견적이 요청되었습니다.`
+          : '예약이 성공적으로 접수되었습니다.\n곧 파트너 배정 및 알림톡 안내가 진행됩니다.';
+        alert(successMsg);
         navigate('/');
       }
     } catch (err) {
       console.error("Failed to save quote", err);
       alert('접수 중 오류가 발생했습니다. 다시 시도해주세요.');
     }
+  };
+
+  const handleGoToPartnerList = () => {
+    const payload = buildQuotePayload();
+    navigate('/partners', { state: { quoteData: payload } });
   };
 
   const handlePrev = () => {
@@ -1016,13 +1035,24 @@ export default function Quote() {
                 </div>
 
                 <div className="space-y-3 mt-auto">
-                  <button 
-                    onClick={handleSubmitQuote}
-                    className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 rounded-xl text-lg shadow-[0_0_20px_rgba(37,99,235,0.4)] transition-all active:scale-95 flex items-center justify-center gap-2"
-                  >
-                    <span className="material-symbols-outlined pb-0.5">check_circle</span>
-                    예약 접수하기
-                  </button>
+                  <div className={`grid ${selectedPartnerName ? 'grid-cols-1' : 'grid-cols-2'} gap-3`}>
+                    <button 
+                      onClick={handleSubmitQuote}
+                      className="w-full bg-slate-700 hover:bg-slate-600 text-white font-bold py-4 rounded-xl text-sm md:text-base shadow-sm transition-all active:scale-95 flex items-center justify-center gap-1.5"
+                    >
+                      <span className="material-symbols-outlined pb-0.5 text-lg">bolt</span>
+                      {selectedPartnerName ? `${selectedPartnerName} 파트너에게 지정 예약` : '빠른 예약 (자동 배정)'}
+                    </button>
+                    {!selectedPartnerName && (
+                      <button 
+                        onClick={handleGoToPartnerList}
+                        className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 rounded-xl text-sm md:text-base shadow-[0_0_20px_rgba(37,99,235,0.4)] transition-all active:scale-95 flex items-center justify-center gap-1.5"
+                      >
+                        <span className="material-symbols-outlined pb-0.5 text-lg">search</span>
+                        파트너 직접 선택
+                      </button>
+                    )}
+                  </div>
                   <a
                     href="http://pf.kakao.com/_xxxxxx/chat"
                     target="_blank"

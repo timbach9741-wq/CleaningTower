@@ -143,7 +143,7 @@ export default function Partner() {
     
   // 대기중인 오더: 긴급 오더 최우선, 그 다음 날짜 오름차순
   const remainingOrders = [...quotes]
-    .filter(o => o.status === '대기중' && !o.assignedTo)
+    .filter(o => o.status === '대기중' && (!o.assignedTo || o.assignedTo === currentUser?.id))
     .sort((a, b) => {
       if (a.isUrgent && !b.isUrgent) return -1;
       if (!a.isUrgent && b.isUrgent) return 1;
@@ -223,7 +223,20 @@ export default function Partner() {
   const getPartnerPrice = (order: Order | null) => {
     if (!order) return "0";
     
-    // 1. 기본 평당 단가 계산
+    // 견적 마법사에서 넘어온 총 결제 금액(부가세 포함)을 기반으로 계산
+    if (order.price) {
+      const numericPrice = parseInt(order.price.replace(/[^0-9]/g, ''), 10);
+      if (!isNaN(numericPrice)) {
+        // 예: 부가세를 제외한 공급가액(원래 금액) 계산
+        const supplyPrice = Math.round(numericPrice / 1.1);
+        
+        // 공급가의 70%를 파트너 수익으로 책정 (천원 단위 올림 처리)
+        const partnerPrice = Math.ceil((supplyPrice * 0.7) / 1000) * 1000;
+        return partnerPrice.toLocaleString();
+      }
+    }
+
+    // 구버전 데이터나 price 필드가 없는 경우의 Fallback
     let unitPrice = 10000;
     const isPremium = order.type?.includes('프리미엄') || false;
     const isOccupied = order.options?.includes('거주 청소 (짐 있음)') || false;
@@ -238,50 +251,11 @@ export default function Partner() {
     const size = parseInt(order.size || '0', 10) || 0;
     let partnerPrice = unitPrice * size;
     
-    // 사이청소 고정 추가금 (10만원 중 파트너 7만원)
     if (isBetween) {
       partnerPrice += 70000;
     }
     
-    // 2. 세부 옵션 가격 처리 (70% 지급)
-    const optionsPriceMap: Record<string, number> = {
-      '냉장고': 30000,
-      '세탁기': 30000,
-      '에어컨': 30000,
-      '식기세척기': 30000,
-      '오븐': 30000,
-      '곰팡이 제거 (공간당)': 40000,
-      '스티커 제거 (공간당)': 40000,
-      '단열재 제거 (공간당)': 40000,
-      '니코틴 제거 (공간당)': 40000,
-      '거실 비확장형 베란다 청소': 40000,
-      '피톤치드 연무소독 (평당)': 1000,
-      '엘리베이터 없음 (3층 이상)': 30000,
-    };
-    
-    if (order.options && Array.isArray(order.options)) {
-      order.options.forEach((optLabel: string) => {
-        // 예: "에어컨 (대당) (2개)" 에서 "에어컨 (대당)"과 "2"를 추출. 갯수 없으면 1개.
-        const match = optLabel.match(/^(.*?)(?:\s*\((\d+)개\))?$/);
-        if (match) {
-          const baseLabel = match[1].trim();
-          const count = match[2] ? parseInt(match[2], 10) : 1;
-          
-          if (optionsPriceMap[baseLabel] !== undefined) {
-            const optPrice = optionsPriceMap[baseLabel];
-            if (baseLabel === '거실바닥 친환경 (평당)' || baseLabel === '피톤치드 연무소독 (평당)') {
-              partnerPrice += (optPrice * size * count) * 0.7; // 총액의 70%
-            } else {
-              partnerPrice += (optPrice * count) * 0.7; // 70% 추가
-            }
-          }
-        }
-      });
-    }
-    
-    // 파트너 정산액 백원 단위 올림 처리 (천원 단위)
     const roundedPrice = Math.ceil(partnerPrice / 1000) * 1000;
-    
     return roundedPrice.toLocaleString();
   };
 
@@ -612,6 +586,11 @@ export default function Partner() {
                         {order.isUrgent && (
                           <span className="bg-rose-500 text-white font-black text-[10px] px-2 py-0.5 rounded-full mb-2 inline-flex items-center gap-1 shadow-sm animate-pulse">
                             🔥 긴급 대타 / 단가 +10% 
+                          </span>
+                        )}
+                        {order.assignedTo === currentUser?.id && (
+                          <span className="bg-emerald-500 text-white font-black text-[10px] px-2 py-0.5 rounded-full mb-2 ml-1 inline-flex items-center gap-1 shadow-sm">
+                            🎯 지정 견적 대기
                           </span>
                         )}
                         <div className="flex justify-between items-start mb-4">

@@ -14,10 +14,12 @@ import Quote from './pages/Quote';
 import ServiceGuide from './pages/ServiceGuide';
 import B2BQuote from './pages/B2BQuote';
 import B2BSignup from './pages/B2BSignup';
+import ScrollToTopButton from './components/common/ScrollToTopButton';
 
 function App() {
   return (
     <BrowserRouter>
+      <ScrollToTopButton />
       <Routes>
         <Route path="/" element={<CleaningHome />} />
         <Route path="/service" element={<ServiceGuide />} />

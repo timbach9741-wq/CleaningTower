@@ -362,7 +362,7 @@ export default function PartnerSignup() {
                   <>
                     <p className="text-slate-500 text-sm mb-8 break-keep">
                       프리미엄 파트너 가입을 환영합니다!<br/>
-                      첫 달 <strong>프리미엄 회비(99,000원)</strong> 결제 및 안내를 위해 가입 완료 후 매니저가 연락을 드립니다.
+                      <strong>가입비 및 유지비 없이 무료로</strong> 프리미엄 혜택을 누리실 수 있습니다.
                     </p>
 
                     <div className="bg-blue-50 w-full rounded-2xl p-6 text-left mb-8 border border-blue-200">
@@ -373,8 +373,8 @@ export default function PartnerSignup() {
                         <li>- 전담 파트너 매니저 배정</li>
                       </ul>
                       <div className="mt-4 pt-4 border-t border-blue-200 flex justify-between items-center">
-                        <span className="text-blue-800 text-sm font-bold">월 회비</span>
-                        <span className="text-blue-600 font-black text-xl">99,000원</span>
+                        <span className="text-blue-800 text-sm font-bold">비용</span>
+                        <span className="text-blue-600 font-black text-xl">무료 (0원)</span>
                       </div>
                     </div>
                   </>

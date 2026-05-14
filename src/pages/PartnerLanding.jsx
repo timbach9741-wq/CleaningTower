@@ -191,9 +191,9 @@ export default function PartnerLanding() {
                   </ul>
                 </div>
                 <div className="mt-auto">
-                  <div className="text-2xl font-black text-slate-900 mb-4">₩99,000<span className="text-base font-normal text-slate-500"> / 월</span></div>
+                  <div className="text-2xl font-black text-slate-900 mb-4">무료<span className="text-base font-normal text-slate-500"> (0원)</span></div>
                   <Link to="/partners/register" state={{ plan: 'premium' }} className="block w-full bg-blue-600 text-white font-bold py-3 rounded-xl hover:bg-blue-700 transition-colors shadow-md text-center">
-                    프리미엄 가입하기
+                    프리미엄 무료 가입
                   </Link>
                 </div>
               </div>
@@ -205,11 +205,11 @@ export default function PartnerLanding() {
         {/* 전환 유도 하단 */}
         <section className="py-20 bg-blue-600 text-center px-4">
           <div className="max-w-4xl mx-auto">
-            <h2 className="text-3xl md:text-4xl font-extrabold text-white mb-6">지금 가입하면 첫 3개월 프리미엄 무료!</h2>
+            <h2 className="text-3xl md:text-4xl font-extrabold text-white mb-6">지금 가입하면 프리미엄 혜택 평생 무료!</h2>
             <p className="text-blue-100 text-lg mb-10">
-              선착순 100개 파트너 한정으로 진행되는 오픈 이벤트를 놓치지 마세요.
+              초기 파트너사 전용 오픈 혜택! 가입비 및 유지비 없이 상위 노출 혜택을 누리세요.
             </p>
-            <Link to="/partners/register" className="inline-block bg-white text-blue-600 font-black py-4 px-12 rounded-full text-xl hover:scale-105 transition-transform shadow-xl">
+            <Link to="/partners/register" state={{ plan: 'premium' }} className="inline-block bg-white text-blue-600 font-black py-4 px-12 rounded-full text-xl hover:scale-105 transition-transform shadow-xl">
               무료 혜택받고 가입하기
             </Link>
           </div>

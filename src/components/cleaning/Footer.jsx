@@ -14,7 +14,7 @@ export default function Footer() {
               <img 
                 src="/logo_cropped.png" 
                 alt="청소타워 로고 아이콘" 
-                className="h-10 sm:h-12 w-auto object-contain mix-blend-multiply grayscale opacity-80" 
+                className="h-10 sm:h-12 w-auto object-contain" 
               />
               <span className="text-xl font-black text-slate-700 tracking-tight">청소타워</span>
             </div>

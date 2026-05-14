@@ -19,7 +19,7 @@ export default function PartnerLanding() {
           
           <div className="relative max-w-5xl mx-auto text-center z-10">
             <span className="text-amber-400 font-black tracking-wider text-sm md:text-base mb-4 block uppercase px-4 py-1 border border-amber-400/30 rounded-full inline-block bg-amber-400/10 backdrop-blur-md">
-              Ssak-Cle Partners
+              청소타워 Partners
             </span>
             <h1 className="text-4xl md:text-6xl font-extrabold mb-6 leading-tight tracking-tight">
               청소 전문가님, <br className="md:hidden" />
@@ -27,7 +27,7 @@ export default function PartnerLanding() {
             </h1>
             <p className="text-lg md:text-2xl text-blue-100 mb-10 max-w-3xl mx-auto leading-relaxed opacity-90 font-medium">
               가입비 0원, 초기 세팅비 0원. <br className="hidden md:block" />
-              대한민국 1등 입주청소 플랫폼 '싹클'과 함께 확실한 매출 성장을 경험하세요.
+              대한민국 1등 입주청소 플랫폼 '청소타워'과 함께 확실한 매출 성장을 경험하세요.
             </p>
             <div className="flex flex-col sm:flex-row flex-wrap justify-center gap-3 md:gap-4 mt-8">
               <Link 
@@ -59,7 +59,7 @@ export default function PartnerLanding() {
         <section className="py-24 px-4 bg-white relative">
           <div className="max-w-6xl mx-auto">
             <div className="text-center mb-16">
-              <h2 className="text-3xl md:text-4xl font-extrabold text-blue-950 mb-4 tracking-tight">왜 싹클 파트너스인가요?</h2>
+              <h2 className="text-3xl md:text-4xl font-extrabold text-blue-950 mb-4 tracking-tight">왜 청소타워 파트너스인가요?</h2>
               <p className="text-lg text-slate-500 font-medium">기존 플랫폼들의 불합리한 수수료와 경쟁 유도를 완벽히 해결했습니다.</p>
             </div>
 

@@ -8,7 +8,7 @@ export default function CoreServicesSection() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16">
           <span className="inline-block px-4 py-1 mb-4 text-sm font-bold bg-blue-100 text-blue-700 rounded-full">CORE SERVICES</span>
-          <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 mb-4 tracking-tight break-keep">데일리하우징 4대 핵심 서비스</h2>
+          <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 mb-4 tracking-tight break-keep">청소타워 4대 핵심 서비스</h2>
           <p className="text-base sm:text-lg text-slate-600 font-medium break-keep px-2">우리가 가장 잘하는 4가지 청소에만 집중하여 변함없는 퀄리티를 약속합니다.</p>
         </div>
         

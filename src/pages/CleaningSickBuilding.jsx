@@ -10,7 +10,7 @@ export default function CleaningSickBuilding() {
             <span className="material-symbols-outlined">arrow_back</span>
             메인으로
           </Link>
-          <h1 className="text-xl font-black text-slate-900 tracking-tight">데일리하우징 새집증후군 케어</h1>
+          <h1 className="text-xl font-black text-slate-900 tracking-tight">청소타워 새집증후군 케어</h1>
           <div className="w-24"></div>
         </div>
       </header>

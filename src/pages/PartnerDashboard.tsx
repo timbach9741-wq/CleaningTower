@@ -29,6 +29,7 @@ export interface Order {
   completionItems?: string[];
   completionNote?: string;
   cancelPenalty?: string;
+  price?: string;
 }
 
 export interface PartnerUser {

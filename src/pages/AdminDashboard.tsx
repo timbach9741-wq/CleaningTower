@@ -65,6 +65,8 @@ export interface PartnerUser {
 export default function Admin() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(localStorage.getItem('adminLoggedIn') === 'true');
+  const [loginForm, setLoginForm] = useState({ id: '', password: '' });
   const [quotes, setQuotes] = useState<Order[]>([]);
   const [partners, setPartners] = useState<PartnerUser[]>([]);
   const [selectedQuoteDetail, setSelectedQuoteDetail] = useState<Order | null>(null);
@@ -164,6 +166,12 @@ export default function Admin() {
       await deleteDoc(doc(db, 'partners', id));
       alert("파트너가 삭제되었습니다.");
     }
+  };
+
+  const handleSendBusinessUrl = (partner: PartnerUser) => {
+    const businessUrl = `https://clean-partner.dailyhousing.kr`;
+    const message = `[입주청소 파트너스]\n${partner.companyName || partner.name}님, 사업자 전용 페이지 주소가 발송되었습니다.\n\nURL: ${businessUrl}\n아이디: ${partner.loginId}\n비밀번호: ${partner.loginPassword}`;
+    alert(`아래 내용으로 파트너에게 URL 발송이 시뮬레이션 되었습니다. (추후 카카오톡 연동 예정)\n\n${message}`);
   };
 
   const handleCreateQuote = async () => {
@@ -420,6 +428,71 @@ export default function Admin() {
   // 드롭다운 필터용 파트너 고유 목록 추출
   const uniquePartners = Array.from(new Set(quotes.filter(q => q.assignedTo).map(q => q.assignedTo)));
 
+  const handleAdminLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (loginForm.id === 'timbach@naver.com' && loginForm.password === '123456') {
+      localStorage.setItem('adminLoggedIn', 'true');
+      setIsLoggedIn(true);
+    } else {
+      alert("아이디 또는 비밀번호가 일치하지 않습니다.");
+    }
+  };
+
+  const handleAdminLogout = () => {
+    if (confirm("로그아웃 하시겠습니까?")) {
+      localStorage.removeItem('adminLoggedIn');
+      setIsLoggedIn(false);
+    }
+  };
+
+  if (!isLoggedIn) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8 font-sans max-w-md mx-auto shadow-2xl relative">
+        <div className="sm:mx-auto sm:w-full sm:max-w-md px-6 z-10">
+          <h2 className="text-3xl font-black text-slate-900 tracking-tight mb-2 text-center">
+            관리자 로그인
+          </h2>
+          <p className="text-sm text-slate-500 font-medium mb-8 text-center">
+            관리자 계정으로 로그인해주세요.
+          </p>
+
+          <form onSubmit={handleAdminLogin} className="space-y-5">
+            <div>
+              <label className="block text-sm font-bold text-slate-700 mb-2">아이디 (이메일)</label>
+              <input
+                type="text"
+                required
+                className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all shadow-sm"
+                placeholder="timbach@naver.com"
+                value={loginForm.id}
+                onChange={e => setLoginForm({ ...loginForm, id: e.target.value })}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-bold text-slate-700 mb-2">비밀번호</label>
+              <input
+                type="password"
+                required
+                className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all shadow-sm"
+                placeholder="비밀번호를 입력하세요"
+                value={loginForm.password}
+                onChange={e => setLoginForm({ ...loginForm, password: e.target.value })}
+              />
+            </div>
+
+            <div className="pt-2">
+              <button
+                type="submit"
+                className="w-full py-4 bg-slate-900 hover:bg-slate-800 text-white font-black rounded-xl shadow-xl active:scale-[0.98] transition-all flex justify-center"
+              >
+                관리자 접속
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 flex overflow-hidden">
@@ -507,7 +580,10 @@ export default function Admin() {
         </nav>
 
         <div className="p-4 border-t border-slate-800">
-          <button className="w-full flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors">
+          <button 
+            onClick={handleAdminLogout}
+            className="w-full flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors"
+          >
             <LogOut size={20} />
             <span className="font-medium">로그아웃</span>
           </button>
@@ -978,7 +1054,7 @@ export default function Admin() {
                         filteredPartnersList.map((partner) => (
                           <tr key={partner.id} className="hover:bg-slate-50 transition-colors">
                             <td className="p-4 text-sm text-gray-500 whitespace-nowrap">
-                              {new Date(partner.createdAt || Date.now()).toLocaleDateString()}
+                              {partner.createdAt ? new Date(partner.createdAt).toLocaleDateString() : '날짜 없음'}
                             </td>
                             <td className="p-4 font-bold text-gray-800">
                               {partner.companyName || partner.name} {partner.managerName && <span className="text-sm font-medium text-gray-500">({partner.managerName})</span>}
@@ -1030,6 +1106,12 @@ export default function Admin() {
                                       정상 활동 중
                                     </span>
                                     <button 
+                                      onClick={() => handleSendBusinessUrl(partner)}
+                                      className="w-full bg-blue-50 hover:bg-blue-100 text-blue-600 font-bold py-2 rounded-lg text-xs border border-blue-200 transition-all active:scale-[0.98] mb-1"
+                                    >
+                                      URL 발송
+                                    </button>
+                                    <button 
                                       onClick={() => handleSuspendPartner(partner.id)}
                                       className="w-full bg-orange-50 hover:bg-orange-100 text-orange-600 font-bold py-2 rounded-lg text-xs border border-orange-200 transition-all active:scale-[0.98]"
                                     >
@@ -1080,7 +1162,7 @@ export default function Admin() {
                                   <span className="flex items-center gap-1 text-[10px] text-slate-600 bg-slate-50 px-1.5 py-0.5 rounded font-bold border border-slate-200"><UserCheck size={10} /> 비사업자</span>
                                 )}
                               </div>
-                              <p className="text-xs text-slate-400 font-medium">가입일: {new Date(partner.createdAt || Date.now()).toLocaleDateString()}</p>
+                              <p className="text-xs text-slate-400 font-medium">가입일: {partner.createdAt ? new Date(partner.createdAt).toLocaleDateString() : '날짜 없음'}</p>
                             </div>
                             <span className={`px-2 py-1 rounded-full text-xs font-bold border ${
                               partner.status === 'active' 
@@ -1122,17 +1204,25 @@ export default function Admin() {
                               </>
                             )}
                             {partner.status === 'active' && (
-                              <>
-                                <div className="flex-1 bg-slate-50 text-slate-400 font-bold py-3 rounded-xl text-center border border-slate-200 text-sm">
+                              <div className="flex flex-col gap-2 w-full">
+                                <div className="bg-slate-50 text-slate-400 font-bold py-3 rounded-xl text-center border border-slate-200 text-sm">
                                   승인 완료
                                 </div>
-                                <button 
-                                  onClick={() => handleSuspendPartner(partner.id)}
-                                  className="flex-1 bg-orange-50 hover:bg-orange-100 text-orange-600 font-bold py-3 rounded-xl border border-orange-200 transition-all active:scale-[0.98] text-sm"
-                                >
-                                  계정 정지
-                                </button>
-                              </>
+                                <div className="flex gap-2 w-full">
+                                  <button 
+                                    onClick={() => handleSendBusinessUrl(partner)}
+                                    className="flex-1 bg-blue-50 hover:bg-blue-100 text-blue-600 font-bold py-3 rounded-xl border border-blue-200 transition-all active:scale-[0.98] text-sm"
+                                  >
+                                    URL 발송
+                                  </button>
+                                  <button 
+                                    onClick={() => handleSuspendPartner(partner.id)}
+                                    className="flex-1 bg-orange-50 hover:bg-orange-100 text-orange-600 font-bold py-3 rounded-xl border border-orange-200 transition-all active:scale-[0.98] text-sm"
+                                  >
+                                    계정 정지
+                                  </button>
+                                </div>
+                              </div>
                             )}
                             {partner.status === 'suspended' && (
                               <>
@@ -1549,7 +1639,7 @@ export default function Admin() {
                   value={newPartnerForm.companyName}
                   onChange={e => setNewPartnerForm({...newPartnerForm, companyName: e.target.value})}
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:border-blue-500 outline-none placeholder:text-gray-300"
-                  placeholder="예: 싹클린 강남지사"
+                  placeholder="예: 청소타워린 강남지사"
                 />
               </div>
               <div className="grid grid-cols-2 gap-4">

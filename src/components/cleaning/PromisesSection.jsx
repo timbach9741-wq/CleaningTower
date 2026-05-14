@@ -7,7 +7,7 @@ export default function PromisesSection() {
         <div className="text-center mb-16">
           <span className="inline-block px-4 py-1 mb-4 text-sm font-bold bg-indigo-100 text-indigo-700 rounded-full">OUR PROMISE</span>
           <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 mb-4 tracking-tight break-keep">당연한 것을 완벽하게 지킵니다.</h2>
-          <p className="text-base sm:text-lg text-slate-600 font-medium break-keep px-2">눈속임 없는 정직한 시공과 책임지는 마인드, 데일리하우징의 3가지 원칙입니다.</p>
+          <p className="text-base sm:text-lg text-slate-600 font-medium break-keep px-2">눈속임 없는 정직한 시공과 책임지는 마인드, 청소타워의 3가지 원칙입니다.</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">

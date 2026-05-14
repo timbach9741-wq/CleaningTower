@@ -100,7 +100,7 @@ const mockPartners = [
   {
     id: 1,
     tier: 'EXCLUSIVE', // 2번 모델 (지역 독점 단독 배너)
-    name: '싹클 마스터 강남점',
+    name: '청소타워 마스터 강남점',
     rating: 5.0,
     reviews: 2105,
     desc: '강남구 압도적 1위! 호텔식 프리미엄 홈케어 서비스를 경험해보세요. 하루 딱 한 집만 작업합니다.',
@@ -238,7 +238,7 @@ export default function PartnerList() {
               <h1 className="text-4xl font-extrabold text-blue-900 tracking-tight">파트너 찾기</h1>
               <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-bold border border-blue-200">📍 서울 강남구</span>
             </div>
-            <p className="text-slate-500 font-medium">선택하신 지역에 <span className="text-blue-900 font-bold">42명</span>의 싹클 인증 전문가가 대기중입니다.</p>
+            <p className="text-slate-500 font-medium">선택하신 지역에 <span className="text-blue-900 font-bold">42명</span>의 청소타워 인증 전문가가 대기중입니다.</p>
           </div>
           <div className="flex bg-white rounded-full p-1 shadow-sm border border-slate-200 self-stretch md:self-auto transition-all">
             <button onClick={() => setSortBy('추천순')} className={getBtnClass('추천순')}>추천순</button>

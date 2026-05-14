@@ -10,7 +10,7 @@ export default function CleaningRegular() {
             <span className="material-symbols-outlined">arrow_back</span>
             메인으로
           </Link>
-          <h1 className="text-xl font-black text-slate-900 tracking-tight">데일리하우징 정기 구독 청소</h1>
+          <h1 className="text-xl font-black text-slate-900 tracking-tight">청소타워 정기 구독 청소</h1>
           <div className="w-24"></div>
         </div>
       </header>
@@ -58,7 +58,7 @@ export default function CleaningRegular() {
           </div>
 
           <div className="bg-gradient-to-br from-rose-50 to-orange-50 rounded-3xl p-8 sm:p-12 border border-rose-100 shadow-sm relative overflow-hidden mb-20">
-            <h2 className="text-3xl font-black text-slate-900 mb-8 text-center relative z-10">데일리하우징 정기 구독만의 특별 혜택</h2>
+            <h2 className="text-3xl font-black text-slate-900 mb-8 text-center relative z-10">청소타워 정기 구독만의 특별 혜택</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 relative z-10">
               <div className="bg-white p-6 rounded-2xl shadow-sm flex gap-4 items-start">
                 <div className="bg-rose-100 text-rose-600 p-2 rounded-xl">

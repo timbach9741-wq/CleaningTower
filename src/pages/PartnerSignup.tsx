@@ -53,7 +53,7 @@ export default function PartnerSignup() {
         region: finalRegion, // 배열이 아닌 문자열로 통합 저장
         teamSize: formData.teamSize,
         mainServices: formData.mainServices,
-        status: 'approved', // 임시: 가입 즉시 승인(테스트 및 유도 목적)
+        status: 'active', // 가입 즉시 완료 상태 부여 (사업자 페이지 URL 전달은 관리자가 별도 진행)
         loginId: formData.phone.replace(/[^0-9]/g, ''), // 연락처(숫자만)를 아이디로 사용
         password: formData.password, // 직접 설정한 비밀번호
         createdAt: new Date().toISOString()
@@ -65,7 +65,7 @@ export default function PartnerSignup() {
       
       setFormData(prev => ({
         ...prev,
-        status: 'approved'
+        status: 'active'
       }));
       setStep(4); // 완료 화면
     } catch (e) {
@@ -496,13 +496,12 @@ export default function PartnerSignup() {
                 </div>
                 <h3 className="text-2xl font-black text-slate-900 mb-3">가입이 완료되었습니다!</h3>
                 <p className="text-slate-500 mb-6 break-keep leading-relaxed font-medium">
-                  입력하신 <strong className="text-blue-600">휴대폰 번호(알림톡/문자)</strong>로 파트너스 전용 앱(웹) 접속 링크와 계정 정보를 전송해 드렸습니다.
+                  환영합니다!<br/>
+                  바로 파트너스 페이지로 이동하여 로그인 후 이용하실 수 있습니다.
                 </p>
 
                 <div className="w-full bg-slate-50 border border-slate-200 rounded-xl p-5 mb-8 text-sm text-slate-600 leading-relaxed text-left">
-                  <p className="mb-2 font-bold text-slate-800">📌 전송된 알림톡 내용 (예시)</p>
-                  <p className="mb-1">[{formData.businessType === 'business' && formData.companyName ? formData.companyName : formData.name} 반장님 환영합니다!]</p>
-                  <p className="mb-1">✔ 접속 링크: 파트너스 전용 링크 (바로가기)</p>
+                  <p className="mb-2 font-bold text-slate-800">📌 로그인 안내</p>
                   <p className="mb-1">✔ 아이디: <strong className="text-slate-800">{formData.phone}</strong> (입력하신 연락처)</p>
                   <p>✔ 비밀번호: 직접 설정하신 비밀번호</p>
                 </div>

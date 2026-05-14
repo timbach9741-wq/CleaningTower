@@ -110,11 +110,11 @@ export default function ServiceGuide() {
         
         <div className="max-w-4xl mx-auto text-center relative z-10">
           <span className="inline-block py-1 px-3 rounded-full bg-blue-500/20 text-blue-300 font-bold text-sm mb-4 border border-blue-400/30">
-            싹클 프리미엄 서비스 안내
+            청소타워 프리미엄 서비스 안내
           </span>
           <h1 className="text-4xl md:text-5xl font-black mb-6 leading-tight tracking-tight break-keep">
             보이지 않는 곳까지 완벽하게,<br/>
-            <span className="text-blue-400">싹클의 프리미엄 클리닝</span>
+            <span className="text-blue-400">청소타워의 프리미엄 클리닝</span>
           </h1>
           <p className="text-lg md:text-xl text-slate-300 font-medium break-keep mb-8 max-w-2xl mx-auto">
             검증된 정규직 전문가, 친환경 세제, 최첨단 장비로 당신의 공간을 새롭게 디자인합니다.
@@ -203,11 +203,11 @@ export default function ServiceGuide() {
         </div>
       </section>
 
-      {/* 4. 싹클만의 특별함 */}
+      {/* 4. 청소타워만의 특별함 */}
       <section className="py-20 px-4">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-3xl font-black text-slate-900 mb-4 tracking-tight">싹클만의 프리미엄 디테일</h2>
+            <h2 className="text-3xl font-black text-slate-900 mb-4 tracking-tight">청소타워만의 프리미엄 디테일</h2>
             <p className="text-slate-500 font-medium text-lg">장비와 세제부터 다른 1%의 차이</p>
           </div>
 
@@ -281,7 +281,7 @@ export default function ServiceGuide() {
           <ShieldCheck className="w-16 h-16 text-blue-600 mx-auto mb-6" />
           <h2 className="text-3xl font-black text-slate-900 mb-4 tracking-tight">100% 안심 A/S 보증</h2>
           <p className="text-lg text-slate-600 font-medium mb-8 break-keep max-w-2xl mx-auto">
-            청소 품질에 자신 있기에 가능한 싹클만의 약속입니다.
+            청소 품질에 자신 있기에 가능한 청소타워만의 약속입니다.
           </p>
           
           <div className="grid md:grid-cols-2 gap-4 text-left">

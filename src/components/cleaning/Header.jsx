@@ -37,12 +37,14 @@ export default function Header({ onOpenQuote, theme = 'light', hideQuoteButton =
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
         {/* Logo */}
-        <Link to="/" className="flex items-center gap-2 cursor-pointer z-50">
-          <div className="bg-blue-600 p-2 rounded-lg">
-            <Sparkles className="w-5 h-5 text-white" />
-          </div>
-          <span className={`font-black text-xl tracking-tight ${isScrolled || isMobileMenuOpen ? 'text-slate-900' : (theme === 'dark' ? 'text-white' : 'text-slate-900')}`}>
-            싹클<span className="text-blue-600">.</span>
+        <Link to="/" className="flex items-center gap-2 cursor-pointer z-50 transition-transform hover:scale-105 duration-300">
+          <img 
+            src="/logo_cropped.png" 
+            alt="청소타워 로고 아이콘" 
+            className="h-10 sm:h-12 w-auto object-contain mix-blend-multiply" 
+          />
+          <span className={`text-xl sm:text-2xl font-black tracking-tight ${isScrolled || isMobileMenuOpen ? 'text-blue-900' : (theme === 'dark' ? 'text-white' : 'text-blue-900')}`}>
+            청소타워
           </span>
         </Link>
 

@@ -8,11 +8,18 @@ export default function Footer() {
       <div className="max-w-6xl mx-auto px-4">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-12">
           
-          {/* Ssak-Cle Brand Info */}
+          {/* 청소타워 Brand Info */}
           <div className="flex flex-col gap-4">
-            <h3 className="text-xl font-bold text-blue-900">Ssak-Cle</h3>
+            <div className="flex items-center gap-2">
+              <img 
+                src="/logo_cropped.png" 
+                alt="청소타워 로고 아이콘" 
+                className="h-10 sm:h-12 w-auto object-contain mix-blend-multiply grayscale opacity-80" 
+              />
+              <span className="text-xl font-black text-slate-700 tracking-tight">청소타워</span>
+            </div>
             <p className="text-sm text-slate-500 leading-relaxed">
-              청결의 깊이, 싹-클리어. 일상의 모든 공간에 프리미엄 입주 청소의 기준을 전합니다.
+              청결의 깊이, 청소타워. 일상의 모든 공간에 프리미엄 입주 청소의 기준을 전합니다.
             </p>
             <div className="flex items-center gap-3 text-slate-400 mt-2">
               <Globe className="w-5 h-5 hover:text-blue-600 cursor-pointer transition-colors" />
@@ -63,7 +70,7 @@ export default function Footer() {
         {/* Copyright */}
         <div className="pt-8 border-t border-slate-200 text-center">
           <p className="text-xs text-slate-400">
-            © 2024 Ssak-Cle Marketplace. 청결의 깊이가 다른 선택.
+            © 2024 청소타워 Marketplace. 청결의 깊이가 다른 선택.
           </p>
         </div>
       </div>

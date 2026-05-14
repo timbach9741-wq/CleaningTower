@@ -12,6 +12,8 @@ import PartnerDashboard from './pages/PartnerDashboard';
 import AdminDashboard from './pages/AdminDashboard';
 import Quote from './pages/Quote';
 import ServiceGuide from './pages/ServiceGuide';
+import B2BQuote from './pages/B2BQuote';
+import B2BSignup from './pages/B2BSignup';
 
 function App() {
   return (
@@ -29,6 +31,10 @@ function App() {
         <Route path="/cleaning/appliance" element={<CleaningAppliance />} />
         <Route path="/cleaning/regular" element={<CleaningRegular />} />
         <Route path="/quote/:type" element={<Quote />} />
+        
+        {/* 숨겨진 B2B (사업자 전용) 라우트 - 헤더/푸터 메뉴에 노출되지 않음 */}
+        <Route path="/b2b/quote" element={<B2BQuote />} />
+        <Route path="/b2b/signup" element={<B2BSignup />} />
       </Routes>
     </BrowserRouter>
   );

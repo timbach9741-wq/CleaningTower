@@ -32,7 +32,7 @@ export default function ScrollToTopButton() {
       {isVisible && (
         <button
           onClick={scrollToTop}
-          className="fixed bottom-8 right-8 z-50 p-3 rounded-full bg-[#243c8b] text-white shadow-[0_4px_14px_0_rgba(36,60,139,0.39)] hover:bg-blue-800 transition-all duration-300 transform hover:-translate-y-1 focus:outline-none"
+          className="fixed bottom-24 right-6 lg:bottom-28 lg:right-10 z-50 p-3 rounded-full bg-[#243c8b] text-white shadow-[0_4px_14px_0_rgba(36,60,139,0.39)] hover:bg-blue-800 transition-all duration-300 transform hover:-translate-y-1 focus:outline-none"
           aria-label="최상단으로 스크롤"
         >
           <ArrowUp className="w-6 h-6" />

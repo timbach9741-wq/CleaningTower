@@ -30,10 +30,9 @@ export default function PartnerSignup() {
     mainServices: [] as string[],
     status: '',
     loginId: '',
-    password: '',
+    password: Math.floor(1000 + Math.random() * 9000).toString(),
     createdAt: ''
   });
-  const [passwordConfirm, setPasswordConfirm] = useState('');
   const [isAgreed, setIsAgreed] = useState(false);
 
   const handleNext = () => setStep(step + 1);
@@ -291,47 +290,14 @@ export default function PartnerSignup() {
                     </div>
                   </div>
 
-                  <div className="pt-2">
-                    <label className="block text-sm font-bold text-slate-700 mb-2">
-                      {formData.businessType === 'business' ? '사업자등록증 사본 (선택)' : '신분증 사본 (대표자만, 선택)'}
-                    </label>
-                    <p className="text-[11px] text-slate-500 font-medium mb-2 leading-relaxed">
-                      * 지금 업로드하지 않고 나중에 본사에 문자로 보내주셔도 됩니다.<br/>
-                      {formData.businessType === 'business' 
-                        ? '* 법인명, 사업자번호, 대표자 성명이 또렷하게 나오도록 사진을 찍어주세요.' 
-                        : '* 본인 확인용이며 주민번호 뒷자리는 꼭 가리고 올려주세요.'}
-                    </p>
-                    <div className="relative border border-dashed border-blue-200 rounded-xl p-6 flex flex-col items-center justify-center bg-blue-50/30 text-blue-500 hover:bg-blue-50 focus-within:bg-blue-50 transition-colors cursor-pointer group">
-                      <input type="file" accept="image/*" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" title="클릭하여 파일 선택" />
-                      <Upload size={24} className="mb-2 group-hover:-translate-y-1 transition-transform opacity-70" />
-                      <span className="text-xs font-bold text-slate-600 mb-1">여기를 터치하여 사진 업로드</span>
-                    </div>
-                  </div>
-
-                  {/* 비밀번호 설정란 추가 */}
+                  {/* 비밀번호 설정란 (자동완성 완벽 차단용 텍스트 필드 트릭 + readOnly 트릭 적용) */}
                   <div className="pt-2 border-t border-slate-100 mt-4">
-                    <label className="block text-sm font-bold text-slate-700 mb-2">파트너스 로그인 비밀번호 <span className="text-rose-500">*</span></label>
-                    <input
-                      type="password"
-                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all focus:bg-white mb-3"
-                      placeholder="비밀번호를 입력해주세요"
-                      value={formData.password}
-                      onChange={e => setFormData({ ...formData, password: e.target.value })}
-                    />
-                    <input
-                      type="password"
-                      className={`w-full px-4 py-3 bg-slate-50 border rounded-xl outline-none transition-all focus:bg-white ${
-                        passwordConfirm && formData.password !== passwordConfirm 
-                          ? 'border-rose-300 focus:ring-2 focus:ring-rose-500' 
-                          : 'border-slate-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
-                      }`}
-                      placeholder="비밀번호를 한번 더 입력해주세요"
-                      value={passwordConfirm}
-                      onChange={e => setPasswordConfirm(e.target.value)}
-                    />
-                    {passwordConfirm && formData.password !== passwordConfirm && (
-                      <p className="text-rose-500 text-xs font-bold mt-2 ml-1">비밀번호가 일치하지 않습니다.</p>
-                    )}
+                    <label className="block text-sm font-bold text-slate-700 mb-2">파트너스 로그인 임시 비밀번호</label>
+                    <div className="w-full px-4 py-3 bg-slate-100 border border-slate-200 rounded-xl text-slate-700 font-bold mb-1 flex items-center justify-between">
+                      <span className="tracking-widest text-lg">{formData.password}</span>
+                      <span className="text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded-md font-medium">자동 생성됨</span>
+                    </div>
+                    <p className="text-xs text-slate-500 font-medium ml-1">가입 후 파트너스 페이지에서 비밀번호를 변경하실 수 있습니다.</p>
                   </div>
                 </div>
 
@@ -348,8 +314,6 @@ export default function PartnerSignup() {
                       (formData.businessType === 'business' ? !formData.managerName : !formData.name) 
                       || !formData.phone 
                       || formData.region.length === 0
-                      || !formData.password
-                      || formData.password !== passwordConfirm
                     }
                     className="flex-1 py-4 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 disabled:cursor-not-allowed text-white font-bold rounded-xl shadow-lg active:scale-[0.98] transition-all flex items-center justify-center gap-2"
                   >
@@ -503,7 +467,7 @@ export default function PartnerSignup() {
                 <div className="w-full bg-slate-50 border border-slate-200 rounded-xl p-5 mb-8 text-sm text-slate-600 leading-relaxed text-left">
                   <p className="mb-2 font-bold text-slate-800">📌 로그인 안내</p>
                   <p className="mb-1">✔ 아이디: <strong className="text-slate-800">{formData.phone}</strong> (입력하신 연락처)</p>
-                  <p>✔ 비밀번호: 직접 설정하신 비밀번호</p>
+                  <p>✔ 임시 비밀번호: <strong className="text-slate-800">{formData.password}</strong></p>
                 </div>
 
                 <div className="flex gap-3 w-full">

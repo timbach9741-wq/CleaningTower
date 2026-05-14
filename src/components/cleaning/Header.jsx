@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Sparkles, Menu, X } from 'lucide-react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 
 export default function Header({ onOpenQuote, theme = 'light', hideQuoteButton = false }) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -37,7 +38,15 @@ export default function Header({ onOpenQuote, theme = 'light', hideQuoteButton =
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
         {/* Logo */}
-        <Link to="/" className="flex items-center gap-2 cursor-pointer z-50 transition-transform hover:scale-105 duration-300">
+        <Link 
+          to="/" 
+          className="flex items-center gap-2 cursor-pointer z-50 transition-transform hover:scale-105 duration-300"
+          onClick={() => {
+            if (location.pathname === '/') {
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+          }}
+        >
           <img 
             src="/logo_cropped.png" 
             alt="청소타워 로고 아이콘" 
@@ -63,9 +72,22 @@ export default function Header({ onOpenQuote, theme = 'light', hideQuoteButton =
                 className={commonClasses}
                 onClick={(e) => {
                   e.preventDefault();
-                  const target = document.querySelector(link.href);
-                  if (target) {
-                    target.scrollIntoView({ behavior: 'smooth' });
+                  if (location.pathname !== '/') {
+                    navigate('/' + link.href);
+                  } else {
+                    if (location.hash === link.href) {
+                      const element = document.querySelector(link.href);
+                      if (element) {
+                        const headerOffset = 80;
+                        const elementPosition = element.getBoundingClientRect().top;
+                        window.scrollTo({
+                          top: elementPosition + window.scrollY - headerOffset,
+                          behavior: 'smooth'
+                        });
+                      }
+                    } else {
+                      navigate(link.href);
+                    }
                   }
                 }}
               >
@@ -76,6 +98,11 @@ export default function Header({ onOpenQuote, theme = 'light', hideQuoteButton =
                 key={link.name} 
                 to={link.href}
                 className={commonClasses}
+                onClick={() => {
+                  if (location.pathname === link.href) {
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }
+                }}
               >
                 {link.name}
               </Link>
@@ -128,9 +155,22 @@ export default function Header({ onOpenQuote, theme = 'light', hideQuoteButton =
                 onClick={(e) => {
                   e.preventDefault();
                   setIsMobileMenuOpen(false);
-                  const target = document.querySelector(link.href);
-                  if (target) {
-                    target.scrollIntoView({ behavior: 'smooth' });
+                  if (location.pathname !== '/') {
+                    navigate('/' + link.href);
+                  } else {
+                    if (location.hash === link.href) {
+                      const element = document.querySelector(link.href);
+                      if (element) {
+                        const headerOffset = 80;
+                        const elementPosition = element.getBoundingClientRect().top;
+                        window.scrollTo({
+                          top: elementPosition + window.scrollY - headerOffset,
+                          behavior: 'smooth'
+                        });
+                      }
+                    } else {
+                      navigate(link.href);
+                    }
                   }
                 }}
               >
@@ -141,7 +181,12 @@ export default function Header({ onOpenQuote, theme = 'light', hideQuoteButton =
                 key={link.name} 
                 to={link.href}
                 className={commonClasses}
-                onClick={() => setIsMobileMenuOpen(false)}
+                onClick={() => {
+                  setIsMobileMenuOpen(false);
+                  if (location.pathname === link.href) {
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }
+                }}
               >
                 {link.name}
               </Link>

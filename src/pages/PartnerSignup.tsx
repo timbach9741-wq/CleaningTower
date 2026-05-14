@@ -339,18 +339,20 @@ export default function PartnerSignup() {
                 {formData.plan === 'basic' && (
                   <>
                     <p className="text-slate-500 text-sm mb-8 break-keep">
-                      안전한 오더 거래와 노쇼 방지를 위해 초기 <strong>활동 보증금(30만 원)</strong>의 예치가 필요합니다.<br/>
-                      * 보증금은 파트너 탈퇴 시 전액 즉시 반환됩니다.
+                      일반 파트너 가입을 환영합니다!<br/>
+                      <strong>가입비 및 활동 보증금 없이</strong> 즉시 파트너스로 활동하실 수 있습니다.
                     </p>
 
-                    <div className="bg-slate-50 w-full rounded-2xl p-6 text-left mb-8 border border-slate-200">
-                      <p className="text-xs text-slate-400 font-bold mb-1">입금 계좌번호</p>
-                      <p className="text-xl font-black text-slate-900 tracking-wider">우리은행 1002-123-456789</p>
-                      <p className="text-sm text-slate-500 mt-1">예금주: (주)클린허브파트너스</p>
-                      
-                      <div className="mt-4 pt-4 border-t border-slate-200 flex justify-between items-center">
-                        <span className="text-slate-500 text-sm font-bold">입금하실 보증금</span>
-                        <span className="text-rose-600 font-black text-xl">300,000원</span>
+                    <div className="bg-blue-50 w-full rounded-2xl p-6 text-left mb-8 border border-blue-200">
+                      <p className="text-sm text-blue-800 font-bold mb-2">일반 파트너 혜택</p>
+                      <ul className="text-sm text-blue-700 space-y-1 mb-4">
+                        <li>- 초기 비용 전면 무료</li>
+                        <li>- 가입 즉시 실시간 오더 확인 가능</li>
+                        <li>- 자유로운 오더 수락 지원</li>
+                      </ul>
+                      <div className="mt-4 pt-4 border-t border-blue-200 flex justify-between items-center">
+                        <span className="text-blue-800 text-sm font-bold">초기 비용</span>
+                        <span className="text-blue-600 font-black text-xl">무료 (0원)</span>
                       </div>
                     </div>
                   </>
@@ -400,35 +402,19 @@ export default function PartnerSignup() {
                   </>
                 )}
 
-                {formData.plan === 'basic' ? (
-                  <div className="w-full bg-rose-50 border border-rose-200 rounded-xl p-4 mb-6 text-left">
-                    <label className="flex items-start gap-3 cursor-pointer">
-                      <input 
-                        type="checkbox" 
-                        className="mt-1 w-5 h-5 rounded border-rose-300 text-rose-600 focus:ring-rose-500 accent-rose-600"
-                        checked={isAgreed}
-                        onChange={(e) => setIsAgreed(e.target.checked)}
-                      />
-                      <span className="text-sm text-rose-900 font-medium leading-relaxed">
-                        [필수] 오더 수락 후 일방적 취소(포기) 및 노쇼 시, 기간과 무관하게 <strong className="text-rose-700">보증금 전액(30만 원)이 즉시 몰수되며 영구 제명</strong>되는 무관용 페널티 정책에 동의합니다.
-                      </span>
-                    </label>
-                  </div>
-                ) : (
-                  <div className="w-full bg-blue-50 border border-blue-200 rounded-xl p-4 mb-6 text-left">
-                    <label className="flex items-start gap-3 cursor-pointer">
-                      <input 
-                        type="checkbox" 
-                        className="mt-1 w-5 h-5 rounded border-blue-300 text-blue-600 focus:ring-blue-500 accent-blue-600"
-                        checked={isAgreed}
-                        onChange={(e) => setIsAgreed(e.target.checked)}
-                      />
-                      <span className="text-sm text-blue-900 font-medium leading-relaxed">
-                        [필수] 파트너스 가입 및 서비스 운영 정책에 동의하며, 허위 정보 기재 시 제재를 받을 수 있음을 확인합니다.
-                      </span>
-                    </label>
-                  </div>
-                )}
+                <div className="w-full bg-blue-50 border border-blue-200 rounded-xl p-4 mb-6 text-left">
+                  <label className="flex items-start gap-3 cursor-pointer">
+                    <input 
+                      type="checkbox" 
+                      className="mt-1 w-5 h-5 rounded border-blue-300 text-blue-600 focus:ring-blue-500 accent-blue-600"
+                      checked={isAgreed}
+                      onChange={(e) => setIsAgreed(e.target.checked)}
+                    />
+                    <span className="text-sm text-blue-900 font-medium leading-relaxed">
+                      [필수] 파트너스 가입 및 서비스 운영 정책에 동의하며, 허위 정보 기재 시 제재를 받을 수 있음을 확인합니다.
+                    </span>
+                  </label>
+                </div>
 
                 <div className="w-full flex gap-3 mt-auto">
                   <button 

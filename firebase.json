@@ -9,6 +9,10 @@
     ],
     "rewrites": [
       {
+        "source": "/naver*.html",
+        "destination": "/naver85eea957decbb5fb8a570e18af012678dbba5017.html"
+      },
+      {
         "source": "**",
         "destination": "/index.html"
       }

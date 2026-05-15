@@ -32,8 +32,8 @@ export default function HeroSection({ onOpenQuote }) {
       <div className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 lg:grid-cols-2 items-center gap-12 lg:gap-16">
           
-          {/* Left Column: Text & CTA */}
-          <div className="flex flex-col items-center text-center lg:items-start lg:text-left w-full min-w-0">
+          {/* Left Column: Text & CTA — 모바일에서는 이미지 아래로 배치 */}
+          <div className="flex flex-col items-center text-center lg:items-start lg:text-left w-full min-w-0 order-last lg:order-first">
             {/* Badge */}
             <div className="inline-flex items-center gap-1.5 px-4 py-1.5 mb-6 text-sm font-bold bg-blue-100 text-blue-700 rounded-full">
               <ShieldCheck className="w-4 h-4" />
@@ -78,8 +78,8 @@ export default function HeroSection({ onOpenQuote }) {
             </div>
           </div>
 
-          {/* Right Column: Image */}
-          <div className="relative w-full max-w-lg lg:max-w-none mx-auto mt-12 lg:mt-0 px-4 sm:px-0">
+          {/* Right Column: Image — 모바일에서 먼저(위) 노출 */}
+          <div className="relative w-full max-w-lg lg:max-w-none mx-auto mt-0 lg:mt-0 px-4 sm:px-0 order-first lg:order-last">
             {/* Background Blob/Decoration */}
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-blue-200/40 blur-3xl rounded-full -z-10"></div>
             

@@ -1546,8 +1546,8 @@ export default function Partner() {
                     </h3>
                   </div>
                   <div className="flex items-center gap-4">
-                    <div className="w-20 h-20 rounded-xl overflow-hidden bg-slate-100 shrink-0 border border-slate-200 relative">
-                      <img src={editProfileForm.image || '/images/cleaner_in_action.png'} alt="대표 이미지" className="w-full h-full object-cover" />
+                    <div className="w-32 h-32 rounded-xl overflow-hidden bg-white shrink-0 border border-slate-200 relative p-2 flex items-center justify-center shadow-sm">
+                      <img src={editProfileForm.image || '/images/cleaner_in_action.png'} alt="대표 이미지" className="max-w-full max-h-full object-contain" />
                       {uploadProgress !== null && (
                         <div className="absolute inset-0 bg-black/50 flex items-center justify-center backdrop-blur-sm transition-all">
                           <span className="text-white text-xs font-bold">{Math.round(uploadProgress)}%</span>
@@ -1555,8 +1555,8 @@ export default function Partner() {
                       )}
                     </div>
                     <div className="flex-1">
-                      <p className="text-xs text-slate-500 mb-2 break-keep leading-relaxed">
-                        업체 목록 상단에 노출될 대표 이미지(또는 로고)를 업로드해주세요.
+                      <p className="text-xs text-slate-500 mb-2 break-keep leading-relaxed font-medium">
+                        업체 목록에 노출될 로고 또는 대표 이미지를 업로드해주세요. <strong>(원본 비율을 유지하여 깔끔하게 노출됩니다.)</strong>
                       </p>
                       <div className="flex gap-2 items-center">
                         <label className="flex-1 cursor-pointer bg-blue-50 hover:bg-blue-100 text-blue-600 font-bold border border-blue-200 rounded-xl p-2.5 text-xs text-center transition-colors">

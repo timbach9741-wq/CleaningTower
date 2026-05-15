@@ -3,7 +3,7 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import DaumPostcode from 'react-daum-postcode';
 import { db } from '../firebase';
-import { collection, addDoc } from 'firebase/firestore';
+import { collection, addDoc, query, where, getDocs } from 'firebase/firestore';
 
 const optionCategories = [
   {
@@ -208,45 +208,119 @@ export default function Quote() {
     if (parking) memoParts.push(`[주차여부] ${parking}`);
     if (elevator) memoParts.push(`[엘리베이터] ${elevator}`);
     if (commonEntrancePw) memoParts.push(`[공동현관] ${commonEntrancePw}`);
-    if (houseEntrancePw) memoParts.push(`[세대현관] ${houseEntrancePw}`);
+    if (houseEntrancePw) memoParts.push(`[현관비밀번호] ${houseEntrancePw}`);
+    if (detailAddress) memoParts.push(`[상세주소] ${detailAddress}`);
     if (memos) memoParts.push(`[추가메모] ${memos}`);
 
-    const finalDetail = memoParts.length > 0 ? memoParts.join('\n') : '특이사항 없음';
-
     return {
-      date: cleaningDate || '미정',
-      time: cleaningTime || '시간협의',
-      name: businessName || '기본고객',
-      customerName: businessName || '기본고객',
-      type: `${cleaningType} 청소`,
-      house: houseSubType ? `${houseType} (${houseSubType})` : houseType,
-      size: size || 0,
-      location: address ? `${address} ${detailAddress}`.trim() : '주소 미상',
-      price: totalPriceIncVat.toLocaleString() + '원',
-      detail: finalDetail,
+      houseType,
+      houseSubType,
+      size,
+      cleaningType,
       options: optionLabels,
-      status: '대기중',
-      realPhone: contactInfo,
-      createdAt: new Date().toISOString()
+      cleaningDate,
+      cleaningTime,
+      address,
+      contactInfo,
+      memo: memoParts.join('\n'),
+      totalPrice: totalPriceIncVat,
+      status: 'pending',
+      createdAt: new Date()
     };
   };
 
-  const handleSubmitQuote = async () => {
+  const handleFinish = async () => {
     try {
-      if (db) {
-        const payload = buildQuotePayload();
-        await addDoc(collection(db, 'quotes'), {
-          ...payload,
-          assignedTo: selectedPartnerId,
-          designatedPartnerName: selectedPartnerName
-        });
-        
-        const successMsg = selectedPartnerName 
-          ? `예약이 성공적으로 접수되었습니다.\n${selectedPartnerName} 파트너에게 지정 견적이 요청되었습니다.`
-          : '예약이 성공적으로 접수되었습니다.\n곧 파트너 배정 및 알림톡 안내가 진행됩니다.';
-        alert(successMsg);
-        navigate('/');
+      const payload = buildQuotePayload();
+      let assignedToId = selectedPartnerId;
+      let assignedPartnerName = selectedPartnerName;
+
+      // 자동 배정(Fast Booking)인 경우: 독점(exclusive) -> 프리미엄(premium) -> 일반(basic) 순으로 배정
+      if (!assignedToId && address) {
+        try {
+          const q = query(
+            collection(db, 'partners'), 
+            where('status', '==', 'approved')
+          );
+          const querySnapshot = await getDocs(q);
+          const allApprovedPartners = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() as any }));
+
+          const addressParts = address.split(' ');
+          const city = addressParts[0]; 
+          const gu = addressParts[1];   
+          const cityKey = city ? city.substring(0, 2) : ''; // '서울', '경기' 등
+          const guKey = gu ? gu.replace(/시$|구$|군$/, '') : ''; // '서초', '강남' 등
+
+          // 지역 매칭 점수 계산 (높을수록 우선순위)
+          const getMatchScore = (pData: any) => {
+            const pRegion = pData.region || pData.area || '';
+            if (!pRegion) return 0;
+            if (pRegion.includes('전국')) return 1; // 전국구는 기본 점수
+            
+            let score = 0;
+            // 시/도 매칭 확인 (예: '서울', '경기')
+            if (cityKey && pRegion.includes(cityKey)) {
+              score += 10; // 시/도 일치 시 10점
+              
+              // 구/군 매칭 확인 (예: '서초', '강남')
+              if (guKey && pRegion.includes(guKey)) {
+                score += 50; // 구/군까지 일치하면 50점 가산
+              } else if (pRegion.includes('전지역')) {
+                score += 20; // 시/도 전지역이면 20점 가산
+              } else if (pRegion.includes('일부')) {
+                score += 5; // 일부 지역이면 5점 가산
+              }
+            }
+            return score;
+          };
+
+          // 파트너 필터링 및 점수 계산
+          const eligiblePartners = allApprovedPartners
+            .map(p => {
+              const matchScore = getMatchScore(p);
+              // [추가] 지역 독점 파트너에게 강력한 우선순위 가중치 부여 (지역 매칭이 된 경우에만)
+              let finalScore = matchScore;
+              if (p.plan === 'exclusive' && matchScore >= 10) {
+                finalScore += 1000; // 독점 파트너는 지역만 맞으면 압도적 우선순위
+              } else if (p.plan === 'premium' && matchScore >= 10) {
+                finalScore += 500;  // 프리미엄 파트너 가중치
+              }
+              
+              return { ...p, matchScore, finalScore };
+            })
+            .filter(p => p.matchScore > 0);
+
+          // 우선순위 정렬: 1. 최종 점수(가중치 포함 높은 순), 2. 매칭 점수(순수 지역 매칭), 3. 랜덤
+          const sortedPartners = eligiblePartners.sort((a, b) => {
+            if (b.finalScore !== a.finalScore) return b.finalScore - a.finalScore;
+            if (b.matchScore !== a.matchScore) return b.matchScore - a.matchScore;
+            return Math.random() - 0.5; // 동일 조건 시 랜덤
+          });
+
+          if (sortedPartners.length > 0) {
+            const selectedPartner = sortedPartners[0];
+            assignedToId = selectedPartner.id;
+            assignedPartnerName = selectedPartner.companyName || selectedPartner.name || '추천 파트너';
+            console.log(`[자동 배정 완료] ${selectedPartner.plan} 등급 / 매칭점수 ${selectedPartner.matchScore} / 최종점수 ${selectedPartner.finalScore}: ${assignedPartnerName}`);
+          }
+        } catch (e) {
+          console.error("Error during auto-assignment logic", e);
+        }
       }
+
+      // 최종 견적 데이터 저장
+      await addDoc(collection(db, 'quotes'), {
+        ...payload,
+        assignedTo: assignedToId || null,
+        designatedPartnerName: assignedPartnerName || null
+      });
+      
+      const successMsg = assignedPartnerName 
+        ? `예약이 성공적으로 접수되었습니다.\n${assignedPartnerName} 업체에 견적이 전달되었습니다.\n담당자가 확인 후 곧 연락드리겠습니다.`
+        : '예약이 성공적으로 접수되었습니다.\n최적의 전문 파트너를 배정 중입니다.\n담당자가 확인 후 곧 연락드리겠습니다.';
+      
+      alert(successMsg);
+      navigate('/');
     } catch (err) {
       console.error("Failed to save quote", err);
       alert('접수 중 오류가 발생했습니다. 다시 시도해주세요.');
@@ -1037,7 +1111,7 @@ export default function Quote() {
                 <div className="space-y-3 mt-auto">
                   <div className={`grid ${selectedPartnerName ? 'grid-cols-1' : 'grid-cols-2'} gap-3`}>
                     <button 
-                      onClick={handleSubmitQuote}
+                      onClick={handleFinish}
                       className="w-full bg-slate-700 hover:bg-slate-600 text-white font-bold py-4 rounded-xl text-sm md:text-base shadow-sm transition-all active:scale-95 flex items-center justify-center gap-1.5"
                     >
                       <span className="material-symbols-outlined pb-0.5 text-lg">bolt</span>

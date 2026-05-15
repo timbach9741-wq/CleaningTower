@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import Header from '../components/cleaning/Header';
 import { db } from '../firebase';
 import { collection, getDocs, query, where, addDoc } from 'firebase/firestore';
+import { mockPartners } from '../data/mockPartnersData';
 
 const PartnerDetailModal = ({ partner, onClose, quoteData }) => {
   const navigate = useNavigate();
@@ -17,7 +18,7 @@ const PartnerDetailModal = ({ partner, onClose, quoteData }) => {
           assignedTo: partner.id,
           designatedPartnerName: partner.name
         });
-        alert(`예약이 성공적으로 접수되었습니다.\n${partner.name} 파트너에게 견적이 전달되었습니다.`);
+        alert(`예약이 성공적으로 접수되었습니다.\n${partner.name} 업체에 견적이 전달되었습니다.\n담당자가 확인 후 곧 연락드리겠습니다.`);
         navigate('/');
       }
     } catch (err) {
@@ -34,8 +35,12 @@ const PartnerDetailModal = ({ partner, onClose, quoteData }) => {
             <h2 className="text-lg sm:text-xl font-bold text-slate-900 pr-2">{partner.name}</h2>
             <button onClick={onClose} className="text-slate-400 hover:text-slate-600 text-xl leading-none shrink-0 mt-0.5">✕</button>
           </div>
-          <div className="h-24 sm:h-32 w-full rounded-xl overflow-hidden mb-3 bg-slate-100 border border-slate-100">
-            <img src={partner.image} alt={partner.name} className="w-full h-full object-cover" />
+          <div className="h-56 sm:h-80 w-full rounded-xl overflow-hidden mb-4 bg-slate-50 border border-slate-100 p-4 flex items-center justify-center">
+            <img 
+              src={partner.image} 
+              alt={partner.name} 
+              className="max-w-full max-h-full object-contain drop-shadow-md" 
+            />
           </div>
           
           <div className="space-y-3">
@@ -183,188 +188,9 @@ const PartnerDetailModal = ({ partner, onClose, quoteData }) => {
   );
 };
 
-const mockPartners = [
-  {
-    id: 101,
-    tier: 'EXCLUSIVE', // 2번 모델 (지역 독점 단독 배너)
-    name: '퍼펙트 클린 서초점',
-    rating: 4.9,
-    reviews: 1842,
-    desc: '서초구 프리미엄 입주청소. 보이지 않는 곳까지 완벽하게 케어합니다. 100% 본사 직영팀.',
-    tags: ['#서초구1위', '#친환경세제', '#본사직영'],
-    price: '320,000',
-    image: '/images/cleaner_in_action.png',
-    area: '서울 서초구 전지역'
-  },
-  {
-    id: 1,
-    tier: 'EXCLUSIVE', // 2번 모델 (지역 독점 단독 배너)
-    name: '청소타워 마스터 강남점',
-    rating: 5.0,
-    reviews: 2105,
-    desc: '강남구 압도적 1위! 호텔식 프리미엄 홈케어 서비스를 경험해보세요. 하루 딱 한 집만 작업합니다.',
-    tags: ['#강남구1위', '#호텔식청소', '#프리미엄'],
-    price: '350,000',
-    image: '/images/living_room_cleaning.png',
-    area: '서울 강남구 전지역'
-  },
-  {
-    id: 2,
-    tier: 'PREMIUM', // 1번 모델 (표준 등급제 상위 리스트)
-    name: '클린탑 코리아',
-    rating: 4.9,
-    reviews: 1205,
-    desc: '우리집처럼 깨끗하게! 100% 직영팀 운영으로 책임감 있는 홈케어 서비스를 제공합니다.',
-    tags: ['#직영팀운영', '#새집증후군', '#살균소독'],
-    price: '210,000',
-    image: '/images/cleaner_in_action.png',
-    area: '서울 전지역 (당일가능)'
-  },
-  {
-    id: 3,
-    tier: 'PREMIUM', // 1번 모델
-    name: '에코 홈클리닝',
-    rating: 4.8,
-    reviews: 842,
-    desc: '독일제 친환경 세제만 고집합니다. 아이와 반려동물이 있는 집이라면 강력 추천!',
-    tags: ['#친환경세제', '#펫프렌들리', '#아토피예방'],
-    price: '230,000',
-    image: '/images/cleaning_couple_team.png',
-    area: '서울 강남/송파'
-  },
-  {
-    id: 102,
-    tier: 'PREMIUM',
-    name: '청소의 정석',
-    rating: 4.8,
-    reviews: 654,
-    desc: '입주청소의 정석을 보여드립니다. 하루 한 집, 사장님이 직접 뛰어 완벽함을 보장합니다.',
-    tags: ['#하루한집', '#사장님직접', '#AS확실'],
-    price: '240,000',
-    image: '/images/cleaning_couple_team.png',
-    area: '서울 전지역'
-  },
-  {
-    id: 103,
-    tier: 'PREMIUM',
-    name: '화이트 홈케어',
-    rating: 4.7,
-    reviews: 432,
-    desc: '화이트톤 인테리어 전문 청소! 스크래치 없이 오염만 지우는 섬세한 케어를 약속드립니다.',
-    tags: ['#인테리어청소', '#섬세한케어', '#스팀소독'],
-    price: '220,000',
-    image: '/images/living_room_cleaning.png',
-    area: '서울/경기 일부'
-  },
-  {
-    id: 104,
-    tier: 'PREMIUM',
-    name: '스마일 홈클리닝',
-    rating: 4.9,
-    reviews: 721,
-    desc: '고객 만족도 1위! 보이지 않는 구석의 먼지 하나까지 확실하게 책임집니다. 팀장 직접 출동 보장.',
-    tags: ['#고객만족1위', '#스팀살균', '#꼼꼼한청소'],
-    price: '230,000',
-    image: '/images/cleaning_couple_team.png',
-    area: '서울 전지역'
-  },
-  {
-    id: 4,
-    tier: 'BASIC', // 기본 모델
-    name: '성실 청소반장',
-    rating: 4.9,
-    reviews: 248,
-    desc: '"입주청소 10년 차 부부가 직접 방문합니다. 안 보이는 틈새부터 하수구 냄새까지 완벽하게 잡아드립니다."',
-    tags: ['#부부청소단', '#AS보장', '#베란다특화'],
-    price: '200,000',
-    image: '/images/living_room_cleaning.png',
-    area: '서울/경기 전지역'
-  },
-  {
-    id: 5,
-    tier: 'BASIC', // 기본 모델
-    name: '반짝반짝 홈케어',
-    rating: 4.6,
-    reviews: 89,
-    desc: '합리적인 가격으로 정성을 다해 청소합니다. 하루 한 집만 꼼꼼히 작업합니다.',
-    tags: ['#가성비', '#하루한집', '#피톤치드'],
-    price: '190,000',
-    image: '/images/living_room_cleaning.png',
-    area: '안양/과천'
-  },
-  {
-    id: 6,
-    tier: 'BASIC',
-    name: '클린메이트',
-    rating: 4.8,
-    reviews: 156,
-    desc: '친절하고 꼼꼼한 젊은 팀! 고객님의 공간을 내 집처럼 소중히 다룹니다.',
-    tags: ['#젊은팀', '#친절상담', '#꼼꼼함'],
-    price: '210,000',
-    image: '/images/cleaning_couple_team.png',
-    area: '서울 전지역'
-  },
-  {
-    id: 7,
-    tier: 'BASIC',
-    name: '우리동네 청소꾼',
-    rating: 4.7,
-    reviews: 203,
-    desc: '다년간의 노하우로 찌든 때, 묵은 때 완벽 제거! 합리적인 가격에 모십니다.',
-    tags: ['#묵은때제거', '#합리적가격', '#경력자'],
-    price: '180,000',
-    image: '/images/cleaner_in_action.png',
-    area: '서울/경기 전지역'
-  },
-  {
-    id: 8,
-    tier: 'BASIC',
-    name: '프레시 룸스',
-    rating: 4.9,
-    reviews: 88,
-    desc: '새집증후군, 헌집증후군 타파! 피톤치드 무료 서비스 진행 중입니다.',
-    tags: ['#피톤치드무료', '#새집증후군', '#살균케어'],
-    price: '220,000',
-    image: '/images/living_room_cleaning.png',
-    area: '서울 전지역'
-  },
-  {
-    id: 9,
-    tier: 'BASIC',
-    name: '더 깔끔',
-    rating: 4.5,
-    reviews: 312,
-    desc: '바쁜 직장인들을 위한 맞춤형 홈케어! 믿고 맡길 수 있는 청소 서비스입니다.',
-    tags: ['#직장인맞춤', '#신속정확', '#안심케어'],
-    price: '195,000',
-    image: '/images/cleaning_couple_team.png',
-    area: '서울 전지역'
-  },
-  {
-    id: 10,
-    tier: 'BASIC',
-    name: '마법의 손길',
-    rating: 4.8,
-    reviews: 145,
-    desc: '손이 안 닿는 곳까지 세밀하게! 마법처럼 깨끗해지는 공간을 경험해보세요.',
-    tags: ['#세밀한청소', '#먼지제거', '#광택작업'],
-    price: '205,000',
-    image: '/images/cleaner_in_action.png',
-    area: '서울/경기 일부'
-  },
-  {
-    id: 11,
-    tier: 'BASIC',
-    name: '청소하는 형제들',
-    rating: 4.7,
-    reviews: 95,
-    desc: '형제가 직접 운영하는 정직한 청소업체! 책임시공으로 보답하겠습니다.',
-    tags: ['#형제운영', '#정직한가격', '#책임시공'],
-    price: '200,000',
-    image: '/images/living_room_cleaning.png',
-    area: '서울 전지역'
-  }
-];
+// mockPartners는 '../data/mockPartnersData'에서 import
+// 16개 지역 × ~10개 업체 = ~160개 자동 생성
+
 
 export default function PartnerList() {
   const location = useLocation();
@@ -393,6 +219,36 @@ export default function PartnerList() {
     setCurrentPage(1);
   }, [sortBy, selectedRegion, itemsPerPage]);
 
+  // 모달 오픈 시 뒤로가기 대응
+  useEffect(() => {
+    if (!selectedPartner) return;
+
+    // 현재 상태가 이미 모달이 아니라면 히스토리 추가
+    const currentState = window.history.state;
+    if (!currentState || currentState.modal !== 'partner_detail') {
+      window.history.pushState({ modal: 'partner_detail' }, '');
+    }
+
+    const handlePopState = (e) => {
+      // 뒤로가기 발생 시 모달 닫기
+      setSelectedPartner(null);
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, [selectedPartner]);
+
+  const handleCloseDetail = () => {
+    if (window.history.state?.modal === 'partner_detail') {
+      // 닫기 클릭 시 히스토리를 한 칸 뒤로 돌려 popstate를 유발함 (모달 닫힘)
+      window.history.back();
+    } else {
+      setSelectedPartner(null);
+    }
+  };
+
   useEffect(() => {
     const fetchPartners = async () => {
       try {
@@ -413,7 +269,6 @@ export default function PartnerList() {
             reviews: 0, // 초기값
             desc: data.desc || `안녕하세요. 책임감 있는 청소 약속드립니다.`,
             tags: data.tags && data.tags.length > 0 ? data.tags.map(t => t.startsWith('#') ? t : `#${t}`) : (data.mainServices ? data.mainServices.map(s => `#${s}`) : ['#신규등록']),
-            price: '견적 협의',
             image: data.image || '/images/living_room_cleaning.png',
             area: data.region || '전국',
             monthlyEvent: data.monthlyEvent || '', // 이달의 행사 필드 연동
@@ -465,7 +320,8 @@ export default function PartnerList() {
   let mixedPartners = [];
 
   if (sortBy === '추천순') {
-    sortedPremium = restPartners.filter(p => p.tier === 'PREMIUM').slice(0, 4);
+    // 프리미엄 전체 표시 (제한 없음), 그 아래 일반 전체 표시
+    sortedPremium = restPartners.filter(p => p.tier === 'PREMIUM');
     sortedBasic = restPartners.filter(p => p.tier === 'BASIC');
   } else if (sortBy === '평점순') {
     mixedPartners = [...restPartners].sort((a, b) => b.rating - a.rating);
@@ -634,15 +490,27 @@ export default function PartnerList() {
                     onClick={() => setSelectedPartner(partner)}
                     className="relative rounded-xl lg:rounded-3xl overflow-hidden shadow-lg lg:shadow-2xl group cursor-pointer border border-blue-900 flex flex-col"
                   >
-                    <div className="absolute inset-0 bg-gradient-to-br from-blue-950/95 via-blue-900/90 to-blue-800/80 z-10 pointer-events-none"></div>
-                    <img src={partner.image} alt={partner.name} className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
+                    <div className="absolute inset-0 bg-slate-900 z-0"></div>
+                    <div className="absolute inset-0 bg-gradient-to-br from-blue-950/95 via-blue-900/90 to-blue-800/80 z-5 pointer-events-none"></div>
+                    <div className="absolute inset-0 flex items-center justify-center z-10 p-4 lg:p-8">
+                      <img src={partner.image} alt={partner.name} className="w-full h-full object-contain opacity-40 group-hover:opacity-60 group-hover:scale-105 transition-all duration-700" />
+                    </div>
                     <div className="relative z-20 p-4 lg:p-8 flex flex-col h-full justify-between gap-3 lg:gap-6">
                       <div className="text-white w-full">
-                        <div className="flex items-center gap-1.5 mb-1.5 lg:mb-3">
-                          <span className="bg-amber-400 text-amber-950 text-[8px] lg:text-[10px] font-black px-1.5 py-0.5 lg:py-1 rounded-full uppercase tracking-wider shadow-sm">Premium Exclusive</span>
-                          <span className="text-blue-200 text-[9px] lg:text-xs font-semibold">📍 {partner.area} 독점 추천</span>
+                        <div className="flex items-center gap-3 lg:gap-5 mb-2 lg:mb-4">
+                          {partner.image && (
+                            <div className="w-12 h-12 lg:w-20 lg:h-20 bg-white rounded-xl lg:rounded-2xl p-1.5 lg:p-2.5 shadow-xl shrink-0 flex items-center justify-center border border-white/20">
+                              <img src={partner.image} alt={partner.name} className="w-full h-full object-contain" />
+                            </div>
+                          )}
+                          <div>
+                            <div className="flex items-center gap-1.5 mb-1 lg:mb-2">
+                              <span className="bg-amber-400 text-amber-950 text-[8px] lg:text-[10px] font-black px-1.5 py-0.5 lg:py-1 rounded-full uppercase tracking-wider shadow-sm">Premium Exclusive</span>
+                              <span className="text-blue-200 text-[9px] lg:text-xs font-semibold">📍 {partner.area} 독점 추천</span>
+                            </div>
+                            <h2 className="text-lg lg:text-3xl font-extrabold tracking-tight group-hover:text-amber-300 transition-colors">{partner.name}</h2>
+                          </div>
                         </div>
-                        <h2 className="text-lg lg:text-3xl font-extrabold mb-1 lg:mb-2 tracking-tight group-hover:text-amber-300 transition-colors">{partner.name}</h2>
                         <div className="flex items-center gap-1.5 mb-2 lg:mb-4">
                           <span className="text-amber-400 text-xs lg:text-base">★★★★★</span>
                           <span className="font-bold text-[10px] lg:text-sm">{partner.rating}</span>
@@ -698,13 +566,13 @@ export default function PartnerList() {
                       <div 
                         key={partner.id} 
                         onClick={() => setSelectedPartner(partner)}
-                        className="bg-white rounded-lg lg:rounded-2xl border border-slate-200 hover:border-blue-400 hover:shadow-lg transition-all flex flex-col group overflow-hidden relative cursor-pointer h-full"
+                        className="bg-gradient-to-b from-blue-50 to-white rounded-lg lg:rounded-2xl border-2 border-blue-200 hover:border-blue-500 hover:shadow-lg hover:shadow-blue-100 transition-all flex flex-col group overflow-hidden relative cursor-pointer h-full"
                       >
-                        <div className="absolute top-0 left-0 bg-blue-600 text-white text-[7px] lg:text-[10px] font-bold py-0.5 px-1.5 lg:py-1 lg:px-3 rounded-br-md lg:rounded-br-lg z-10 shadow-sm">
-                          PREMIUM
+                        <div className="absolute top-0 left-0 bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-[7px] lg:text-[10px] font-bold py-0.5 px-1.5 lg:py-1 lg:px-3 rounded-br-md lg:rounded-br-lg z-10 shadow-md">
+                          ⭐ PREMIUM
                         </div>
-                        <div className="w-full h-16 lg:h-36 shrink-0 relative overflow-hidden bg-slate-100 border-b border-slate-100">
-                          <img src={partner.image} alt={partner.name} className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-500" />
+                        <div className="w-full h-36 lg:h-56 shrink-0 relative overflow-hidden bg-white border-b border-blue-100 p-4 flex items-center justify-center">
+                          <img src={partner.image} alt={partner.name} className="object-contain max-w-full max-h-full group-hover:scale-105 transition-transform duration-500" />
                         </div>
                         <div className="p-2 lg:p-4 flex-grow flex flex-col justify-between">
                           <div>
@@ -721,19 +589,19 @@ export default function PartnerList() {
                             </p>
                             <div className="hidden lg:flex flex-wrap gap-1 mb-2 lg:mb-3 h-8 lg:h-12 overflow-hidden content-start">
                               {partner.tags.map(tag => (
-                                <span key={tag} className="bg-slate-50 border border-slate-200 text-slate-500 px-1 lg:px-1.5 py-0.5 rounded text-[8px] lg:text-[10px] font-semibold">
+                                <span key={tag} className="bg-blue-50 border border-blue-200 text-blue-600 px-1 lg:px-1.5 py-0.5 rounded text-[8px] lg:text-[10px] font-semibold">
                                   {tag}
                                 </span>
                               ))}
                             </div>
                           </div>
-                          <div className="flex items-center justify-between pt-1.5 lg:pt-3 border-t border-slate-100 mt-auto">
-                            <div className="font-bold text-[9px] lg:text-xs text-slate-700 truncate pr-2">
-                              <span className="text-amber-500 mr-1">✨</span>
-                              <span className="hidden lg:inline text-slate-500 mr-1 font-semibold">우리업체의 장점:</span>
+                          <div className="flex items-center justify-between pt-1.5 lg:pt-3 border-t border-blue-100 mt-auto">
+                            <div className="font-bold text-[9px] lg:text-xs text-blue-700 truncate pr-2">
+                              <span className="text-blue-500 mr-1">💎</span>
+                              <span className="hidden lg:inline text-blue-500 mr-1 font-semibold">우리업체의 장점:</span>
                               {partner.tags.map(t => t.replace('#', '')).join(' · ')}
                             </div>
-                            <button onClick={(e) => { e.stopPropagation(); setSelectedPartner(partner); }} className="text-blue-600 font-bold text-[8px] lg:text-xs hover:underline flex items-center shrink-0">
+                            <button onClick={(e) => { e.stopPropagation(); setSelectedPartner(partner); }} className="text-blue-700 font-bold text-[8px] lg:text-xs hover:underline flex items-center shrink-0">
                               상세 보기
                             </button>
                           </div>
@@ -756,8 +624,12 @@ export default function PartnerList() {
                         onClick={() => setSelectedPartner(partner)}
                         className="bg-white rounded-lg lg:rounded-2xl border border-slate-200 hover:border-blue-400 shadow-sm hover:shadow-md transition-all flex flex-col group overflow-hidden cursor-pointer h-full"
                       >
-                        <div className="w-full h-16 lg:h-32 shrink-0 relative overflow-hidden bg-slate-100 border-b border-slate-100">
-                          <img src={partner.image} alt={partner.name} className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-500" />
+                        <div className="w-full h-36 lg:h-56 shrink-0 relative overflow-hidden bg-white border-b border-slate-100 p-4 flex items-center justify-center">
+                          <img 
+                            src={partner.image} 
+                            alt={partner.name} 
+                            className="object-contain w-full h-full group-hover:scale-105 transition-transform duration-500" 
+                          />
                         </div>
                         <div className="p-2 lg:p-4 flex-grow flex flex-col justify-between">
                           <div>
@@ -814,8 +686,8 @@ export default function PartnerList() {
                           PREMIUM
                         </div>
                       )}
-                      <div className="w-full h-16 lg:h-32 shrink-0 relative overflow-hidden bg-slate-100 border-b border-slate-100">
-                        <img src={partner.image} alt={partner.name} className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-500" />
+                      <div className="w-full h-32 lg:h-48 shrink-0 relative overflow-hidden bg-white border-b border-slate-100 p-4 flex items-center justify-center">
+                        <img src={partner.image} alt={partner.name} className="object-contain max-w-full max-h-full group-hover:scale-105 transition-transform duration-500" />
                       </div>
                       <div className="p-2 lg:p-4 flex-grow flex flex-col justify-between">
                         <div>
@@ -892,7 +764,7 @@ export default function PartnerList() {
         </div>
       </main>
 
-      <PartnerDetailModal partner={selectedPartner} onClose={() => setSelectedPartner(null)} quoteData={quoteData} />
+      <PartnerDetailModal partner={selectedPartner} onClose={handleCloseDetail} quoteData={quoteData} />
     </div>
   );
 }

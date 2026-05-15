@@ -21,11 +21,11 @@ export default function Header({ onOpenQuote, theme = 'light', hideQuoteButton =
 
   const navLinks = [
     { name: '홈', href: '/' },
-    { name: '서비스 안내', href: '/service' },
     { name: '전문가 찾기', href: '/partners' },
-    { name: '실제 후기', href: '#reviews' },
-    { name: '부가서비스', href: '#services' },
     { name: '파트너스 지원하기', href: '/partners/join' },
+    { name: '서비스 안내', href: '/service' },
+    { name: '실제 후기', href: '#reviews' },
+    { name: '부가서비스 안내', href: '#services' },
   ];
 
   return (
@@ -114,7 +114,7 @@ export default function Header({ onOpenQuote, theme = 'light', hideQuoteButton =
         <div className="flex items-center gap-4 z-50">
           {!hideQuoteButton && (
             <button 
-              onClick={onOpenQuote}
+              onClick={() => navigate('/partners')}
               className={`hidden sm:flex px-5 py-2.5 rounded-full font-bold text-sm transition-all duration-300 shadow-md items-center gap-2 hover:-translate-y-0.5 ${
                 isScrolled || isMobileMenuOpen
                   ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-blue-600/30' 
@@ -123,7 +123,7 @@ export default function Header({ onOpenQuote, theme = 'light', hideQuoteButton =
                       : 'bg-white text-blue-600 hover:bg-blue-50 shadow-black/10')
               }`}
             >
-              지금 바로 5단계 간편 견적 받기
+              바로 전문가 찾기
             </button>
           )}
           
@@ -195,11 +195,11 @@ export default function Header({ onOpenQuote, theme = 'light', hideQuoteButton =
           <button 
             onClick={() => {
               setIsMobileMenuOpen(false);
-              onOpenQuote();
+              navigate('/partners');
             }}
             className="mt-2 w-full px-5 py-3 rounded-xl font-bold text-sm bg-blue-600 text-white shadow-md flex justify-center items-center"
           >
-            지금 바로 5단계 간편 견적 받기
+            바로 전문가 찾기
           </button>
         </nav>
       </div>

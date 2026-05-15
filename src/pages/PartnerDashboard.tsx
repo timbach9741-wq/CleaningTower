@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MapPin, Calendar, CheckCircle, AlertTriangle, Phone, Home, List, User, Briefcase, Info, Bell } from 'lucide-react';
-import { db } from '../firebase';
+import { db, storage } from '../firebase';
 import { collection, onSnapshot, doc, updateDoc, getDocs, query, where } from 'firebase/firestore';
 import type { Unsubscribe } from 'firebase/firestore';
+import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { useNavigate, useLocation } from 'react-router-dom';
 
 export interface Order {
@@ -42,6 +43,14 @@ export interface PartnerUser {
   region?: string;
   isNotificationEnabled?: boolean;
   notificationRegions?: string[];
+  monthlyEvent?: string;
+  portfolio?: string[];
+  recentReviews?: { id: number, author: string, text: string, rating: number, date: string }[];
+  description?: string;
+  teamSize?: string;
+  mainServices?: string[];
+  tags?: string[];
+  image?: string;
 }
 
 export default function Partner() {
@@ -63,6 +72,24 @@ export default function Partner() {
   const [currentUser, setCurrentUser] = useState<PartnerUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [showLanding, setShowLanding] = useState(!localStorage.getItem('partnerId'));
+  
+  // 홍보 정보 수정 모달 상태
+  const [showEditProfileModal, setShowEditProfileModal] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<number | null>(null);
+  const [editProfileForm, setEditProfileForm] = useState({
+    companyName: '',
+    managerName: '',
+    region: '',
+    monthlyEvent: '',
+    portfolio: [] as string[],
+    description: '',
+    teamSize: '',
+    mainServices: [] as string[],
+    tags: [] as string[],
+    image: ''
+  });
+  const [customService, setCustomService] = useState('');
+  const serviceExamples = ['입주청소', '거주청소', '상가청소', '쓰레기집', '에어컨청소', '새집증후군', '줄눈시공'];
   const location = useLocation();
   const navigate = useNavigate();
   const [showLogin, setShowLogin] = useState(location.state?.showLogin || false);
@@ -210,7 +237,12 @@ export default function Partner() {
         completionItems: checkedItems,
         completionNote: completionNote
       });
-      alert('작업 완료 및 정산 요청이 접수되었습니다.');
+      
+      // 고객에게 리뷰 작성 요청 알림톡 발송 트리거 (현재는 Mock 처리)
+      const reviewUrl = `${window.location.origin}/review-write/${jobToComplete.id}`;
+      console.log(`[알림톡 발송 모의] 수신번호: ${jobToComplete.realPhone || '없음'}, 내용: 청소가 완료되었습니다! 리뷰를 남겨주세요. ${reviewUrl}`);
+      
+      alert(`작업 완료 및 정산 요청이 접수되었습니다.\n고객님께 리뷰 작성 요청 알림톡이 자동 발송되었습니다.`);
       setShowCompletionModal(false);
       setJobToComplete(null);
       setCheckedItems([]);
@@ -370,6 +402,106 @@ export default function Partner() {
     setCurrentUser(null);
     setShowLanding(true);
     setShowLogin(true); // 바로 로그인 화면을 띄워줌
+  };
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!storage) {
+      alert("스토리지 설정이 안 되어 있습니다.");
+      return;
+    }
+
+    const storageRef = ref(storage, `partner_logos/${currentUser?.id || Date.now()}_${file.name}`);
+    const uploadTask = uploadBytesResumable(storageRef, file);
+
+    uploadTask.on('state_changed', 
+      (snapshot) => {
+        const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+        setUploadProgress(progress);
+      }, 
+      (error) => {
+        console.error("Upload error:", error);
+        alert("업로드 중 오류가 발생했습니다.");
+        setUploadProgress(null);
+      }, 
+      () => {
+        getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
+          setEditProfileForm(prev => ({...prev, image: downloadURL}));
+          setUploadProgress(null);
+        });
+      }
+    );
+  };
+
+  const openEditProfileModal = () => {
+    setEditProfileForm({
+      companyName: currentUser?.companyName || currentUser?.name || '',
+      managerName: currentUser?.managerName || '',
+      region: currentUser?.region || '',
+      monthlyEvent: currentUser?.monthlyEvent || '',
+      portfolio: currentUser?.portfolio || [],
+      description: currentUser?.description || '',
+      teamSize: currentUser?.teamSize || '',
+      mainServices: currentUser?.mainServices || [],
+      tags: currentUser?.tags || [],
+      image: currentUser?.image || '/images/cleaner_in_action.png'
+    });
+    setCustomService('');
+    setShowEditProfileModal(true);
+  };
+
+  const handleSaveProfileInfo = async () => {
+    if (!db || !currentUser) return;
+    try {
+      await updateDoc(doc(db, 'partners', currentUser.id), {
+        companyName: editProfileForm.companyName,
+        name: editProfileForm.companyName, // 닉네임/업체명 동시 업데이트
+        managerName: editProfileForm.managerName,
+        region: editProfileForm.region,
+        monthlyEvent: editProfileForm.monthlyEvent,
+        portfolio: editProfileForm.portfolio,
+        description: editProfileForm.description,
+        teamSize: editProfileForm.teamSize,
+        mainServices: editProfileForm.mainServices,
+        tags: editProfileForm.tags,
+        image: editProfileForm.image
+      });
+      alert('홍보 정보가 성공적으로 저장되었습니다.');
+      setShowEditProfileModal(false);
+    } catch (e) {
+      console.error(e);
+      alert('저장 중 오류가 발생했습니다.');
+    }
+  };
+
+  const toggleService = (svc: string) => {
+    setEditProfileForm(prev => {
+      if (prev.mainServices.includes(svc)) {
+        return { ...prev, mainServices: prev.mainServices.filter(s => s !== svc) };
+      } else {
+        return { ...prev, mainServices: [...prev.mainServices, svc] };
+      }
+    });
+  };
+
+  const addCustomService = () => {
+    if (customService.trim() && !editProfileForm.mainServices.includes(customService.trim())) {
+      setEditProfileForm(prev => ({
+        ...prev,
+        mainServices: [...prev.mainServices, customService.trim()]
+      }));
+    }
+    setCustomService('');
+  };
+
+  const handleMockPortfolioUpload = () => {
+    const mockImages = ['/clean1.jpg', '/clean2.jpg', '/clean3.jpg'];
+    const newImage = mockImages[editProfileForm.portfolio.length % mockImages.length];
+    setEditProfileForm(prev => ({
+      ...prev,
+      portfolio: [...prev.portfolio, newImage]
+    }));
   };
 
   if (showLanding) {
@@ -782,6 +914,13 @@ export default function Partner() {
                     <p className="text-xl font-black text-emerald-600">안전</p>
                   </div>
                 </div>
+                <button 
+                  onClick={openEditProfileModal}
+                  className="mt-6 w-full py-3 bg-blue-50 hover:bg-blue-100 text-blue-600 font-black rounded-xl border border-blue-200 transition-colors flex items-center justify-center gap-2"
+                >
+                  <span className="material-symbols-outlined text-[18px]">edit_document</span>
+                  내 홍보 정보 수정 (포트폴리오/리뷰/행사)
+                </button>
               </div>
 
               <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 mb-4">
@@ -1327,6 +1466,267 @@ export default function Partner() {
               </div>
             </motion.div>
           </div>
+        )}
+      </AnimatePresence>
+
+      {/* 홍보 정보 수정 모달 */}
+      <AnimatePresence>
+        {showEditProfileModal && (
+          <>
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowEditProfileModal(false)}
+              className="fixed inset-0 bg-black/50 z-40 backdrop-blur-sm"
+            />
+            <motion.div 
+              initial={{ y: '100%' }}
+              animate={{ y: 0 }}
+              exit={{ y: '100%' }}
+              transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+              className="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-white rounded-t-3xl z-50 overflow-hidden shadow-2xl h-[90vh] flex flex-col"
+            >
+              <div className="p-6 pb-4 border-b border-slate-100 flex-shrink-0">
+                <div className="flex justify-between items-center mb-2">
+                  <h2 className="text-xl font-black text-slate-900">홍보 정보 수정</h2>
+                  <button onClick={() => setShowEditProfileModal(false)} className="text-slate-400 hover:text-slate-600">
+                    <span className="material-symbols-outlined">close</span>
+                  </button>
+                </div>
+                <p className="text-sm text-slate-500">고객에게 노출될 업체 정보를 매력적으로 꾸며보세요.</p>
+              </div>
+              
+              <div className="p-6 overflow-y-auto flex-1 bg-slate-50 space-y-6">
+                
+                {/* 기본 정보 */}
+                <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
+                  <h3 className="font-bold text-slate-900 mb-4 flex items-center gap-1.5">
+                    📝 기본 정보
+                  </h3>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-500 mb-1.5">업체명 (팀명)</label>
+                      <input 
+                        type="text"
+                        value={editProfileForm.companyName}
+                        onChange={(e) => setEditProfileForm({...editProfileForm, companyName: e.target.value})}
+                        placeholder="예) 퍼펙트 클린 서초점"
+                        className="w-full border border-slate-200 rounded-xl p-3 text-sm outline-none focus:border-blue-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-slate-500 mb-1.5">담당자명</label>
+                      <input 
+                        type="text"
+                        value={editProfileForm.managerName}
+                        onChange={(e) => setEditProfileForm({...editProfileForm, managerName: e.target.value})}
+                        placeholder="예) 김철수"
+                        className="w-full border border-slate-200 rounded-xl p-3 text-sm outline-none focus:border-blue-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-slate-500 mb-1.5">주 활동 지역</label>
+                      <input 
+                        type="text"
+                        value={editProfileForm.region}
+                        onChange={(e) => setEditProfileForm({...editProfileForm, region: e.target.value})}
+                        placeholder="예) 서울 서초구 전지역"
+                        className="w-full border border-slate-200 rounded-xl p-3 text-sm outline-none focus:border-blue-500"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* 메인 로고 / 대표 이미지 */}
+                <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
+                  <div className="flex justify-between items-center mb-3">
+                    <h3 className="font-bold text-slate-900 flex items-center gap-1.5">
+                      🖼️ 업체 로고 및 대표 이미지
+                    </h3>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <div className="w-20 h-20 rounded-xl overflow-hidden bg-slate-100 shrink-0 border border-slate-200 relative">
+                      <img src={editProfileForm.image || '/images/cleaner_in_action.png'} alt="대표 이미지" className="w-full h-full object-cover" />
+                      {uploadProgress !== null && (
+                        <div className="absolute inset-0 bg-black/50 flex items-center justify-center backdrop-blur-sm transition-all">
+                          <span className="text-white text-xs font-bold">{Math.round(uploadProgress)}%</span>
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-xs text-slate-500 mb-2 break-keep leading-relaxed">
+                        업체 목록 상단에 노출될 대표 이미지(또는 로고)를 업로드해주세요.
+                      </p>
+                      <div className="flex gap-2 items-center">
+                        <label className="flex-1 cursor-pointer bg-blue-50 hover:bg-blue-100 text-blue-600 font-bold border border-blue-200 rounded-xl p-2.5 text-xs text-center transition-colors">
+                          {uploadProgress !== null ? '업로드 중...' : '이미지 파일 선택'}
+                          <input 
+                            type="file" 
+                            accept="image/*"
+                            className="hidden"
+                            onChange={handleImageUpload}
+                            disabled={uploadProgress !== null}
+                          />
+                        </label>
+                        {/* 데모용 버튼 */}
+                        <button 
+                          onClick={() => setEditProfileForm({...editProfileForm, image: '/images/cleaning_couple_team.png'})}
+                          className="text-xs bg-slate-100 hover:bg-slate-200 font-bold px-3 py-2.5 rounded-xl text-slate-600 transition-colors whitespace-nowrap"
+                          disabled={uploadProgress !== null}
+                        >
+                          기본 샘플
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 업체 소개 */}
+                <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
+                  <h3 className="font-bold text-slate-900 mb-2 flex items-center gap-1.5">
+                    🏢 업체 상세 소개
+                  </h3>
+                  <textarea 
+                    value={editProfileForm.description}
+                    onChange={(e) => setEditProfileForm({...editProfileForm, description: e.target.value})}
+                    placeholder="고객에게 업체의 전문성, 경력, 철학 등을 소개해주세요."
+                    className="w-full border border-slate-200 rounded-xl p-3 text-sm outline-none focus:border-blue-500 min-h-[80px]"
+                  />
+                </div>
+
+                {/* 직원수 */}
+                <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
+                  <h3 className="font-bold text-slate-900 mb-2 flex items-center gap-1.5">
+                    👥 직원수
+                  </h3>
+                  <input 
+                    type="text"
+                    value={editProfileForm.teamSize}
+                    onChange={(e) => setEditProfileForm({...editProfileForm, teamSize: e.target.value})}
+                    placeholder="예) 3명 (팀장 1, 팀원 2)"
+                    className="w-full border border-slate-200 rounded-xl p-3 text-sm outline-none focus:border-blue-500"
+                  />
+                </div>
+
+                {/* 우리 업체의 장점 (태그) */}
+                <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
+                  <h3 className="font-bold text-slate-900 mb-2 flex items-center gap-1.5">
+                    💡 우리 업체의 장점 (키워드)
+                  </h3>
+                  <input 
+                    type="text"
+                    value={editProfileForm.tags.join(', ')}
+                    onChange={(e) => setEditProfileForm({...editProfileForm, tags: e.target.value.split(',').map(t => t.trim()).filter(t => t)})}
+                    placeholder="예) #서초구1위, #친환경세제 (쉼표로 구분)"
+                    className="w-full border border-slate-200 rounded-xl p-3 text-sm outline-none focus:border-blue-500"
+                  />
+                  <p className="text-[11px] text-slate-400 mt-2 font-medium">쉼표(,)로 구분하여 여러 개의 장점을 해시태그 형식으로 입력해주세요.</p>
+                </div>
+
+                {/* 가능 서비스 */}
+                <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
+                  <h3 className="font-bold text-slate-900 mb-2 flex items-center gap-1.5">
+                    ✨ 가능 서비스
+                  </h3>
+                  <div className="flex flex-wrap gap-2 mb-3">
+                    {serviceExamples.map(svc => (
+                      <button
+                        key={svc}
+                        onClick={() => toggleService(svc)}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${editProfileForm.mainServices.includes(svc) ? 'bg-blue-600 text-white shadow-md' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+                      >
+                        {svc}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="flex flex-wrap gap-2 mb-3">
+                    {editProfileForm.mainServices.filter(svc => !serviceExamples.includes(svc)).map(svc => (
+                       <button
+                        key={svc}
+                        onClick={() => toggleService(svc)}
+                        className="px-3 py-1.5 rounded-lg text-xs font-bold transition-colors bg-blue-600 text-white shadow-md flex items-center gap-1"
+                      >
+                        {svc} <span className="font-normal opacity-80">✕</span>
+                      </button>
+                    ))}
+                  </div>
+                  <div className="flex gap-2">
+                    <input 
+                      type="text"
+                      value={customService}
+                      onChange={(e) => setCustomService(e.target.value)}
+                      onKeyPress={(e) => e.key === 'Enter' && addCustomService()}
+                      placeholder="직접 입력 (예: 마루코팅)"
+                      className="flex-1 border border-slate-200 rounded-xl p-3 text-sm outline-none focus:border-blue-500"
+                    />
+                    <button 
+                      onClick={addCustomService}
+                      className="px-4 py-3 bg-slate-900 text-white font-bold rounded-xl text-sm active:scale-[0.98] transition-transform"
+                    >
+                      추가
+                    </button>
+                  </div>
+                </div>
+
+                {/* 이달의 행사 */}
+                <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
+                  <h3 className="font-bold text-slate-900 mb-2 flex items-center gap-1.5">
+                    🎁 이달의 행사 및 혜택
+                  </h3>
+                  <textarea 
+                    value={editProfileForm.monthlyEvent}
+                    onChange={(e) => setEditProfileForm({...editProfileForm, monthlyEvent: e.target.value})}
+                    placeholder="예) 피톤치드 살균 소독 무료 제공! (이번달 한정)"
+                    className="w-full border border-slate-200 rounded-xl p-3 text-sm outline-none focus:border-blue-500 min-h-[80px]"
+                  />
+                </div>
+
+                {/* 포트폴리오 */}
+                <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
+                  <div className="flex justify-between items-center mb-2">
+                    <h3 className="font-bold text-slate-900 flex items-center gap-1.5">
+                      📸 포트폴리오 사진 ({editProfileForm.portfolio.length}장)
+                    </h3>
+                    <button 
+                      onClick={handleMockPortfolioUpload}
+                      className="text-xs font-bold text-blue-600 bg-blue-50 px-2.5 py-1.5 rounded-lg"
+                    >
+                      + 사진 추가 (테스트)
+                    </button>
+                  </div>
+                  <div className="flex gap-3 overflow-x-auto pb-2 mt-3">
+                    {editProfileForm.portfolio.length === 0 ? (
+                      <p className="text-sm text-slate-400 w-full text-center py-4 bg-slate-50 rounded-xl border border-dashed border-slate-200">
+                        등록된 사진이 없습니다.
+                      </p>
+                    ) : (
+                      editProfileForm.portfolio.map((img, i) => (
+                        <div key={i} className="relative w-24 h-24 rounded-xl overflow-hidden shrink-0 border border-slate-200">
+                          <img src={img} alt={`포트폴리오 ${i+1}`} className="w-full h-full object-cover" />
+                          <button 
+                            onClick={() => setEditProfileForm(prev => ({...prev, portfolio: prev.portfolio.filter((_, idx) => idx !== i)}))}
+                            className="absolute top-1 right-1 w-6 h-6 bg-black/50 text-white rounded-full flex items-center justify-center text-xs backdrop-blur-sm"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+
+              </div>
+              <div className="p-6 bg-white border-t border-slate-100 flex-shrink-0">
+                <button 
+                  onClick={handleSaveProfileInfo} 
+                  className="w-full py-4 rounded-xl bg-blue-600 text-white font-black active:bg-blue-700 shadow-lg shadow-blue-600/30"
+                >
+                  홍보 정보 저장하기
+                </button>
+              </div>
+            </motion.div>
+          </>
         )}
       </AnimatePresence>
 

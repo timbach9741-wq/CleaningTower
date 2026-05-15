@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { CheckCircle, ShieldCheck } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 export default function HeroSection({ onOpenQuote }) {
+  const navigate = useNavigate();
   const RECENT_CASES = [
     "서울 송파구 34평 프리미엄 입주청소",
     "경기 화성시 동탄신도시 30평 이사청소",
@@ -67,10 +69,10 @@ export default function HeroSection({ onOpenQuote }) {
             {/* CTA & Social Proof */}
             <div className="flex flex-col gap-3 w-full max-w-md mx-auto lg:mx-0">
               <button 
-                onClick={onOpenQuote}
+                onClick={() => navigate('/partners')}
                 className="w-full px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white text-lg font-bold rounded-xl shadow-lg shadow-blue-600/30 transition-all hover:-translate-y-1 flex items-center justify-center shrink-0"
               >
-                지금 바로 5단계 간편 견적 받기
+                바로 전문가 찾기
               </button>
               
             </div>

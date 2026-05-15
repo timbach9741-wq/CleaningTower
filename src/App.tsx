@@ -16,6 +16,7 @@ import B2BQuote from './pages/B2BQuote';
 import B2BSignup from './pages/B2BSignup';
 import ScrollToTopButton from './components/common/ScrollToTopButton';
 import ScrollToAnchor from './components/common/ScrollToAnchor';
+import ReviewWrite from './pages/ReviewWrite';
 
 function App() {
   return (
@@ -39,6 +40,9 @@ function App() {
         {/* 숨겨진 B2B (사업자 전용) 라우트 - 헤더/푸터 메뉴에 노출되지 않음 */}
         <Route path="/b2b/quote" element={<B2BQuote />} />
         <Route path="/b2b/signup" element={<B2BSignup />} />
+
+        {/* 고객용 알림톡 전용 라우트 - 헤더/푸터 메뉴 노출 안됨 */}
+        <Route path="/review-write/:orderId" element={<ReviewWrite />} />
       </Routes>
     </BrowserRouter>
   );

@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 export default function FloatingCTA({ onOpenQuote }) {
+  const navigate = useNavigate();
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
@@ -27,10 +29,10 @@ export default function FloatingCTA({ onOpenQuote }) {
       }`}
     >
       <button 
-        onClick={onOpenQuote}
+        onClick={() => navigate('/partners')}
         className="px-6 py-4 bg-blue-600 hover:bg-blue-700 text-white text-base lg:text-lg font-bold rounded-full shadow-2xl shadow-blue-600/40 transition-transform hover:-translate-y-1 flex items-center justify-center"
       >
-        <span>지금 바로 5단계 간편 견적 받기</span>
+        <span>바로 전문가 찾기</span>
       </button>
     </div>
   );

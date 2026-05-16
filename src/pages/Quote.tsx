@@ -39,6 +39,17 @@ const optionCategories = [
 
 const optionsList = optionCategories.flatMap(cat => cat.items);
 
+interface PartnerData {
+  id?: string;
+  status?: string;
+  plan?: string;
+  region?: string;
+  area?: string;
+  companyName?: string;
+  name?: string;
+  [key: string]: unknown;
+}
+
 /**
  * 입주청소 사업자용 홈페이지 - 모바일 퍼스트 설계 (Funnel 버전)
  * 
@@ -247,7 +258,7 @@ export default function Quote() {
             where('status', '==', 'approved')
           );
           const querySnapshot = await getDocs(q);
-          const allApprovedPartners = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() as any }));
+          const allApprovedPartners = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() as PartnerData }));
 
           const addressParts = address.split(' ');
           const city = addressParts[0]; 
@@ -256,7 +267,7 @@ export default function Quote() {
           const guKey = gu ? gu.replace(/시$|구$|군$/, '') : ''; // '서초', '강남' 등
 
           // 지역 매칭 점수 계산 (높을수록 우선순위)
-          const getMatchScore = (pData: any) => {
+          const getMatchScore = (pData: PartnerData) => {
             const pRegion = pData.region || pData.area || '';
             if (!pRegion) return 0;
             if (pRegion.includes('전국')) return 1; // 전국구는 기본 점수
@@ -421,7 +432,7 @@ export default function Quote() {
                       ].map(item => (
                         <button
                           key={item.id}
-                          onClick={() => setCleaningType(item.id as any)}
+                          onClick={() => setCleaningType(item.id as '프리미엄' | '이사' | '거주')}
                           className={`p-4 rounded-xl text-left transition-all active:scale-[0.98] border flex items-center justify-between ${
                             cleaningType === item.id 
                             ? 'bg-blue-600/20 border-blue-500 shadow-lg shadow-blue-500/10' 

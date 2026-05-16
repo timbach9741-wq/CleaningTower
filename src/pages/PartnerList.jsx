@@ -689,7 +689,7 @@ export default function PartnerList() {
                     </h2>
                     <span className="text-slate-400 text-xs lg:text-sm font-medium">총 {sortedPremium.length}건</span>
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 lg:gap-4">
+                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 lg:gap-4">
                     {currentPremiumPartners.map(partner => (
                       <div 
                         key={partner.id} 
@@ -745,7 +745,7 @@ export default function PartnerList() {
                     <h2 className="font-bold text-slate-700 text-base lg:text-lg">일반 파트너</h2>
                     <span className="text-slate-400 text-xs lg:text-sm font-medium">총 {sortedBasic.length}건</span>
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 lg:gap-4">
+                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 lg:gap-4">
                     {currentBasicPartners.map(partner => (
                       <div 
                         key={partner.id} 
@@ -804,7 +804,7 @@ export default function PartnerList() {
                   </h2>
                   <span className="text-slate-400 text-xs lg:text-sm font-medium">총 {mixedPartners.length}건</span>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 lg:gap-4">
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 lg:gap-4">
                   {currentMixedPartners.map(partner => (
                     <div 
                       key={partner.id} 

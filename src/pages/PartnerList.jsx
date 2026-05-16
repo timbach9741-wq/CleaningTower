@@ -294,7 +294,9 @@ export default function PartnerList() {
   const [isSortDropdownOpen, setIsSortDropdownOpen] = useState(false);
   const [realPartners, setRealPartners] = useState([]);
   const [selectedPartner, setSelectedPartner] = useState(null);
-  const [currentPage, setCurrentPage] = useState(1);
+  const [premiumPage, setPremiumPage] = useState(1);
+  const [basicPage, setBasicPage] = useState(1);
+  const [mixedPage, setMixedPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(8);
 
   useEffect(() => {
@@ -307,7 +309,9 @@ export default function PartnerList() {
   }, []);
 
   useEffect(() => {
-    setCurrentPage(1);
+    setPremiumPage(1);
+    setBasicPage(1);
+    setMixedPage(1);
   }, [sortBy, selectedRegion, itemsPerPage]);
 
   // 모달 오픈 시 뒤로가기 대응
@@ -400,7 +404,9 @@ export default function PartnerList() {
     currentPremiumPartners,
     currentBasicPartners,
     currentMixedPartners,
-    totalPages
+    totalPremiumPages,
+    totalBasicPages,
+    totalMixedPages
   } = React.useMemo(() => {
     const filtered = [...realPartners, ...mockPartners].filter(p => matchRegion(p.area, selectedRegion));
     const exclusive = filtered.filter(p => p.tier === 'EXCLUSIVE').slice(0, 2);
@@ -419,13 +425,13 @@ export default function PartnerList() {
       mixed = [...rest].sort((a, b) => b.reviews - a.reviews);
     }
 
-    const tPages = sortBy === '추천순' 
-      ? Math.ceil(Math.max(premium.length, basic.length) / itemsPerPage) 
-      : Math.ceil(mixed.length / itemsPerPage);
+    const tPremiumPages = Math.ceil(premium.length / itemsPerPage);
+    const tBasicPages = Math.ceil(basic.length / itemsPerPage);
+    const tMixedPages = Math.ceil(mixed.length / itemsPerPage);
 
-    const cPremium = premium.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
-    const cBasic = basic.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
-    const cMixed = mixed.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+    const cPremium = premium.slice((premiumPage - 1) * itemsPerPage, premiumPage * itemsPerPage);
+    const cBasic = basic.slice((basicPage - 1) * itemsPerPage, basicPage * itemsPerPage);
+    const cMixed = mixed.slice((mixedPage - 1) * itemsPerPage, mixedPage * itemsPerPage);
 
     return {
       filteredPartners: filtered,
@@ -436,12 +442,14 @@ export default function PartnerList() {
       currentPremiumPartners: cPremium,
       currentBasicPartners: cBasic,
       currentMixedPartners: cMixed,
-      totalPages: tPages
+      totalPremiumPages: tPremiumPages,
+      totalBasicPages: tBasicPages,
+      totalMixedPages: tMixedPages
     };
-  }, [realPartners, selectedRegion, sortBy, itemsPerPage, currentPage]);
+  }, [realPartners, selectedRegion, sortBy, itemsPerPage, premiumPage, basicPage, mixedPage]);
 
   // 페이지네이션 번호 계산 로직 (모바일 대응을 위해 현재 페이지 주변만 표시)
-  const getPageNumbers = () => {
+  const getPageNumbers = (currentPage, totalPages) => {
     const pageNumbers = [];
     const maxVisiblePages = window.innerWidth < 640 ? 3 : 5;
     
@@ -458,6 +466,44 @@ export default function PartnerList() {
       for (let i = start; i <= end; i++) pageNumbers.push(i);
     }
     return pageNumbers;
+  };
+
+  const renderPagination = (currentPage, totalPages, setPage) => {
+    if (totalPages <= 1) return null;
+    
+    const handlePageChange = (newPage) => {
+      setPage(newPage);
+      // 부드러운 스크롤을 이용해 위로 이동
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    return (
+      <div className="py-4 flex justify-center items-center gap-2 mt-4">
+        <button 
+          onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
+          disabled={currentPage === 1}
+          className="w-8 h-8 flex items-center justify-center rounded-full border border-slate-200 text-slate-500 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        >
+          &lt;
+        </button>
+        {getPageNumbers(currentPage, totalPages).map((pageNumber) => (
+          <button
+            key={pageNumber}
+            onClick={() => handlePageChange(pageNumber)}
+            className={`w-8 h-8 flex items-center justify-center rounded-full font-bold transition-colors text-sm ${currentPage === pageNumber ? 'bg-blue-600 text-white shadow-md' : 'text-slate-600 hover:bg-slate-100'}`}
+          >
+            {pageNumber}
+          </button>
+        ))}
+        <button 
+          onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
+          disabled={currentPage === totalPages}
+          className="w-8 h-8 flex items-center justify-center rounded-full border border-slate-200 text-slate-500 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        >
+          &gt;
+        </button>
+      </div>
+    );
   };
 
 
@@ -737,10 +783,11 @@ export default function PartnerList() {
                       </div>
                     ))}
                   </div>
+                  {renderPagination(premiumPage, totalPremiumPages, setPremiumPage)}
                 </div>
 
                 {/* 일반 파트너 섹션 */}
-                <div className="px-1 lg:px-0">
+                <div className="px-1 lg:px-0 mt-8">
                   <div className="flex items-center justify-between mb-3 lg:mb-4 px-1 lg:px-2">
                     <h2 className="font-bold text-slate-700 text-base lg:text-lg">일반 파트너</h2>
                     <span className="text-slate-400 text-xs lg:text-sm font-medium">총 {sortedBasic.length}건</span>
@@ -793,6 +840,7 @@ export default function PartnerList() {
                       </div>
                     ))}
                   </div>
+                  {renderPagination(basicPage, totalBasicPages, setBasicPage)}
                 </div>
               </>
             ) : (
@@ -851,45 +899,11 @@ export default function PartnerList() {
                     </div>
                   ))}
                 </div>
+                {renderPagination(mixedPage, totalMixedPages, setMixedPage)}
               </div>
             )}
 
-            {totalPages > 1 && (
-              <div className="py-8 flex justify-center items-center gap-2 mt-4">
-                <button 
-                  onClick={() => {
-                    setCurrentPage(p => Math.max(1, p - 1));
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                  }}
-                  disabled={currentPage === 1}
-                  className="w-10 h-10 flex items-center justify-center rounded-full border border-slate-200 text-slate-500 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
-                  &lt;
-                </button>
-                {getPageNumbers().map((pageNumber) => (
-                  <button
-                    key={pageNumber}
-                    onClick={() => {
-                      setCurrentPage(pageNumber);
-                      window.scrollTo({ top: 0, behavior: 'smooth' });
-                    }}
-                    className={`w-10 h-10 flex items-center justify-center rounded-full font-bold transition-colors ${currentPage === pageNumber ? 'bg-blue-600 text-white shadow-md' : 'text-slate-600 hover:bg-slate-100'}`}
-                  >
-                    {pageNumber}
-                  </button>
-                ))}
-                <button 
-                  onClick={() => {
-                    setCurrentPage(p => Math.min(totalPages, p + 1));
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                  }}
-                  disabled={currentPage === totalPages}
-                  className="w-10 h-10 flex items-center justify-center rounded-full border border-slate-200 text-slate-500 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
-                  &gt;
-                </button>
-              </div>
-            )}
+            {/* 개별 섹션별 페이지네이션을 적용하여 공통 페이지네이션 삭제 */}
           </div>
         </div>
       </main>

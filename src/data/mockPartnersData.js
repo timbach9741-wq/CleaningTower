@@ -4,28 +4,28 @@
  */
 
 const IMAGES = [
-  '/images/partners/team_blue_uniform.png',
-  '/images/partners/couple_team_apron.png',
-  '/images/partners/female_team_green.png',
-  '/images/partners/male_steam_expert.png',
-  '/images/partners/experienced_leader.png',
-  '/images/partners/mixed_team_white.png',
-  '/images/partners/female_eco_expert.png',
-  '/images/partners/young_duo_brothers.png',
-  '/images/partners/young_couple_team.png',
-  '/images/partners/premium_team_black.png',
-  '/images/partners/female_duo_cheerful.png',
-  '/images/partners/team_karcher_equip.png',
-  '/images/partners/large_team_photo.png',
-  '/images/partners/female_leader_pro.png',
-  '/images/partners/team_orange_vest.png',
-  '/images/partners/couple_mature_expert.png',
-  '/images/partners/young_female_solo.png',
-  '/images/partners/team_red_uniform.png',
-  '/images/partners/male_solo_trusted.png',
-  '/images/partners/team_gray_modern.png',
-  '/images/partners/couple_young_casual.png',
-  '/images/partners/team_professional_van.png',
+  '/images/partners/team_blue_uniform.webp',
+  '/images/partners/couple_team_apron.webp',
+  '/images/partners/female_team_green.webp',
+  '/images/partners/male_steam_expert.webp',
+  '/images/partners/experienced_leader.webp',
+  '/images/partners/mixed_team_white.webp',
+  '/images/partners/female_eco_expert.webp',
+  '/images/partners/young_duo_brothers.webp',
+  '/images/partners/young_couple_team.webp',
+  '/images/partners/premium_team_black.webp',
+  '/images/partners/female_duo_cheerful.webp',
+  '/images/partners/team_karcher_equip.webp',
+  '/images/partners/large_team_photo.webp',
+  '/images/partners/female_leader_pro.webp',
+  '/images/partners/team_orange_vest.webp',
+  '/images/partners/couple_mature_expert.webp',
+  '/images/partners/young_female_solo.webp',
+  '/images/partners/team_red_uniform.webp',
+  '/images/partners/male_solo_trusted.webp',
+  '/images/partners/team_gray_modern.webp',
+  '/images/partners/couple_young_casual.webp',
+  '/images/partners/team_professional_van.webp',
 ];
 
 const REGIONS = [
@@ -34,10 +34,12 @@ const REGIONS = [
   { key: 'gangseo', label: '서울 강서/영등포/양천/구로', short: '강서' },
   { key: 'nowon', label: '서울 노원/도봉/강북/성북', short: '노원' },
   { key: 'eunpyeong', label: '서울 은평/서대문/종로/중구', short: '은평' },
-  { key: 'gyeonggi_south', label: '경기 남부 (성남/용인/수원)', short: '성남' },
+  { key: 'gyeonggi_south', label: '경기 남부 (수원/성남/용인)', short: '수원' },
+  { key: 'gyeonggi_hwaseong', label: '경기 화성/오산 (동탄신도시)', short: '화성' },
+  { key: 'gyeonggi_ansan', label: '경기 안산/시흥/광명', short: '안산' },
   { key: 'gyeonggi_sw', label: '경기 서남부 (안양/과천/군포)', short: '안양' },
-  { key: 'gyeonggi_west', label: '경기 서부 (부천/광명/시흥)', short: '부천' },
-  { key: 'gyeonggi_north', label: '경기 북부 (고양/파주/김포)', short: '고양' },
+  { key: 'gyeonggi_west', label: '경기 서부 (부천/김포)', short: '부천' },
+  { key: 'gyeonggi_north', label: '경기 북부 (고양/파주)', short: '고양' },
   { key: 'gyeonggi_east', label: '경기 동부 (구리/남양주/하남)', short: '구리' },
   { key: 'incheon', label: '인천 전지역', short: '인천' },
   { key: 'daejeon', label: '대전/세종/충청권', short: '대전' },
@@ -185,13 +187,25 @@ const REVIEWS = [
 ];
 
 const PORTFOLIO = [
-  { before: '먼지 오염 심한 거실', after: '스팀 후 반짝이는 바닥' },
-  { before: '곰팡이 낀 욕실', after: '고온 스팀으로 완벽 제거' },
-  { before: '기름때 낀 주방 후드', after: '분해 세척 후 새것 같은 후드' },
-  { before: '먼지 쌓인 새시 레일', after: '분해 청소 후 깔끔한 새시' },
-  { before: '물때 낀 화장실 유리', after: '코팅 처리 완료된 화장실' },
-  { before: '오염된 베란다 바닥', after: '고압 세척 후 깨끗한 베란다' },
+  { title: '거실 바닥 청소', before: '/images/portfolio/before_living.webp', after: '/images/portfolio/after_living.webp' },
+  { title: '욕실 곰팡이 제거', before: '/images/portfolio/before_bathroom.webp', after: '/images/portfolio/after_bathroom.webp' },
+  { title: '주방 후드 분해세척', before: '/images/portfolio/before_kitchen.webp', after: '/images/portfolio/after_kitchen.webp' },
+  { title: '새시 레일 청소', before: '/images/portfolio/before_window.webp', after: '/images/portfolio/after_window.webp' },
+  { title: '화장실 유리 코팅', before: '/images/portfolio/before_glass.webp', after: '/images/portfolio/after_glass.webp' },
+  { title: '베란다 바닥 세척', before: '/images/portfolio/before_balcony.webp', after: '/images/portfolio/after_balcony.webp' },
 ];
+
+// ── 가능한 서비스 종류 풀 ──
+const SERVICES_POOL = [
+  ['입주청소', '이사청소', '거주청소', '프리미엄청소'],
+  ['입주청소', '이사청소', '에어컨분해청소'],
+  ['입주청소', '거주청소', '새시분해청소', '베란다청소'],
+  ['입주청소', '이사청소', '프리미엄청소', '코팅서비스'],
+  ['입주청소', '거주청소', '주방후드청소'],
+  ['입주청소', '이사청소', '거주청소'],
+];
+
+const TEAM_SIZES = ['2~3명', '3~4명', '4~5명', '2~4명', '3~5명', '5명 이상'];
 
 /**
  * 핵심 생성 함수
@@ -224,6 +238,8 @@ export function generateMockPartners() {
         desc: `${reg.short} ${['압도적 1위! 호텔식 프리미엄 홈케어.','No.1 입주청소 전문! 100% 본사 직영팀.'][i]} 하루 딱 한 집만 완벽하게 작업합니다.`,
         tags: [`#${reg.short}1위`, ...TAGS[(ri*2+i)%TAGS.length].slice(1)],
         image: img(i), area: reg.label,
+        mainServices: SERVICES_POOL[(ri+i) % SERVICES_POOL.length],
+        teamSize: TEAM_SIZES[(ri+i) % TEAM_SIZES.length],
         monthlyEvent: EVENTS[(ri+i)%EVENTS.length],
         portfolio: [PORTFOLIO[(ri*2+i)%6], PORTFOLIO[(ri*2+i+1)%6]],
         recentReviews: [REVIEWS[(ri*3+i)%30], REVIEWS[(ri*3+i+1)%30], REVIEWS[(ri*3+i+2)%30]],
@@ -240,6 +256,8 @@ export function generateMockPartners() {
         desc: PM_DESCS[(ri*3+i) % PM_DESCS.length],
         tags: TAGS[(ri*3+i+4) % TAGS.length],
         image: img(2 + i), area: reg.label,
+        mainServices: SERVICES_POOL[(ri+i+2) % SERVICES_POOL.length],
+        teamSize: TEAM_SIZES[(ri+i+1) % TEAM_SIZES.length],
         monthlyEvent: EVENTS[(ri+i+3) % EVENTS.length],
         portfolio: [PORTFOLIO[(ri+i+2)%6], PORTFOLIO[(ri+i+3)%6]],
         recentReviews: [REVIEWS[(ri*4+i+5)%30], REVIEWS[(ri*4+i+6)%30], REVIEWS[(ri*4+i+7)%30]],
@@ -256,6 +274,8 @@ export function generateMockPartners() {
         desc: BA_DESCS[(ri*4+i) % BA_DESCS.length],
         tags: TAGS[(ri*5+i+8) % TAGS.length],
         image: img(6 + i), area: reg.label,
+        mainServices: SERVICES_POOL[(ri+i+3) % SERVICES_POOL.length],
+        teamSize: TEAM_SIZES[(ri+i+2) % TEAM_SIZES.length],
         monthlyEvent: i < 5 ? EVENTS[(ri+i+6) % EVENTS.length] : '',
         portfolio: i < 8 ? [PORTFOLIO[(ri+i+4)%6]] : [],
         recentReviews: [REVIEWS[(ri*5+i+10)%30], REVIEWS[(ri*5+i+11)%30]],

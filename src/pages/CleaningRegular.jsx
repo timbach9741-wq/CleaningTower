@@ -18,7 +18,7 @@ export default function CleaningRegular() {
       <main className="flex-1 w-full bg-slate-50">
         <section className="relative w-full h-[400px] md:h-[500px]">
           <div className="absolute inset-0 bg-slate-900">
-            <img src="/service_regular.png" alt="정기 구독 청소" className="w-full h-full object-cover opacity-50" />
+            <img src="/service_regular.webp" alt="정기 구독 청소" className="w-full h-full object-cover opacity-50" />
           </div>
           <div className="absolute inset-0 flex flex-col justify-center items-center text-center px-4">
             <span className="bg-rose-600 text-white text-sm font-bold px-3 py-1 rounded-full mb-4 flex items-center gap-1">

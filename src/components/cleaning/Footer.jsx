@@ -12,7 +12,7 @@ export default function Footer() {
           <div className="flex flex-col gap-4">
             <div className="flex items-center gap-2">
               <img 
-                src="/logo_cropped.png" 
+                src="/logo_cropped.webp" 
                 alt="청소타워 로고 아이콘" 
                 className="h-10 sm:h-12 w-auto object-contain" 
               />

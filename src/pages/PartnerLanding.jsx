@@ -14,7 +14,7 @@ export default function PartnerLanding() {
       <main className="flex-grow">
         {/* 히어로 섹션 */}
         <section className="relative bg-blue-950 text-white pt-40 pb-32 px-4 overflow-hidden">
-          <div className="absolute inset-0 opacity-20 bg-[url('/images/cleaner_in_action.png')] bg-cover bg-center"></div>
+          <div className="absolute inset-0 opacity-20 bg-[url('/images/cleaner_in_action.webp')] bg-cover bg-center"></div>
           <div className="absolute inset-0 bg-gradient-to-b from-blue-950/80 to-blue-950/95"></div>
           
           <div className="relative max-w-5xl mx-auto text-center z-10">

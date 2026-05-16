@@ -86,7 +86,7 @@ export default function HeroSection({ onOpenQuote }) {
             {/* Main Image */}
             <div className="relative rounded-3xl overflow-hidden shadow-2xl border-4 border-white">
               <img 
-                src="/expert_team_clean.png" 
+                src="/expert_team_clean.webp" 
                 alt="Expert Cleaning Team" 
                 className="w-full h-auto object-cover aspect-[4/3] lg:aspect-[4/5] max-h-[600px]"
               />

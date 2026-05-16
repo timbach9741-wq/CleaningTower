@@ -1,4 +1,4 @@
-import { initializeApp } from 'firebase/app';
+import { initializeApp, getApps } from 'firebase/app';
 import type { FirebaseApp } from 'firebase/app';
 import { getFirestore } from 'firebase/firestore';
 import type { Firestore } from 'firebase/firestore';
@@ -16,20 +16,34 @@ const firebaseConfig = {
   measurementId: "G-B7GTPZ6TQ1"
 };
 
-let app: FirebaseApp | undefined;
-let db: Firestore | undefined;
-let storage: FirebaseStorage | undefined;
+// 중복 초기화 방지: 이미 초기화된 앱이 있으면 재사용
+const app: FirebaseApp = getApps().length === 0 
+  ? initializeApp(firebaseConfig) 
+  : getApps()[0];
 
-// apiKey가 기본값이면 연동되지 않은 상태로 간주 (앱 크래시 방지)
-if (firebaseConfig.apiKey !== "YOUR_API_KEY") {
-  try {
-    app = initializeApp(firebaseConfig);
-    db = getFirestore(app);
-    storage = getStorage(app);
-    console.log("Firebase Database 및 Storage 연결 성공!");
-  } catch (error) {
-    console.error("Firebase 초기화 에러:", error);
+// Firestore & Storage 인스턴스 (싱글톤 패턴)
+let _db: Firestore | null = null;
+let _storage: FirebaseStorage | null = null;
+
+// 지연 초기화: 실제로 사용될 때만 인스턴스를 생성
+// 왜? → Firebase SDK 트리쉐이킹 + 초기 로딩 시 불필요한 네트워크 연결 방지
+export function getDb(): Firestore {
+  if (!_db) {
+    _db = getFirestore(app);
   }
+  return _db;
 }
+
+export function getStorageInstance(): FirebaseStorage {
+  if (!_storage) {
+    _storage = getStorage(app);
+  }
+  return _storage;
+}
+
+// 기존 코드와의 호환성을 위해 즉시 초기화된 export도 유지
+// 점진적으로 getDb(), getStorageInstance()로 마이그레이션 권장
+const db = getFirestore(app);
+const storage = getStorage(app);
 
 export { app, db, storage };

@@ -15,7 +15,7 @@ export default function PromisesSection() {
           <div className="bg-white rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 overflow-hidden border border-slate-100 group">
             <div className="h-60 overflow-hidden relative">
               <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors z-10"></div>
-              <img src="/promise_disassembly_kr.png" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" alt="100% 완전 탈거 세척" />
+              <img src="/promise_disassembly_kr.webp" loading="lazy" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" alt="100% 완전 탈거 세척" />
               <div className="absolute top-4 left-4 bg-blue-600 text-white w-10 h-10 flex items-center justify-center rounded-full font-black text-xl z-20 shadow-lg">1</div>
             </div>
             <div className="p-8">
@@ -28,7 +28,7 @@ export default function PromisesSection() {
           <div className="bg-white rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 overflow-hidden border border-slate-100 group">
             <div className="h-60 overflow-hidden relative">
               <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors z-10"></div>
-              <img src="/promise_experts_kr.png" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" alt="전원 정규직 마스터 투입" />
+              <img src="/promise_experts_kr.webp" loading="lazy" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" alt="전원 정규직 마스터 투입" />
               <div className="absolute top-4 left-4 bg-green-600 text-white w-10 h-10 flex items-center justify-center rounded-full font-black text-xl z-20 shadow-lg">2</div>
             </div>
             <div className="p-8">
@@ -41,7 +41,7 @@ export default function PromisesSection() {
           <div className="bg-white rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 overflow-hidden border border-slate-100 group">
             <div className="h-60 overflow-hidden relative">
               <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors z-10"></div>
-              <img src="/promise_warranty.png" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" alt="7일 무상 A/S 보장" />
+              <img src="/promise_warranty.webp" loading="lazy" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" alt="7일 무상 A/S 보장" />
               <div className="absolute top-4 left-4 bg-rose-600 text-white w-10 h-10 flex items-center justify-center rounded-full font-black text-xl z-20 shadow-lg">3</div>
             </div>
             <div className="p-8">

@@ -6,7 +6,7 @@ import { collection, addDoc } from 'firebase/firestore';
 import { useNavigate, useLocation } from 'react-router-dom';
 
 const REGIONS = [
-  '전국', '서울', '경기', '인천', '강원', 
+  '전국', '서울', '경기', '인천', '안산', '화성', '강원', 
   '충북', '충남', '대전', '세종',
   '전북', '전남', '광주', 
   '경북', '경남', '대구', '울산', '부산', '제주'
@@ -304,20 +304,16 @@ export default function PartnerSignup() {
                 <div className="mt-8 flex gap-3">
                   <button 
                     onClick={handleBack}
-                    className="px-6 py-4 rounded-xl text-slate-600 font-bold bg-slate-100 active:bg-slate-200"
+                    className="px-6 py-4 rounded-xl text-slate-600 font-bold bg-slate-100 active:bg-slate-200 transition-colors"
                   >
                     이전
                   </button>
                   <button 
                     onClick={handleNext}
-                    disabled={
-                      (formData.businessType === 'business' ? !formData.managerName : !formData.name) 
-                      || !formData.phone 
-                      || formData.region.length === 0
-                    }
-                    className="flex-1 py-4 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 disabled:cursor-not-allowed text-white font-bold rounded-xl shadow-lg active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+                    disabled={!formData.phone || (!formData.name && !formData.managerName) || formData.region.length === 0}
+                    className="flex-1 py-4 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300 disabled:cursor-not-allowed text-white font-bold rounded-xl shadow-lg active:scale-[0.98] transition-all"
                   >
-                    다음 단계 <ArrowRight size={18} />
+                    다음 단계
                   </button>
                 </div>
               </motion.div>
@@ -331,28 +327,37 @@ export default function PartnerSignup() {
                 exit={{ opacity: 0, x: -20 }}
                 className="pt-4 flex flex-col h-full items-center text-center"
               >
-                <div className="w-16 h-16 bg-amber-50 rounded-full flex items-center justify-center mb-6">
-                  <ShieldCheck size={32} className="text-amber-500" />
+                <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mb-6">
+                  <CheckCircle size={32} className="text-blue-500" />
                 </div>
-                <h3 className="text-2xl font-black text-slate-900 mb-2">마지막 단계입니다!</h3>
+                <h3 className="text-2xl font-black text-slate-900 mb-2">가입 완료 전 확인해주세요!</h3>
                 
                 {formData.plan === 'basic' && (
                   <>
-                    <p className="text-slate-500 text-sm mb-8 break-keep">
-                      일반 파트너 가입을 환영합니다!<br/>
-                      <strong>가입비 및 활동 보증금 없이</strong> 즉시 파트너스로 활동하실 수 있습니다.
+                    <p className="text-slate-500 text-sm mb-8 break-keep font-medium">
+                      데일리하우징 일반 파트너는 <strong>누구나 무료로</strong> 가입하실 수 있습니다.<br/>
+                      지금 바로 파트너로 등록하고 실시간 오더를 확인해보세요.
                     </p>
 
                     <div className="bg-blue-50 w-full rounded-2xl p-6 text-left mb-8 border border-blue-200">
-                      <p className="text-sm text-blue-800 font-bold mb-2">일반 파트너 혜택</p>
-                      <ul className="text-sm text-blue-700 space-y-1 mb-4">
-                        <li>- 초기 비용 전면 무료</li>
-                        <li>- 가입 즉시 실시간 오더 확인 가능</li>
-                        <li>- 자유로운 오더 수락 지원</li>
+                      <p className="text-sm text-blue-800 font-bold mb-3">일반 파트너 혜택</p>
+                      <ul className="text-sm text-blue-700 space-y-2 mb-4">
+                        <li className="flex items-center gap-2">
+                          <div className="w-1 h-1 bg-blue-400 rounded-full" />
+                          가입비 및 초기 등록비 전액 무료
+                        </li>
+                        <li className="flex items-center gap-2">
+                          <div className="w-1 h-1 bg-blue-400 rounded-full" />
+                          전국 실시간 청소 오더 무제한 확인
+                        </li>
+                        <li className="flex items-center gap-2">
+                          <div className="w-1 h-1 bg-blue-400 rounded-full" />
+                          자유로운 일정 관리 및 오더 선택
+                        </li>
                       </ul>
                       <div className="mt-4 pt-4 border-t border-blue-200 flex justify-between items-center">
-                        <span className="text-blue-800 text-sm font-bold">초기 비용</span>
-                        <span className="text-blue-600 font-black text-xl">무료 (0원)</span>
+                        <span className="text-blue-800 text-sm font-bold">참가 비용</span>
+                        <span className="text-blue-600 font-black text-xl">0원 (FREE)</span>
                       </div>
                     </div>
                   </>
@@ -360,21 +365,30 @@ export default function PartnerSignup() {
 
                 {formData.plan === 'premium' && (
                   <>
-                    <p className="text-slate-500 text-sm mb-8 break-keep">
-                      프리미엄 파트너 가입을 환영합니다!<br/>
-                      <strong>가입비 및 유지비 없이 무료로</strong> 프리미엄 혜택을 누리실 수 있습니다.
+                    <p className="text-slate-500 text-sm mb-8 break-keep font-medium">
+                      프리미엄 파트너를 위한 특별한 혜택이 준비되었습니다.<br/>
+                      <strong>프로모션 기간 동안 무료로</strong> 프리미엄 기능을 제공해 드립니다.
                     </p>
 
-                    <div className="bg-blue-50 w-full rounded-2xl p-6 text-left mb-8 border border-blue-200">
-                      <p className="text-sm text-blue-800 font-bold mb-2">프리미엄 혜택</p>
-                      <ul className="text-sm text-blue-700 space-y-1 mb-4">
-                        <li>- 우선 상단 노출 그룹 배정</li>
-                        <li>- 프리미엄 전용 배지</li>
-                        <li>- 전담 파트너 매니저 배정</li>
+                    <div className="bg-indigo-50 w-full rounded-2xl p-6 text-left mb-8 border border-indigo-200">
+                      <p className="text-sm text-indigo-800 font-bold mb-3">프리미엄 전용 혜택</p>
+                      <ul className="text-sm text-indigo-700 space-y-2 mb-4">
+                        <li className="flex items-center gap-2">
+                          <div className="w-1 h-1 bg-indigo-400 rounded-full" />
+                          업체 리스트 상단 우선 노출 그룹 배정
+                        </li>
+                        <li className="flex items-center gap-2">
+                          <div className="w-1 h-1 bg-indigo-400 rounded-full" />
+                          신뢰도를 높여주는 프리미엄 전용 배지 부여
+                        </li>
+                        <li className="flex items-center gap-2">
+                          <div className="w-1 h-1 bg-indigo-400 rounded-full" />
+                          전담 매니저를 통한 매칭 효율 최적화
+                        </li>
                       </ul>
-                      <div className="mt-4 pt-4 border-t border-blue-200 flex justify-between items-center">
-                        <span className="text-blue-800 text-sm font-bold">비용</span>
-                        <span className="text-blue-600 font-black text-xl">무료 (0원)</span>
+                      <div className="mt-4 pt-4 border-t border-indigo-200 flex justify-between items-center">
+                        <span className="text-indigo-800 text-sm font-bold">프로모션 혜택</span>
+                        <span className="text-indigo-600 font-black text-xl">0원 (FREE)</span>
                       </div>
                     </div>
                   </>
@@ -382,36 +396,45 @@ export default function PartnerSignup() {
 
                 {formData.plan === 'exclusive' && (
                   <>
-                    <p className="text-slate-500 text-sm mb-8 break-keep">
+                    <p className="text-slate-500 text-sm mb-8 break-keep font-medium">
                       지역 독점 파트너(TO 문의) 상담 신청이 접수됩니다.<br/>
-                      담당 매니저가 배정되어 <strong>비용 및 지역 TO 현황</strong>에 대해 상세히 안내해 드립니다.
+                      담당 매니저가 <strong>지역별 잔여 TO 및 운영 안내</strong>를 도와드립니다.
                     </p>
 
                     <div className="bg-slate-900 w-full rounded-2xl p-6 text-left mb-8 border border-amber-400/30">
-                      <p className="text-sm text-amber-400 font-bold mb-2">독점 파트너 혜택</p>
-                      <ul className="text-sm text-slate-300 space-y-1 mb-4">
-                        <li>- 선택 지역 최상단 100% 독점 노출</li>
-                        <li>- 지역당 1~2팀 한정 TO 배정</li>
-                        <li>- 최우선 오더 배정</li>
+                      <p className="text-sm text-amber-400 font-bold mb-3">독점 파트너 혜택</p>
+                      <ul className="text-sm text-slate-300 space-y-2 mb-4">
+                        <li className="flex items-center gap-2">
+                          <div className="w-1 h-1 bg-amber-400/50 rounded-full" />
+                          선택 지역 최상단 100% 독점 노출 보장
+                        </li>
+                        <li className="flex items-center gap-2">
+                          <div className="w-1 h-1 bg-amber-400/50 rounded-full" />
+                          지역당 한정된 파트너만 배정 (TO제 운영)
+                        </li>
+                        <li className="flex items-center gap-2">
+                          <div className="w-1 h-1 bg-amber-400/50 rounded-full" />
+                          고품질 프리미엄 오더 최우선 배정
+                        </li>
                       </ul>
                       <div className="mt-4 pt-4 border-t border-slate-700 flex justify-between items-center">
-                        <span className="text-slate-300 text-sm font-bold">예상 안내 비용</span>
-                        <span className="text-amber-400 font-black text-xl">상담 후 결정</span>
+                        <span className="text-slate-300 text-sm font-bold">진행 방식</span>
+                        <span className="text-amber-400 font-black text-xl">상담 후 승인</span>
                       </div>
                     </div>
                   </>
                 )}
 
-                <div className="w-full bg-blue-50 border border-blue-200 rounded-xl p-4 mb-6 text-left">
+                <div className="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 mb-6 text-left">
                   <label className="flex items-start gap-3 cursor-pointer">
                     <input 
                       type="checkbox" 
-                      className="mt-1 w-5 h-5 rounded border-blue-300 text-blue-600 focus:ring-blue-500 accent-blue-600"
+                      className="mt-1 w-5 h-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500 accent-blue-600"
                       checked={isAgreed}
                       onChange={(e) => setIsAgreed(e.target.checked)}
                     />
-                    <span className="text-sm text-blue-900 font-medium leading-relaxed">
-                      [필수] 파트너스 가입 및 서비스 운영 정책에 동의하며, 허위 정보 기재 시 제재를 받을 수 있음을 확인합니다.
+                    <span className="text-sm text-slate-700 font-medium leading-relaxed">
+                      [필수] 데일리하우징 파트너 이용 약관 및 서비스 운영 정책에 동의합니다.
                     </span>
                   </label>
                 </div>
@@ -419,14 +442,14 @@ export default function PartnerSignup() {
                 <div className="w-full flex gap-3 mt-auto">
                   <button 
                     onClick={handleBack}
-                    className="px-6 py-4 rounded-xl text-slate-600 font-bold bg-slate-100 active:bg-slate-200"
+                    className="px-6 py-4 rounded-xl text-slate-600 font-bold bg-slate-100 active:bg-slate-200 transition-colors"
                   >
                     이전
                   </button>
                   <button 
                     onClick={handleSubmit}
                     disabled={!isAgreed}
-                    className="flex-1 py-4 bg-slate-900 hover:bg-slate-800 disabled:bg-slate-300 disabled:cursor-not-allowed text-white font-bold rounded-xl shadow-xl active:scale-[0.98] transition-all"
+                    className="flex-1 py-4 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300 disabled:cursor-not-allowed text-white font-bold rounded-xl shadow-lg active:scale-[0.98] transition-all"
                   >
                     {formData.plan === 'exclusive' ? '상담 신청 완료하기' : '가입 완료하기'}
                   </button>

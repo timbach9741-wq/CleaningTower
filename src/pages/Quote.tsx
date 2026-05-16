@@ -58,7 +58,11 @@ export default function Quote() {
   // 입력 상태
   const [houseType, setHouseType] = useState('아파트');
   const [houseSubType, setHouseSubType] = useState('');
-  const [cleaningType] = useState(type === 'general' ? '일반' : '프리미엄');
+  const [cleaningType, setCleaningType] = useState<'프리미엄' | '이사' | '거주'>(() => {
+    if (type === 'general' || type === '이사' || type === 'move-in') return '이사';
+    if (type === 'residence' || type === '거주') return '거주';
+    return '프리미엄';
+  });
   const [size, setSize] = useState<number | ''>(24);
   
   const [businessName, setBusinessName] = useState('');
@@ -79,7 +83,6 @@ export default function Quote() {
   
   const [selectedOptions, setSelectedOptions] = useState<Record<string, number>>({});
   const [isBetweenCleaning, setIsBetweenCleaning] = useState(false);
-  const [isOccupiedCleaning, setIsOccupiedCleaning] = useState(false);
   
   const handleBetweenCleaningToggle = () => {
     const nextState = !isBetweenCleaning;
@@ -110,10 +113,13 @@ export default function Quote() {
 
   // 견적 산출 로직
   const getEstimatedPrice = () => {
-    let basePricePerPyeong = cleaningType === '일반' ? 15000 : 20000;
-    
-    if (cleaningType === '일반' && isOccupiedCleaning) {
+    let basePricePerPyeong = 15000;
+    if (cleaningType === '프리미엄') {
+      basePricePerPyeong = 20000;
+    } else if (cleaningType === '거주') {
       basePricePerPyeong = 18000;
+    } else if (cleaningType === '이사') {
+      basePricePerPyeong = 15000;
     }
 
     const currentSize = typeof size === 'number' ? size : 0;
@@ -199,7 +205,7 @@ export default function Quote() {
     }).filter(Boolean) as string[];
     
     if (isBetweenCleaning) optionLabels.push('당일 이사 (사이청소)');
-    if (isOccupiedCleaning && cleaningType === '일반') optionLabels.push('거주 청소 (짐 있음)');
+    if (cleaningType === '거주') optionLabels.push('거주 청소 (짐 있음)');
     if (elevator === '없음' && isHighFloorWithoutElevator) optionLabels.push('엘리베이터 없음 (3층 이상)');
 
     const memoParts = [];
@@ -309,7 +315,7 @@ export default function Quote() {
       }
 
       // 최종 견적 데이터 저장
-      await addDoc(collection(db, 'quotes'), {
+      await addDoc(collection(db!, 'quotes'), {
         ...payload,
         assignedTo: assignedToId || null,
         designatedPartnerName: assignedPartnerName || null
@@ -408,6 +414,37 @@ export default function Quote() {
                 
                 <div className="space-y-7 flex-1">
                   <div>
+                    <label className="block text-slate-300 text-sm font-semibold mb-3">🧹 청소 종류 선택</label>
+                    <div className="grid grid-cols-1 gap-3 mb-6">
+                      {[
+                        { id: '프리미엄', label: '프리미엄 (입주/분진)', sub: '인테리어 공사 후, 분진이 많은 현장', price: '평당 2.0만' },
+                        { id: '이사', label: '이사청소 (빈집)', sub: '이사 나가고 비어있는 집 청소', price: '평당 1.5만' },
+                        { id: '거주', label: '거주청소 (짐 있음)', sub: '현재 거주 중이며 짐이 있는 상태', price: '평당 1.8만' },
+                      ].map(item => (
+                        <button
+                          key={item.id}
+                          onClick={() => setCleaningType(item.id as any)}
+                          className={`p-4 rounded-xl text-left transition-all active:scale-[0.98] border flex items-center justify-between ${
+                            cleaningType === item.id 
+                            ? 'bg-blue-600/20 border-blue-500 shadow-lg shadow-blue-500/10' 
+                            : 'bg-white/5 border-white/10 hover:bg-white/10'
+                          }`}
+                        >
+                          <div className="flex flex-col">
+                            <span className={`text-[15px] font-bold ${cleaningType === item.id ? 'text-blue-100' : 'text-slate-300'}`}>
+                              {item.label}
+                            </span>
+                            <span className={`text-[11px] mt-0.5 ${cleaningType === item.id ? 'text-blue-300/80' : 'text-slate-500'}`}>
+                              {item.sub}
+                            </span>
+                          </div>
+                          <span className={`text-xs font-bold px-2 py-1 rounded ${cleaningType === item.id ? 'bg-blue-500 text-white' : 'bg-white/10 text-slate-400'}`}>
+                            {item.price}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+
                     <label className="block text-slate-300 text-sm font-semibold mb-3">💡 주거 형태</label>
                     <div className="grid grid-cols-3 gap-2.5">
                       {['아파트', '빌라', '오피스텔'].map(type => (
@@ -478,36 +515,6 @@ export default function Quote() {
                           +100,000원
                         </span>
                       </button>
-
-                      {cleaningType === '일반' && (
-                        <button
-                          onClick={() => setIsOccupiedCleaning(!isOccupiedCleaning)}
-                          className={`w-full p-4 rounded-xl text-sm font-bold transition-all active:scale-[0.98] flex items-center justify-between border ${
-                            isOccupiedCleaning 
-                            ? 'bg-blue-600/20 shadow-sm shadow-blue-500/20 border-blue-500' 
-                            : 'bg-white/5 text-slate-300 border-white/10 hover:bg-white/10'
-                          }`}
-                        >
-                          <div className="flex items-center gap-3">
-                            <div className={`w-5 h-5 rounded flex items-center justify-center border transition-colors ${
-                              isOccupiedCleaning ? 'bg-blue-500 border-blue-500' : 'bg-transparent border-slate-500'
-                            }`}>
-                              {isOccupiedCleaning && <span className="material-symbols-outlined text-white text-[14px] font-bold">check</span>}
-                            </div>
-                            <div className="flex flex-col text-left -mt-0.5">
-                              <span className={`${isOccupiedCleaning ? 'text-blue-100' : 'text-slate-300'} text-[14px]`}>
-                                거주청소 (현재 거주 중)
-                              </span>
-                              <span className={`${isOccupiedCleaning ? 'text-blue-300' : 'text-slate-500'} text-[11px] font-normal mt-0.5`}>
-                                (짐이 있는 상태)
-                              </span>
-                            </div>
-                          </div>
-                          <span className={isOccupiedCleaning ? 'text-blue-300 font-bold' : 'text-slate-400'}>
-                            평당 1.8만
-                          </span>
-                        </button>
-                      )}
                     </div>
                   </div>
 
@@ -529,10 +536,9 @@ export default function Quote() {
                       <div className="flex flex-col items-end">
                         <span className="text-slate-400 text-[10px] mb-0.5">단가</span>
                         <span className="text-blue-300 text-xs font-bold bg-blue-500/20 px-2 py-1 rounded whitespace-nowrap flex-shrink-0">
-                          {cleaningType === '일반' 
-                            ? (isOccupiedCleaning ? '평당 1.8만원' : '평당 1.5만원') 
-                            : '평당 2만원'
-                          }
+                          {cleaningType === '이사' ? '평당 1.5만원' : 
+                           cleaningType === '거주' ? '평당 1.8만원' : 
+                           '평당 2.0만원'}
                         </span>
                       </div>
                     </div>

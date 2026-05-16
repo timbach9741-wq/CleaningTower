@@ -181,13 +181,10 @@ export default function Partner() {
       return (timeA || 0) - (timeB || 0);
     });
 
-  // 무관용 위약금(페널티) 정책 함수
+  // 페널티 정책 함수 (보증금 제도 폐지로 문구 수정)
   const getPenaltyInfo = () => {
-    return { penalty: 300000, penaltyText: '보증금 전액 몰수 + 영구 제명', title: '취소 불가 (무관용 원칙)' };
+    return { penalty: 0, penaltyText: '영구 제명 및 오더 배정 중단', title: '취소 시 계정 정지 안내' };
   };
-
-  // 안전 보증금(선입금) 상태 모의 
-  const depositBalance = 300000;
 
   const completionChecklistData = [
     {
@@ -445,7 +442,7 @@ export default function Partner() {
       teamSize: currentUser?.teamSize || '',
       mainServices: currentUser?.mainServices || [],
       tags: currentUser?.tags || [],
-      image: currentUser?.image || '/images/cleaner_in_action.png'
+      image: currentUser?.image || '/images/cleaner_in_action.webp'
     });
     setCustomService('');
     setShowEditProfileModal(true);
@@ -568,7 +565,7 @@ export default function Partner() {
       <div className="min-h-screen bg-slate-900 flex flex-col relative overflow-hidden font-sans max-w-md mx-auto shadow-2xl">
         <div className="absolute inset-0 z-0">
           <img 
-            src="/cleaner-hero-korean.png" 
+            src="/cleaner-hero-korean.webp" 
             alt="파트너스 배경" 
             className="w-full h-full object-cover opacity-40 object-top"
           />
@@ -615,27 +612,34 @@ export default function Partner() {
   if (currentUser && currentUser.status === 'pending') {
     return (
       <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-6 text-center font-sans tracking-tight max-w-md mx-auto shadow-2xl">
-        <div className="w-20 h-20 bg-amber-100 rounded-full flex items-center justify-center mb-6 shadow-sm border border-amber-200">
-          <AlertTriangle size={36} className="text-amber-500" />
+        <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mb-6 shadow-sm border border-blue-200">
+          <Info size={36} className="text-blue-500" />
         </div>
-        <h1 className="text-2xl font-black text-slate-900 mb-3">가입 승인 대기 중</h1>
+        <h1 className="text-2xl font-black text-slate-900 mb-3">가입 심사 중입니다</h1>
         <p className="text-slate-600 mb-8 font-medium break-keep leading-relaxed text-sm">
           <span className="font-bold text-slate-800 tracking-wide text-base">
             {currentUser.businessType === 'business' ? currentUser.companyName : currentUser.name}
-          </span> 파트너님, 가입을 환영합니다!<br/>
-          원활한 오더 진행을 위해 초기 <strong className="text-rose-500">활동 보증금(30만 원)</strong>의 예치가 필요합니다.<br/>
-          입금이 확인되면 관리자가 즉시 승인해 드립니다.
+          </span> 파트너님, 가입 신청이 완료되었습니다.<br/>
+          현재 관리자가 기입해주신 정보를 바탕으로 심사를 진행 중입니다.<br/>
+          승인이 완료되면 즉시 오더 수주가 가능합니다.
         </p>
 
         <div className="bg-white w-full max-w-sm rounded-2xl p-6 text-left mb-8 shadow-sm border border-slate-200">
-          <p className="text-xs text-slate-400 font-bold mb-1">입금 전용 계좌번호</p>
-          <p className="text-2xl font-black text-slate-900 tracking-wider">우리은행 1002-123-456789</p>
-          <p className="text-sm text-slate-500 mt-1 font-medium">예금주: (주)클린허브파트너스</p>
-          
-          <div className="mt-4 pt-4 border-t border-slate-100 flex justify-between items-center">
-            <span className="text-slate-600 text-sm font-bold">안전 보증금</span>
-            <span className="text-rose-600 font-black text-2xl tracking-tight">300,000<span className="text-base ml-1">원</span></span>
-          </div>
+          <p className="text-xs text-slate-400 font-bold mb-2 text-center">심사 안내</p>
+          <ul className="text-xs text-slate-500 space-y-2 font-medium">
+            <li className="flex gap-2">
+              <CheckCircle size={14} className="text-emerald-500 shrink-0" />
+              <span>영업일 기준 1~2일 내로 승인이 완료됩니다.</span>
+            </li>
+            <li className="flex gap-2">
+              <CheckCircle size={14} className="text-emerald-500 shrink-0" />
+              <span>정보가 부족할 경우 본사에서 해피콜을 드릴 수 있습니다.</span>
+            </li>
+            <li className="flex gap-2">
+              <CheckCircle size={14} className="text-emerald-500 shrink-0" />
+              <span>승인 완료 시 카카오톡으로 알림을 보내드립니다.</span>
+            </li>
+          </ul>
         </div>
 
         <div className="w-full flex justify-center mt-4">
@@ -644,7 +648,7 @@ export default function Partner() {
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
             </span>
-            입금 확인 대기 중... 관리자 시스템에서 처리됩니다.
+            관리자 승인을 기다리는 중입니다...
           </div>
         </div>
       </div>
@@ -665,10 +669,10 @@ export default function Partner() {
             <h1 className="text-2xl font-black tracking-tight text-slate-900">클린파트너스</h1>
             <p className="text-slate-500 text-sm font-medium mt-0.5">환영합니다, {currentUser?.businessType === 'business' ? currentUser?.managerName : currentUser?.name} 파트너님</p>
           </div>
-          <div className="text-right bg-slate-50 px-3 py-2 rounded-xl border border-slate-100">
-            <span className="text-[11px] text-slate-500 block mb-0.5 font-bold">안전 보증금 잔액</span>
-            <span className="font-black text-emerald-600 text-lg flex items-center gap-1">
-              {depositBalance.toLocaleString()}<span className="text-sm font-bold">원</span>
+          <div className="text-right bg-emerald-50 px-3 py-2 rounded-xl border border-emerald-100">
+            <span className="text-[11px] text-emerald-600 block mb-0.5 font-bold">파트너 등급</span>
+            <span className="font-black text-emerald-700 text-lg flex items-center gap-1">
+              정회원<span className="text-xs font-bold bg-white px-1 rounded ml-1">Active</span>
             </span>
           </div>
         </div>
@@ -690,7 +694,7 @@ export default function Partner() {
                 <div>
                   <h3 className="font-bold mb-1">오더 선점은 선착순입니다.</h3>
                   <p className="text-xs text-blue-100 font-medium leading-relaxed opacity-90">
-                    수락된 오더는 취소가 불가능하며, 무단 불참 시 보증금이 몰수되고 즉시 영구제명 됩니다.
+                    수락된 오더는 취소가 불가능하며, 무단 불참 시 플랫폼 이용이 즉시 정지(영구 제명)됩니다.
                   </p>
                 </div>
               </div>
@@ -910,8 +914,8 @@ export default function Partner() {
                   </div>
                   <div className="w-px bg-slate-200 mx-2"></div>
                   <div>
-                    <p className="text-xs text-slate-500 font-bold mb-1">보증금 상태</p>
-                    <p className="text-xl font-black text-emerald-600">안전</p>
+                    <p className="text-xs text-slate-500 font-bold mb-1">계정 상태</p>
+                    <p className="text-xl font-black text-emerald-600">정상 활동</p>
                   </div>
                 </div>
                 <button 
@@ -974,10 +978,10 @@ export default function Partner() {
                   정산 내역 확인 <span className="text-slate-400">→</span>
                 </button>
                 <button 
-                  onClick={() => setShowWithdrawalModal(true)}
+                  onClick={() => window.open('https://open.kakao.com/o/sDailyHousing', '_blank')}
                   className="w-full text-left px-5 py-4 font-bold text-slate-700 flex justify-between items-center bg-white active:bg-slate-50"
                 >
-                  보증금 출금 신청 <span className="text-slate-400">→</span>
+                  본사 1:1 채팅 문의 <span className="text-slate-400">→</span>
                 </button>
                 <button 
                   onClick={handleLogout}
@@ -1100,7 +1104,7 @@ export default function Partner() {
                   오더 수락 후 일방적 취소(노쇼 포함) 시 즉시 플랫폼에서 <span className="underline decoration-wavy decoration-rose-500">영구 강퇴</span> 처리됩니다.
                 </div>
                 <ul className="text-sm text-slate-600 space-y-3 list-disc pl-5 break-keep font-medium leading-relaxed">
-                  <li>무단 취소 시 사전 납부한 <strong>안전 보증금이 환불되지 않으며 페널티로 몰수됩니다.</strong></li>
+                  <li>무단 취소 시 사전 예고 없이 <strong>계정 이용이 즉시 정지(영구 제명)</strong>됩니다.</li>
                   <li>수락 버튼을 누르면 고객의 <strong>정확한 주소 및 연락처</strong>가 공개됩니다.</li>
                   <li>본인의 일정과 인력을 확실히 점검하신 후 수락해주세요.</li>
                 </ul>
@@ -1255,53 +1259,7 @@ export default function Partner() {
         )}
       </AnimatePresence>
 
-      {/* 보증금 출금 모달 */}
-      <AnimatePresence>
-        {showWithdrawalModal && (
-          <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-            <motion.div 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setShowWithdrawalModal(false)}
-              className="absolute inset-0 bg-black/70 backdrop-blur-sm"
-            />
-            <motion.div 
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
-              className="bg-white rounded-3xl w-full max-w-sm overflow-hidden shadow-2xl relative z-10"
-            >
-              <div className="p-6 text-center pt-8">
-                <div className="w-16 h-16 bg-blue-50 text-blue-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <List size={32} />
-                </div>
-                <h2 className="text-xl font-black mb-2 text-slate-900">보증금 출금 신청</h2>
-                <p className="text-slate-500 text-sm font-medium break-keep">
-                  현재 남은 보증금 전액 출금을 신청하시겠습니까?<br/>신청 시 1~2 영업일 내로 가입된 계좌로 입금됩니다.
-                </p>
-              </div>
-              <div className="flex flex-col gap-2 p-6 pt-2">
-                <button 
-                  onClick={() => {
-                    alert('출금 신청이 접수되었습니다. (영업일 기준 1~2일 소요)');
-                    setShowWithdrawalModal(false);
-                  }}
-                  className="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white font-black rounded-xl shadow-lg active:scale-[0.98] transition-transform"
-                >
-                  출금 신청하기
-                </button>
-                <button 
-                  onClick={() => setShowWithdrawalModal(false)}
-                  className="w-full py-4 text-slate-500 font-bold hover:bg-slate-50 rounded-xl"
-                >
-                  취소
-                </button>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
+
 
       {/* 파트너 탈퇴 모달 */}
       <AnimatePresence>
@@ -1547,7 +1505,7 @@ export default function Partner() {
                   </div>
                   <div className="flex items-center gap-4">
                     <div className="w-32 h-32 rounded-xl overflow-hidden bg-white shrink-0 border border-slate-200 relative p-2 flex items-center justify-center shadow-sm">
-                      <img src={editProfileForm.image || '/images/cleaner_in_action.png'} alt="대표 이미지" className="max-w-full max-h-full object-contain" />
+                      <img src={editProfileForm.image || '/images/cleaner_in_action.webp'} alt="대표 이미지" className="max-w-full max-h-full object-contain" />
                       {uploadProgress !== null && (
                         <div className="absolute inset-0 bg-black/50 flex items-center justify-center backdrop-blur-sm transition-all">
                           <span className="text-white text-xs font-bold">{Math.round(uploadProgress)}%</span>
@@ -1571,7 +1529,7 @@ export default function Partner() {
                         </label>
                         {/* 데모용 버튼 */}
                         <button 
-                          onClick={() => setEditProfileForm({...editProfileForm, image: '/images/cleaning_couple_team.png'})}
+                          onClick={() => setEditProfileForm({...editProfileForm, image: '/images/cleaning_couple_team.webp'})}
                           className="text-xs bg-slate-100 hover:bg-slate-200 font-bold px-3 py-2.5 rounded-xl text-slate-600 transition-colors whitespace-nowrap"
                           disabled={uploadProgress !== null}
                         >

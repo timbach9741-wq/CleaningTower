@@ -29,7 +29,7 @@ export default function FlipCardSection() {
               
               {/* Front Face (After - Clean) */}
               <div className="absolute inset-0 h-full w-full rounded-2xl bg-white [backface-visibility:hidden] overflow-hidden border border-slate-200">
-                <img src="/clean_kitchen.png" className="h-2/3 w-full object-cover" alt="주방 후드 깨끗" />
+                <img src="/clean_kitchen.webp" loading="lazy" className="h-2/3 w-full object-cover" alt="주방 후드 깨끗" />
                 <div className="h-1/3 p-6 bg-white flex flex-col justify-center">
                   <div className="flex justify-between items-center mb-2">
                      <h3 className="text-lg font-bold text-slate-900">주방 후드망 완전 탈거 세척</h3>
@@ -45,7 +45,7 @@ export default function FlipCardSection() {
               {/* Back Face (Before - Dirty) */}
               <div className="absolute inset-0 h-full w-full rounded-2xl bg-slate-900 [transform:rotateY(180deg)] [backface-visibility:hidden] overflow-hidden border border-slate-800">
                 <div className="h-2/3 w-full relative">
-                  <img src="/dirty_kitchen.png" className="absolute inset-0 w-full h-full object-cover opacity-80" alt="주방 후드 더러움" />
+                  <img src="/dirty_kitchen.webp" loading="lazy" className="absolute inset-0 w-full h-full object-cover opacity-80" alt="주방 후드 더러움" />
                 </div>
                 <div className="h-1/3 p-6 bg-slate-900 flex flex-col justify-center text-white relative z-10">
                    <div className="flex justify-between items-center mb-2">
@@ -68,7 +68,7 @@ export default function FlipCardSection() {
               
               {/* Front Face (After) */}
               <div className="absolute inset-0 h-full w-full rounded-2xl bg-white [backface-visibility:hidden] overflow-hidden border border-slate-200">
-                <img src="/clean_bathroom.png" className="h-2/3 w-full object-cover" alt="화장실 깨끗" />
+                <img src="/clean_bathroom.webp" loading="lazy" className="h-2/3 w-full object-cover" alt="화장실 깨끗" />
                 <div className="h-1/3 p-6 bg-white flex flex-col justify-center">
                   <div className="flex justify-between items-center mb-2">
                      <h3 className="text-lg font-bold text-slate-900">화장실/배수구 고압 살균</h3>
@@ -84,7 +84,7 @@ export default function FlipCardSection() {
               {/* Back Face (Before) */}
               <div className="absolute inset-0 h-full w-full rounded-2xl bg-slate-900 [transform:rotateY(180deg)] [backface-visibility:hidden] overflow-hidden border border-slate-800">
                 <div className="h-2/3 w-full relative">
-                  <img src="/dirty_bathroom.png" className="absolute inset-0 w-full h-full object-cover opacity-80" alt="화장실 더러움" />
+                  <img src="/dirty_bathroom.webp" loading="lazy" className="absolute inset-0 w-full h-full object-cover opacity-80" alt="화장실 더러움" />
                 </div>
                 <div className="h-1/3 p-6 bg-slate-900 flex flex-col justify-center text-white relative z-10">
                    <div className="flex justify-between items-center mb-2">
@@ -107,7 +107,7 @@ export default function FlipCardSection() {
               
               {/* Front Face (After) */}
               <div className="absolute inset-0 h-full w-full rounded-2xl bg-white [backface-visibility:hidden] overflow-hidden border border-slate-200">
-                <img src="/clean_window.png" className="h-2/3 w-full object-cover" alt="창틀 수전 깨끗" />
+                <img src="/clean_window.webp" loading="lazy" className="h-2/3 w-full object-cover" alt="창틀 수전 깨끗" />
                 <div className="h-1/3 p-6 bg-white flex flex-col justify-center">
                   <div className="flex justify-between items-center mb-2">
                      <h3 className="text-lg font-bold text-slate-900">외풍 차단 창틀 틈새 세척</h3>
@@ -123,7 +123,7 @@ export default function FlipCardSection() {
               {/* Back Face (Before) */}
               <div className="absolute inset-0 h-full w-full rounded-2xl bg-slate-900 [transform:rotateY(180deg)] [backface-visibility:hidden] overflow-hidden border border-slate-800">
                 <div className="h-2/3 w-full relative">
-                  <img src="/dirty_window.png" className="absolute inset-0 w-full h-full object-cover opacity-80" alt="창틀 더러움" />
+                  <img src="/dirty_window.webp" loading="lazy" className="absolute inset-0 w-full h-full object-cover opacity-80" alt="창틀 더러움" />
                 </div>
                 <div className="h-1/3 p-6 bg-slate-900 flex flex-col justify-center text-white relative z-10">
                    <div className="flex justify-between items-center mb-2">

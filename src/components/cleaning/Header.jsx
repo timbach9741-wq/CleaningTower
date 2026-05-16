@@ -48,7 +48,7 @@ export default function Header({ onOpenQuote, theme = 'light', hideQuoteButton =
           }}
         >
           <img 
-            src="/logo_cropped.png" 
+            src="/logo_cropped.webp" 
             alt="청소타워 로고 아이콘" 
             className="h-10 sm:h-12 w-auto object-contain mix-blend-multiply" 
           />

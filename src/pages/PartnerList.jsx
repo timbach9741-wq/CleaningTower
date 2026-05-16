@@ -7,6 +7,8 @@ import { mockPartners } from '../data/mockPartnersData';
 
 const PartnerDetailModal = ({ partner, onClose, quoteData }) => {
   const navigate = useNavigate();
+  const [showServiceSelection, setShowServiceSelection] = useState(false);
+
   if (!partner) return null;
 
   const handleConfirmWithPartner = async () => {
@@ -27,6 +29,15 @@ const PartnerDetailModal = ({ partner, onClose, quoteData }) => {
     }
   };
 
+  const handleSelectService = (type) => {
+    navigate(`/quote/${type}`, { 
+      state: { 
+        selectedPartnerId: partner.id, 
+        selectedPartnerName: partner.name 
+      } 
+    });
+  };
+
   return (
     <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={onClose}>
       <div className="bg-white rounded-2xl w-full max-w-xl max-h-[85vh] overflow-y-auto shadow-2xl" onClick={e => e.stopPropagation()}>
@@ -35,153 +46,213 @@ const PartnerDetailModal = ({ partner, onClose, quoteData }) => {
             <h2 className="text-lg sm:text-xl font-bold text-slate-900 pr-2">{partner.name}</h2>
             <button onClick={onClose} className="text-slate-400 hover:text-slate-600 text-xl leading-none shrink-0 mt-0.5">✕</button>
           </div>
-          <div className="h-56 sm:h-80 w-full rounded-xl overflow-hidden mb-4 bg-slate-50 border border-slate-100 p-4 flex items-center justify-center">
-            <img 
-              src={partner.image} 
-              alt={partner.name} 
-              className="max-w-full max-h-full object-contain drop-shadow-md" 
-            />
-          </div>
-          
-          <div className="space-y-3">
-            <p className="text-slate-600 text-xs sm:text-sm leading-relaxed">{partner.desc}</p>
-            
-            <div className="grid grid-cols-2 gap-2 mt-3">
-              <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-100">
-                <p className="text-[10px] text-slate-500 font-bold mb-0.5">활동 지역</p>
-                <p className="text-slate-900 font-medium text-xs truncate">{partner.area}</p>
+
+          {!showServiceSelection ? (
+            <>
+              <div className="h-56 sm:h-80 w-full rounded-xl overflow-hidden mb-4 bg-slate-50 border border-slate-100 p-4 flex items-center justify-center">
+                <img 
+                  src={partner.image} 
+                  alt={partner.name} 
+                  className="max-w-full max-h-full object-contain drop-shadow-md" 
+                />
               </div>
-              <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-100 overflow-hidden">
-                <p className="text-[10px] text-slate-500 font-bold mb-0.5">우리업체의 장점</p>
-                <p className="text-blue-600 font-bold text-[11px] truncate">{partner.tags.map(t => t.replace('#', '')).join(', ')}</p>
+              
+              <div className="space-y-3">
+                <p className="text-slate-600 text-xs sm:text-sm leading-relaxed">{partner.desc}</p>
+                
+                <div className="grid grid-cols-2 gap-2 mt-3">
+                  <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-100">
+                    <p className="text-[10px] text-slate-500 font-bold mb-0.5">활동 지역</p>
+                    <p className="text-slate-900 font-medium text-xs truncate">{partner.area}</p>
+                  </div>
+                  <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-100 overflow-hidden">
+                    <p className="text-[10px] text-slate-500 font-bold mb-0.5">우리업체의 장점</p>
+                    <p className="text-blue-600 font-bold text-[11px] truncate">{partner.tags.map(t => t.replace('#', '')).join(', ')}</p>
+                  </div>
+                </div>
+
+                {/* 모든 파트너에게 상세 정보를 표시 (mock/real 구분 없이) */}
+                <div className="bg-blue-50/50 border border-blue-100 p-3 sm:p-4 rounded-xl mt-3 shadow-sm">
+                    <h3 className="font-bold text-blue-900 mb-2 text-sm">업체 상세 정보</h3>
+                    <div className="space-y-1.5 text-[11px] sm:text-xs text-slate-700">
+                      <p className="flex justify-between"><span className="text-slate-500 font-medium">업체/팀명:</span> <strong>{partner.name}</strong></p>
+                      <p className="flex justify-between"><span className="text-slate-500 font-medium">담당자:</span> <strong>{partner.managerName || '매칭 후 공개'}</strong></p>
+                      <p className="flex justify-between"><span className="text-slate-500 font-medium">연락처:</span> <strong>안심번호 (매칭 후 안내)</strong></p>
+                      <p className="flex justify-between"><span className="text-slate-500 font-medium">직원수:</span> <strong>{partner.teamSize || '미정'}</strong></p>
+                      <div className="pt-1.5">
+                        <span className="text-slate-500 font-medium block mb-1">가능한 서비스:</span>
+                        <div className="flex flex-wrap gap-1">
+                          {partner.mainServices?.map(svc => (
+                            <span key={svc} className="bg-white shadow-sm border border-slate-200 px-1.5 py-0.5 rounded text-slate-700 font-bold text-[9px] sm:text-[10px]">{svc}</span>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* 이달의 행사 영역 */}
+                      <div className="pt-3 mt-2 border-t border-blue-200/60">
+                        <div className="flex items-center gap-1.5 mb-2">
+                          <span className="text-blue-600 text-sm">🎁</span>
+                          <span className="text-blue-900 font-bold text-sm">이달의 행사</span>
+                        </div>
+                        <div className="bg-white p-3 rounded-lg border border-blue-100 shadow-sm relative">
+                          {partner.monthlyEvent ? (
+                            <p className="text-slate-700 text-xs font-medium leading-relaxed whitespace-pre-wrap">{partner.monthlyEvent}</p>
+                          ) : (
+                            <p className="text-slate-400 text-xs">현재 진행 중인 특별한 행사가 없습니다.</p>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* 작업 전후 사진 (Before & After) 영역 */}
+                      <div className="pt-4 mt-2 border-t border-blue-200/60">
+                        <div className="flex items-center gap-1.5 mb-2">
+                          <span className="text-blue-600 text-sm">📸</span>
+                          <span className="text-blue-900 font-bold text-sm">작업 전후 갤러리</span>
+                        </div>
+                        {partner.portfolio && partner.portfolio.length > 0 ? (
+                          <div className="grid grid-cols-2 gap-2">
+                            {partner.portfolio.slice(0, 4).map((item, idx) => (
+                              <div key={idx} className="bg-white border border-slate-200 rounded-lg overflow-hidden shadow-sm">
+                                {/* Before/After 이미지 영역 - 비율 고정 */}
+                                <div className="flex h-24">
+                                   <div className="w-1/2 h-full relative border-r border-slate-200">
+                                      <img src={item.before} className="w-full h-full object-cover brightness-90" alt="Before" loading="lazy" />
+                                      <span className="absolute top-1 left-1 bg-slate-800/80 text-white text-[8px] font-bold px-1 py-0.5 rounded">Before</span>
+                                   </div>
+                                   <div className="w-1/2 h-full relative">
+                                      <img src={item.after} className="w-full h-full object-cover" alt="After" loading="lazy" />
+                                      <span className="absolute top-1 right-1 bg-blue-600/90 text-white text-[8px] font-bold px-1 py-0.5 rounded">After</span>
+                                   </div>
+                                </div>
+                                {/* 제목 영역 */}
+                                <div className="px-1.5 py-1 text-center bg-slate-50 border-t border-slate-100">
+                                   <p className="text-slate-700 font-bold text-[10px] truncate">{item.title || '작업 사례'}</p>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="bg-slate-50 p-4 rounded-lg border border-slate-100 text-center">
+                            <p className="text-slate-400 text-xs">등록된 포트폴리오 사진이 없습니다.</p>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* 고객 리뷰와 평점 영역 */}
+                      <div className="pt-4 mt-2 border-t border-blue-200/60">
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-blue-600 text-sm">💬</span>
+                            <span className="text-blue-900 font-bold text-sm">고객 생생 리뷰</span>
+                          </div>
+                          <div className="flex items-center gap-1 bg-amber-50 px-2 py-1 rounded-full border border-amber-100">
+                            <span className="text-amber-500 text-xs">★</span>
+                            <span className="text-amber-900 font-black text-xs">{partner.rating}</span>
+                            <span className="text-amber-700/60 font-medium text-[10px]">({partner.reviews})</span>
+                          </div>
+                        </div>
+                        
+                        {partner.recentReviews && partner.recentReviews.length > 0 ? (
+                          <div className="space-y-2">
+                            {partner.recentReviews.map((review, idx) => (
+                              <div key={idx} className="bg-white p-3 rounded-lg border border-slate-200 shadow-sm">
+                                <div className="flex items-center justify-between mb-1.5">
+                                  <span className="text-slate-800 font-bold text-xs">{review.author} 고객님</span>
+                                  <div className="flex flex-col items-end gap-0.5">
+                                    <div className="flex text-amber-400 text-[9px]">
+                                      {'★'.repeat(review.rating)}{'☆'.repeat(5 - review.rating)}
+                                    </div>
+                                    <span className="text-slate-400 text-[9px] font-medium">{review.date}</span>
+                                  </div>
+                                </div>
+                                <p className="text-slate-600 text-[11px] leading-relaxed line-clamp-3">{review.text}</p>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="bg-slate-50 p-4 rounded-lg border border-slate-100 text-center">
+                            <p className="text-slate-400 text-xs">아직 등록된 리뷰가 없습니다.</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+              </div>
+
+              <div className="mt-5 pt-4 border-t border-slate-100 flex gap-2">
+                {quoteData ? (
+                  <button 
+                    onClick={handleConfirmWithPartner}
+                    className="flex-1 text-center py-3 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-xl shadow-lg active:scale-[0.98] transition-all"
+                  >
+                    예약 확정하기
+                  </button>
+                ) : (
+                  <button 
+                    onClick={() => setShowServiceSelection(true)}
+                    className="flex-1 py-3 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-xl shadow-lg active:scale-[0.98] transition-all"
+                  >
+                    지정 무료 견적 받기
+                  </button>
+                )}
+                <button onClick={onClose} className="px-4 py-3 bg-slate-100 hover:bg-slate-200 text-slate-600 text-sm font-bold rounded-xl transition-all">
+                  닫기
+                </button>
+              </div>
+            </>
+          ) : (
+            <div className="py-4">
+              <div className="text-center mb-6">
+                <p className="text-blue-600 font-bold text-sm mb-1">서비스 선택</p>
+                <h3 className="text-xl font-black text-slate-900">어떤 청소가 필요하신가요?</h3>
+                <p className="text-slate-500 text-xs mt-2">유형에 따라 정확한 견적 산출이 가능합니다.</p>
+              </div>
+
+              <div className="space-y-3">
+                <button 
+                  onClick={() => handleSelectService('move-in')}
+                  className="w-full p-4 rounded-2xl border-2 border-slate-100 hover:border-blue-500 hover:bg-blue-50 transition-all text-left flex items-center justify-between group"
+                >
+                  <div>
+                    <p className="font-bold text-slate-900 group-hover:text-blue-700 transition-colors">이사청소 / 입주청소</p>
+                    <p className="text-xs text-slate-500 mt-0.5">이사 나가고 빈집 상태에서 진행하는 기본 청소</p>
+                  </div>
+                  <span className="text-xl group-hover:scale-110 transition-transform">🏠</span>
+                </button>
+
+                <button 
+                  onClick={() => handleSelectService('residence')}
+                  className="w-full p-4 rounded-2xl border-2 border-slate-100 hover:border-blue-500 hover:bg-blue-50 transition-all text-left flex items-center justify-between group"
+                >
+                  <div>
+                    <p className="font-bold text-slate-900 group-hover:text-blue-700 transition-colors">거주청소</p>
+                    <p className="text-xs text-slate-500 mt-0.5">현재 짐이 있는 상태에서 진행하는 거주 중 청소</p>
+                  </div>
+                  <span className="text-xl group-hover:scale-110 transition-transform">🛋️</span>
+                </button>
+
+                <button 
+                  onClick={() => handleSelectService('premium')}
+                  className="w-full p-4 rounded-2xl border-2 border-slate-100 hover:border-blue-500 hover:bg-blue-50 transition-all text-left flex items-center justify-between group"
+                >
+                  <div>
+                    <p className="font-bold text-slate-900 group-hover:text-blue-700 transition-colors">프리미엄 청소</p>
+                    <p className="text-xs text-slate-500 mt-0.5">인테리어 공사 완료 후 미세 분진 제거 특화 청소</p>
+                  </div>
+                  <span className="text-xl group-hover:scale-110 transition-transform">✨</span>
+                </button>
+              </div>
+
+              <div className="mt-8 flex gap-2">
+                <button 
+                  onClick={() => setShowServiceSelection(false)}
+                  className="flex-1 py-3.5 bg-slate-100 hover:bg-slate-200 text-slate-600 text-sm font-bold rounded-xl transition-all"
+                >
+                  이전으로
+                </button>
               </div>
             </div>
-
-            {partner.isReal && (
-              <div className="bg-blue-50/50 border border-blue-100 p-3 sm:p-4 rounded-xl mt-3 shadow-sm">
-                <h3 className="font-bold text-blue-900 mb-2 text-sm">업체 상세 정보</h3>
-                <div className="space-y-1.5 text-[11px] sm:text-xs text-slate-700">
-                  <p className="flex justify-between"><span className="text-slate-500 font-medium">업체/팀명:</span> <strong>{partner.name}</strong></p>
-                  <p className="flex justify-between"><span className="text-slate-500 font-medium">담당자:</span> <strong>{partner.managerName || '매칭 후 공개'}</strong></p>
-                  <p className="flex justify-between"><span className="text-slate-500 font-medium">연락처:</span> <strong>안심번호 (매칭 후 안내)</strong></p>
-                  <p className="flex justify-between"><span className="text-slate-500 font-medium">직원수:</span> <strong>{partner.teamSize || '미정'}</strong></p>
-                  <div className="pt-1.5">
-                    <span className="text-slate-500 font-medium block mb-1">가능한 서비스:</span>
-                    <div className="flex flex-wrap gap-1">
-                      {partner.mainServices?.map(svc => (
-                        <span key={svc} className="bg-white shadow-sm border border-slate-200 px-1.5 py-0.5 rounded text-slate-700 font-bold text-[9px] sm:text-[10px]">{svc}</span>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* 이달의 행사 영역 */}
-                  <div className="pt-3 mt-2 border-t border-blue-200/60">
-                    <div className="flex items-center gap-1.5 mb-2">
-                      <span className="text-blue-600 text-sm">🎁</span>
-                      <span className="text-blue-900 font-bold text-sm">이달의 행사</span>
-                    </div>
-                    <div className="bg-white p-3 rounded-lg border border-blue-100 shadow-sm relative">
-                      {partner.monthlyEvent ? (
-                        <p className="text-slate-700 text-xs font-medium leading-relaxed whitespace-pre-wrap">{partner.monthlyEvent}</p>
-                      ) : (
-                        <p className="text-slate-400 text-xs">현재 진행 중인 특별한 행사가 없습니다.</p>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* 작업 전후 사진 (Before & After) 영역 */}
-                  <div className="pt-4 mt-2 border-t border-blue-200/60">
-                    <div className="flex items-center gap-1.5 mb-2">
-                      <span className="text-blue-600 text-sm">📸</span>
-                      <span className="text-blue-900 font-bold text-sm">작업 전후 갤러리</span>
-                    </div>
-                    {partner.portfolio && partner.portfolio.length > 0 ? (
-                      <div className="flex overflow-x-auto pb-2 gap-3 snap-x [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-                        {partner.portfolio.map((item, idx) => (
-                          <div key={idx} className="shrink-0 w-48 snap-center bg-white border border-slate-200 rounded-lg overflow-hidden shadow-sm">
-                            <div className="relative h-24 flex">
-                               <div className="w-1/2 h-full relative border-r border-slate-100">
-                                  <img src={item.before} className="w-full h-full object-cover filter brightness-90 grayscale-[20%]" alt="Before" />
-                                  <span className="absolute top-1 left-1 bg-slate-800/80 text-white text-[9px] font-bold px-1.5 py-0.5 rounded shadow">Before</span>
-                               </div>
-                               <div className="w-1/2 h-full relative">
-                                  <img src={item.after} className="w-full h-full object-cover" alt="After" />
-                                  <span className="absolute top-1 right-1 bg-blue-600/90 text-white text-[9px] font-bold px-1.5 py-0.5 rounded shadow">After</span>
-                               </div>
-                            </div>
-                            <div className="p-2 text-center bg-slate-50">
-                               <p className="text-slate-700 font-bold text-[10px] truncate">{item.title}</p>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="bg-slate-50 p-4 rounded-lg border border-slate-100 text-center">
-                        <p className="text-slate-400 text-xs">등록된 포트폴리오 사진이 없습니다.</p>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* 고객 리뷰와 평점 영역 */}
-                  <div className="pt-4 mt-2 border-t border-blue-200/60">
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-blue-600 text-sm">💬</span>
-                        <span className="text-blue-900 font-bold text-sm">고객 생생 리뷰</span>
-                      </div>
-                      <div className="flex items-center gap-1 bg-amber-50 px-2 py-1 rounded-full border border-amber-100">
-                        <span className="text-amber-500 text-xs">★</span>
-                        <span className="text-amber-900 font-black text-xs">{partner.rating}</span>
-                        <span className="text-amber-700/60 font-medium text-[10px]">({partner.reviews})</span>
-                      </div>
-                    </div>
-                    
-                    {partner.recentReviews && partner.recentReviews.length > 0 ? (
-                      <div className="space-y-2">
-                        {partner.recentReviews.map((review, idx) => (
-                          <div key={idx} className="bg-white p-3 rounded-lg border border-slate-200 shadow-sm">
-                            <div className="flex items-center justify-between mb-1.5">
-                              <span className="text-slate-800 font-bold text-xs">{review.author} 고객님</span>
-                              <div className="flex flex-col items-end gap-0.5">
-                                <div className="flex text-amber-400 text-[9px]">
-                                  {'★'.repeat(review.rating)}{'☆'.repeat(5 - review.rating)}
-                                </div>
-                                <span className="text-slate-400 text-[9px] font-medium">{review.date}</span>
-                              </div>
-                            </div>
-                            <p className="text-slate-600 text-[11px] leading-relaxed line-clamp-3">{review.text}</p>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="bg-slate-50 p-4 rounded-lg border border-slate-100 text-center">
-                        <p className="text-slate-400 text-xs">아직 등록된 리뷰가 없습니다.</p>
-                      </div>
-                    )}
-                  </div>
-
-                </div>
-              </div>
-            )}
-          </div>
-
-          <div className="mt-5 pt-4 border-t border-slate-100 flex gap-2">
-            {quoteData ? (
-              <button 
-                onClick={handleConfirmWithPartner}
-                className="flex-1 text-center py-3 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-xl shadow-lg active:scale-[0.98] transition-all"
-              >
-                예약 확정하기
-              </button>
-            ) : (
-              <Link to="/quote/move-in" state={{ selectedPartnerId: partner.id, selectedPartnerName: partner.name }} className="flex-1 flex justify-center items-center py-3 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-xl shadow-lg active:scale-[0.98] transition-all">
-                지정 무료 견적 받기
-              </Link>
-            )}
-            <button onClick={onClose} className="px-4 py-3 bg-slate-100 hover:bg-slate-200 text-slate-600 text-sm font-bold rounded-xl transition-all">
-              닫기
-            </button>
-          </div>
+          )}
         </div>
       </div>
     </div>
@@ -269,7 +340,7 @@ export default function PartnerList() {
             reviews: 0, // 초기값
             desc: data.desc || `안녕하세요. 책임감 있는 청소 약속드립니다.`,
             tags: data.tags && data.tags.length > 0 ? data.tags.map(t => t.startsWith('#') ? t : `#${t}`) : (data.mainServices ? data.mainServices.map(s => `#${s}`) : ['#신규등록']),
-            image: data.image || '/images/living_room_cleaning.png',
+            image: data.image || '/images/living_room_cleaning.webp',
             area: data.region || '전국',
             monthlyEvent: data.monthlyEvent || '', // 이달의 행사 필드 연동
             portfolio: data.portfolio || [], // 작업 전후 사진
@@ -287,27 +358,17 @@ export default function PartnerList() {
   }, []);
 
   const matchRegion = (partnerArea, selectedRegion) => {
-    if (!selectedRegion) return true; // 선택된 지역이 없으면 모두 표시
+    if (!selectedRegion) return true;
     if (!partnerArea) return false;
+    
     const area = partnerArea;
     if (area.includes('전국')) return true;
 
-    const regionPrefix = selectedRegion.split(' ')[0]; // '서울', '경기', '인천' 등
+    // 선택된 지역의 키워드 추출 (예: "경기 안산/시흥/광명" -> ["경기", "안산", "시흥", "광명"])
+    const keywords = selectedRegion.split(/[\s/(),]+/).filter(k => k.length > 1);
     
-    // 시/도 단위 '전지역' 매칭
-    if (area.includes('전지역') && area.includes(regionPrefix)) return true;
-    
-    // 세부 지역 키워드 매칭 (괄호, 콤마, 슬래시, 공백 기준 분리)
-    const keywords = selectedRegion.split(/[\s/(),]+/).filter(Boolean);
-    const detailKeywords = keywords.length > 1 ? keywords.slice(1) : keywords;
-    const hasDetailMatch = detailKeywords.some(k => area.includes(k));
-    
-    if (hasDetailMatch) return true;
-    
-    // 파트너 area가 포괄적인 경우 (예: "서울/경기 일부")
-    if (area.includes(regionPrefix) && area.includes('일부')) return true;
-
-    return false;
+    // 파트너의 area에 선택된 키워드 중 하나라도 포함되어 있는지 확인
+    return keywords.some(k => area.includes(k));
   };
 
   const filteredPartners = [...realPartners, ...mockPartners].filter(p => matchRegion(p.area, selectedRegion));
@@ -336,30 +397,50 @@ export default function PartnerList() {
   const currentBasicPartners = sortedBasic.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
   const currentMixedPartners = mixedPartners.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
+  // 페이지네이션 번호 계산 로직 (모바일 대응을 위해 현재 페이지 주변만 표시)
+  const getPageNumbers = () => {
+    const pageNumbers = [];
+    const maxVisiblePages = window.innerWidth < 640 ? 3 : 5;
+    
+    if (totalPages <= maxVisiblePages) {
+      for (let i = 1; i <= totalPages; i++) pageNumbers.push(i);
+    } else {
+      let start = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+      let end = Math.min(totalPages, start + maxVisiblePages - 1);
+      
+      if (end === totalPages) {
+        start = Math.max(1, end - maxVisiblePages + 1);
+      }
+      
+      for (let i = start; i <= end; i++) pageNumbers.push(i);
+    }
+    return pageNumbers;
+  };
+
 
   return (
-    <div className="bg-slate-50 min-h-screen text-slate-900 font-sans flex flex-col">
+    <div className="bg-slate-50 min-h-screen text-slate-900 font-sans flex flex-col overflow-x-hidden">
       <Header onOpenQuote={() => {}} />
-      <main className="pt-[80px] lg:pt-28 pb-16 px-4 md:px-8 max-w-7xl mx-auto w-full flex-grow">
+      <main className="pt-[80px] lg:pt-28 pb-16 px-4 md:px-8 max-w-7xl mx-auto w-full flex-grow overflow-x-hidden">
         
         {/* 상단 타이틀 및 정렬 */}
         <div className="mb-6 lg:mb-8">
           <div className="flex flex-col lg:flex-row justify-between items-start lg:items-end gap-4">
-            <div className="w-full lg:w-auto flex justify-between items-start">
-              <div>
-                <div className="flex items-center gap-3 mb-2">
-                  <h1 className="text-3xl md:text-4xl font-extrabold text-blue-900 tracking-tight text-left">
+            <div className="w-full lg:w-auto flex justify-between items-center lg:items-start gap-2">
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-1">
+                  <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-blue-900 tracking-tight text-left break-words">
                     내동네 전문가 찾기
                   </h1>
                 </div>
                 
-                <p className="text-slate-500 font-medium mt-2">
+                <p className="text-slate-500 text-xs sm:text-sm font-medium mt-1">
                   {selectedRegion ? (
                     <><span className="text-blue-900 font-bold">{selectedRegion}</span> 지역에 </>
                   ) : (
                     <><span className="text-blue-900 font-bold">전국</span>에 </>
                   )}
-                  <span className="text-blue-900 font-bold">{filteredPartners.length}명</span>의 청소타워 인증 전문가가 대기중입니다.
+                  <span className="text-blue-900 font-bold">{filteredPartners.length}명</span>의 전문가가 대기중입니다.
                 </p>
               </div>
 
@@ -414,7 +495,7 @@ export default function PartnerList() {
 
               {/* 지역 선택 드롭다운 메뉴 (PC/Mobile 공통) */}
               {isRegionDropdownOpen && (
-                <div className="absolute top-full left-0 lg:right-0 mt-2 w-full lg:w-[480px] bg-white border border-slate-200 rounded-2xl shadow-2xl z-50 p-4 lg:p-6 grid grid-cols-1 md:grid-cols-2 gap-2 max-h-[60vh] overflow-y-auto">
+                <div className="absolute top-full left-0 right-0 lg:left-auto lg:right-0 mt-2 lg:w-[480px] bg-white border border-slate-200 rounded-2xl shadow-2xl z-50 p-4 lg:p-6 grid grid-cols-1 md:grid-cols-2 gap-2 max-h-[60vh] overflow-y-auto">
                   <button
                     onClick={() => { setSelectedRegion(''); setIsRegionDropdownOpen(false); }}
                     className={`text-left px-4 py-3 rounded-xl text-sm font-bold transition-all shadow-sm
@@ -431,10 +512,13 @@ export default function PartnerList() {
                     '서울 강서/영등포/양천/구로', 
                     '서울 노원/도봉/강북/성북', 
                     '서울 은평/서대문/종로/중구', 
-                    '경기 남부 (성남/용인/수원)', 
-                    '경기 서남부 (안양/과천/군포)', 
-                    '경기 서부 (부천/광명/시흥)', 
-                    '경기 북부 (고양/파주/김포)', 
+                    '경기 수원/성남/용인', 
+                    '경기 안산/시흥/광명',
+                    '경기 화성/오산 (동탄)',
+                    '경기 오산/평택/안성',
+                    '경기 시흥/광명/안양',
+                    '경기 서부 (부천/김포)', 
+                    '경기 북부 (고양/파주)', 
                     '경기 동부 (구리/남양주/하남)', 
                     '인천 전지역',
                     '대전/세종/충청권',
@@ -561,7 +645,7 @@ export default function PartnerList() {
                       <span className="text-blue-600">👍</span> 프리미엄 파트너
                     </h2>
                   </div>
-                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 lg:gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 lg:gap-4">
                     {sortedPremium.map(partner => (
                       <div 
                         key={partner.id} 
@@ -617,7 +701,7 @@ export default function PartnerList() {
                     <h2 className="font-bold text-slate-700 text-base lg:text-lg">일반 파트너</h2>
                     <span className="text-slate-400 text-xs lg:text-sm font-medium">총 {sortedBasic.length}건</span>
                   </div>
-                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 lg:gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 lg:gap-4">
                     {currentBasicPartners.map(partner => (
                       <div 
                         key={partner.id} 
@@ -674,7 +758,7 @@ export default function PartnerList() {
                   </h2>
                   <span className="text-slate-400 text-xs lg:text-sm font-medium">총 {mixedPartners.length}건</span>
                 </div>
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 lg:gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 lg:gap-4">
                   {currentMixedPartners.map(partner => (
                     <div 
                       key={partner.id} 
@@ -736,16 +820,16 @@ export default function PartnerList() {
                 >
                   &lt;
                 </button>
-                {[...Array(totalPages)].map((_, i) => (
+                {getPageNumbers().map((pageNumber) => (
                   <button
-                    key={i}
+                    key={pageNumber}
                     onClick={() => {
-                      setCurrentPage(i + 1);
+                      setCurrentPage(pageNumber);
                       window.scrollTo({ top: 0, behavior: 'smooth' });
                     }}
-                    className={`w-10 h-10 flex items-center justify-center rounded-full font-bold transition-colors ${currentPage === i + 1 ? 'bg-blue-600 text-white shadow-md' : 'text-slate-600 hover:bg-slate-100'}`}
+                    className={`w-10 h-10 flex items-center justify-center rounded-full font-bold transition-colors ${currentPage === pageNumber ? 'bg-blue-600 text-white shadow-md' : 'text-slate-600 hover:bg-slate-100'}`}
                   >
-                    {i + 1}
+                    {pageNumber}
                   </button>
                 ))}
                 <button 

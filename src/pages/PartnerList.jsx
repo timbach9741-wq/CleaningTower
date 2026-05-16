@@ -54,6 +54,8 @@ const PartnerDetailModal = ({ partner, onClose, quoteData }) => {
                   src={partner.image} 
                   alt={partner.name} 
                   className="max-w-full max-h-full object-contain drop-shadow-md" 
+                  loading="lazy"
+                  decoding="async"
                 />
               </div>
               
@@ -208,38 +210,56 @@ const PartnerDetailModal = ({ partner, onClose, quoteData }) => {
                 <p className="text-slate-500 text-xs mt-2">유형에 따라 정확한 견적 산출이 가능합니다.</p>
               </div>
 
-              <div className="space-y-3">
+              <div className="space-y-4">
                 <button 
                   onClick={() => handleSelectService('move-in')}
-                  className="w-full p-4 rounded-2xl border-2 border-slate-100 hover:border-blue-500 hover:bg-blue-50 transition-all text-left flex items-center justify-between group"
+                  className="w-full p-5 rounded-2xl border-2 border-blue-100 bg-white hover:border-blue-500 hover:shadow-md transition-all text-left flex items-center justify-between group relative overflow-hidden"
                 >
-                  <div>
-                    <p className="font-bold text-slate-900 group-hover:text-blue-700 transition-colors">이사청소 / 입주청소</p>
-                    <p className="text-xs text-slate-500 mt-0.5">이사 나가고 빈집 상태에서 진행하는 기본 청소</p>
+                  <div className="absolute top-0 left-0 w-1.5 h-full bg-blue-400"></div>
+                  <div className="flex-1 pl-2 pr-4">
+                    <div className="flex items-center gap-2 mb-1.5">
+                      <p className="font-bold text-slate-900 text-[16px] group-hover:text-blue-700 transition-colors">이사청소 / 입주청소</p>
+                      <span className="text-[11px] font-extrabold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-md border border-blue-100">평당 1.5만</span>
+                    </div>
+                    <p className="text-[13px] text-slate-500 leading-relaxed">이사 나가고 빈집 상태에서 진행하는 기본 청소</p>
                   </div>
-                  <span className="text-xl group-hover:scale-110 transition-transform">🏠</span>
+                  <div className="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform shadow-sm">
+                    🏠
+                  </div>
                 </button>
 
                 <button 
                   onClick={() => handleSelectService('residence')}
-                  className="w-full p-4 rounded-2xl border-2 border-slate-100 hover:border-blue-500 hover:bg-blue-50 transition-all text-left flex items-center justify-between group"
+                  className="w-full p-5 rounded-2xl border-2 border-emerald-100 bg-white hover:border-emerald-500 hover:shadow-md transition-all text-left flex items-center justify-between group relative overflow-hidden"
                 >
-                  <div>
-                    <p className="font-bold text-slate-900 group-hover:text-blue-700 transition-colors">거주청소</p>
-                    <p className="text-xs text-slate-500 mt-0.5">현재 짐이 있는 상태에서 진행하는 거주 중 청소</p>
+                  <div className="absolute top-0 left-0 w-1.5 h-full bg-emerald-400"></div>
+                  <div className="flex-1 pl-2 pr-4">
+                    <div className="flex items-center gap-2 mb-1.5">
+                      <p className="font-bold text-slate-900 text-[16px] group-hover:text-emerald-700 transition-colors">거주청소</p>
+                      <span className="text-[11px] font-extrabold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-100">평당 1.8만</span>
+                    </div>
+                    <p className="text-[13px] text-slate-500 leading-relaxed">현재 짐이 있는 상태에서 진행하는 거주 중 청소</p>
                   </div>
-                  <span className="text-xl group-hover:scale-110 transition-transform">🛋️</span>
+                  <div className="w-12 h-12 rounded-full bg-emerald-50 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform shadow-sm">
+                    🛋️
+                  </div>
                 </button>
 
                 <button 
                   onClick={() => handleSelectService('premium')}
-                  className="w-full p-4 rounded-2xl border-2 border-slate-100 hover:border-blue-500 hover:bg-blue-50 transition-all text-left flex items-center justify-between group"
+                  className="w-full p-5 rounded-2xl border-2 border-purple-100 bg-gradient-to-r from-purple-50 to-white hover:border-purple-400 hover:shadow-md transition-all text-left flex items-center justify-between group relative overflow-hidden"
                 >
-                  <div>
-                    <p className="font-bold text-slate-900 group-hover:text-blue-700 transition-colors">프리미엄 청소</p>
-                    <p className="text-xs text-slate-500 mt-0.5">인테리어 공사 완료 후 미세 분진 제거 특화 청소</p>
+                  <div className="absolute top-0 left-0 w-1.5 h-full bg-gradient-to-b from-purple-500 to-pink-500"></div>
+                  <div className="flex-1 pl-2 pr-4">
+                    <div className="flex items-center gap-2 mb-1.5">
+                      <p className="font-bold text-slate-900 text-[16px] group-hover:text-purple-700 transition-colors">프리미엄 청소</p>
+                      <span className="text-[11px] font-extrabold text-purple-600 bg-purple-100 px-2 py-0.5 rounded-md border border-purple-200">평당 2.0만</span>
+                    </div>
+                    <p className="text-[13px] text-slate-500 leading-relaxed">인테리어 공사 완료 후 미세 분진 제거 특화 청소</p>
                   </div>
-                  <span className="text-xl group-hover:scale-110 transition-transform">✨</span>
+                  <div className="w-12 h-12 rounded-full bg-white shadow-sm flex items-center justify-center text-2xl group-hover:scale-110 transition-transform border border-purple-100">
+                    ✨
+                  </div>
                 </button>
               </div>
 
@@ -371,31 +391,54 @@ export default function PartnerList() {
     return keywords.some(k => area.includes(k));
   };
 
-  const filteredPartners = [...realPartners, ...mockPartners].filter(p => matchRegion(p.area, selectedRegion));
+  const {
+    filteredPartners,
+    exclusivePartners,
+    sortedPremium,
+    sortedBasic,
+    mixedPartners,
+    currentPremiumPartners,
+    currentBasicPartners,
+    currentMixedPartners,
+    totalPages
+  } = React.useMemo(() => {
+    const filtered = [...realPartners, ...mockPartners].filter(p => matchRegion(p.area, selectedRegion));
+    const exclusive = filtered.filter(p => p.tier === 'EXCLUSIVE').slice(0, 2);
+    const rest = filtered.filter(p => p.tier !== 'EXCLUSIVE');
 
-  const exclusivePartners = filteredPartners.filter(p => p.tier === 'EXCLUSIVE').slice(0, 2);
-  const restPartners = filteredPartners.filter(p => p.tier !== 'EXCLUSIVE');
+    let premium = [];
+    let basic = [];
+    let mixed = [];
 
-  let sortedPremium = [];
-  let sortedBasic = [];
-  let mixedPartners = [];
+    if (sortBy === '추천순') {
+      premium = rest.filter(p => p.tier === 'PREMIUM');
+      basic = rest.filter(p => p.tier === 'BASIC');
+    } else if (sortBy === '평점순') {
+      mixed = [...rest].sort((a, b) => b.rating - a.rating);
+    } else if (sortBy === '리뷰순') {
+      mixed = [...rest].sort((a, b) => b.reviews - a.reviews);
+    }
 
-  if (sortBy === '추천순') {
-    // 프리미엄 전체 표시 (제한 없음), 그 아래 일반 전체 표시
-    sortedPremium = restPartners.filter(p => p.tier === 'PREMIUM');
-    sortedBasic = restPartners.filter(p => p.tier === 'BASIC');
-  } else if (sortBy === '평점순') {
-    mixedPartners = [...restPartners].sort((a, b) => b.rating - a.rating);
-  } else if (sortBy === '리뷰순') {
-    mixedPartners = [...restPartners].sort((a, b) => b.reviews - a.reviews);
-  }
+    const tPages = sortBy === '추천순' 
+      ? Math.ceil(Math.max(premium.length, basic.length) / itemsPerPage) 
+      : Math.ceil(mixed.length / itemsPerPage);
 
-  const totalPages = sortBy === '추천순' 
-    ? Math.ceil(sortedBasic.length / itemsPerPage) 
-    : Math.ceil(mixedPartners.length / itemsPerPage);
+    const cPremium = premium.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+    const cBasic = basic.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+    const cMixed = mixed.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
-  const currentBasicPartners = sortedBasic.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
-  const currentMixedPartners = mixedPartners.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+    return {
+      filteredPartners: filtered,
+      exclusivePartners: exclusive,
+      sortedPremium: premium,
+      sortedBasic: basic,
+      mixedPartners: mixed,
+      currentPremiumPartners: cPremium,
+      currentBasicPartners: cBasic,
+      currentMixedPartners: cMixed,
+      totalPages: tPages
+    };
+  }, [realPartners, selectedRegion, sortBy, itemsPerPage, currentPage]);
 
   // 페이지네이션 번호 계산 로직 (모바일 대응을 위해 현재 페이지 주변만 표시)
   const getPageNumbers = () => {
@@ -577,14 +620,14 @@ export default function PartnerList() {
                     <div className="absolute inset-0 bg-slate-900 z-0"></div>
                     <div className="absolute inset-0 bg-gradient-to-br from-blue-950/95 via-blue-900/90 to-blue-800/80 z-5 pointer-events-none"></div>
                     <div className="absolute inset-0 flex items-center justify-center z-10 p-4 lg:p-8">
-                      <img src={partner.image} alt={partner.name} className="w-full h-full object-contain opacity-40 group-hover:opacity-60 group-hover:scale-105 transition-all duration-700" />
+                      <img src={partner.image} alt={partner.name} className="w-full h-full object-contain opacity-40 group-hover:opacity-60 group-hover:scale-105 transition-all duration-700" loading="lazy" decoding="async" />
                     </div>
                     <div className="relative z-20 p-4 lg:p-8 flex flex-col h-full justify-between gap-3 lg:gap-6">
                       <div className="text-white w-full">
                         <div className="flex items-center gap-3 lg:gap-5 mb-2 lg:mb-4">
                           {partner.image && (
                             <div className="w-12 h-12 lg:w-20 lg:h-20 bg-white rounded-xl lg:rounded-2xl p-1.5 lg:p-2.5 shadow-xl shrink-0 flex items-center justify-center border border-white/20">
-                              <img src={partner.image} alt={partner.name} className="w-full h-full object-contain" />
+                              <img src={partner.image} alt={partner.name} className="w-full h-full object-contain" loading="lazy" decoding="async" />
                             </div>
                           )}
                           <div>
@@ -644,9 +687,10 @@ export default function PartnerList() {
                     <h2 className="font-bold text-slate-800 text-lg lg:text-xl flex items-center gap-2">
                       <span className="text-blue-600">👍</span> 프리미엄 파트너
                     </h2>
+                    <span className="text-slate-400 text-xs lg:text-sm font-medium">총 {sortedPremium.length}건</span>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 lg:gap-4">
-                    {sortedPremium.map(partner => (
+                    {currentPremiumPartners.map(partner => (
                       <div 
                         key={partner.id} 
                         onClick={() => setSelectedPartner(partner)}
@@ -656,7 +700,7 @@ export default function PartnerList() {
                           ⭐ PREMIUM
                         </div>
                         <div className="w-full h-36 lg:h-56 shrink-0 relative overflow-hidden bg-white border-b border-blue-100 p-4 flex items-center justify-center">
-                          <img src={partner.image} alt={partner.name} className="object-contain max-w-full max-h-full group-hover:scale-105 transition-transform duration-500" />
+                          <img src={partner.image} alt={partner.name} className="object-contain max-w-full max-h-full group-hover:scale-105 transition-transform duration-500" loading="lazy" decoding="async" />
                         </div>
                         <div className="p-2 lg:p-4 flex-grow flex flex-col justify-between">
                           <div>
@@ -713,6 +757,8 @@ export default function PartnerList() {
                             src={partner.image} 
                             alt={partner.name} 
                             className="object-contain w-full h-full group-hover:scale-105 transition-transform duration-500" 
+                            loading="lazy"
+                            decoding="async"
                           />
                         </div>
                         <div className="p-2 lg:p-4 flex-grow flex flex-col justify-between">
@@ -771,7 +817,7 @@ export default function PartnerList() {
                         </div>
                       )}
                       <div className="w-full h-32 lg:h-48 shrink-0 relative overflow-hidden bg-white border-b border-slate-100 p-4 flex items-center justify-center">
-                        <img src={partner.image} alt={partner.name} className="object-contain max-w-full max-h-full group-hover:scale-105 transition-transform duration-500" />
+                        <img src={partner.image} alt={partner.name} className="object-contain max-w-full max-h-full group-hover:scale-105 transition-transform duration-500" loading="lazy" decoding="async" />
                       </div>
                       <div className="p-2 lg:p-4 flex-grow flex flex-col justify-between">
                         <div>

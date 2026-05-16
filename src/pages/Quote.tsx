@@ -1,4 +1,4 @@
-import { useState, type ChangeEvent } from 'react';
+import React, { useState, type ChangeEvent } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import DaumPostcode from 'react-daum-postcode';
@@ -111,8 +111,7 @@ export default function Quote() {
   // 에러 메시지
   const [errorMsg, setErrorMsg] = useState('');
 
-  // 견적 산출 로직
-  const getEstimatedPrice = () => {
+  const estimatedPrice = React.useMemo(() => {
     let basePricePerPyeong = 15000;
     if (cleaningType === '프리미엄') {
       basePricePerPyeong = 20000;
@@ -145,9 +144,8 @@ export default function Quote() {
     }
 
     return total;
-  };
+  }, [cleaningType, size, isBetweenCleaning, selectedOptions, elevator, isHighFloorWithoutElevator]);
 
-  const estimatedPrice = getEstimatedPrice();
   const vatPrice = Math.floor(estimatedPrice * 0.1);
   const totalPriceIncVat = estimatedPrice + vatPrice;
 

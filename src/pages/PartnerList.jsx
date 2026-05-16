@@ -473,8 +473,7 @@ export default function PartnerList() {
     
     const handlePageChange = (newPage) => {
       setPage(newPage);
-      // 부드러운 스크롤을 이용해 위로 이동
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      // 부드러운 스크롤 로직 제거 (해당 위치에서 페이지 갱신)
     };
 
     return (

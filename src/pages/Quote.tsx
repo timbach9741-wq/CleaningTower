@@ -417,9 +417,9 @@ export default function Quote() {
                     <label className="block text-slate-300 text-sm font-semibold mb-3">🧹 청소 종류 선택</label>
                     <div className="grid grid-cols-1 gap-3 mb-6">
                       {[
-                        { id: '프리미엄', label: '프리미엄 (입주/분진)', sub: '인테리어 공사 후, 분진이 많은 현장', price: '평당 2.0만' },
-                        { id: '이사', label: '이사청소 (빈집)', sub: '이사 나가고 비어있는 집 청소', price: '평당 1.5만' },
-                        { id: '거주', label: '거주청소 (짐 있음)', sub: '현재 거주 중이며 짐이 있는 상태', price: '평당 1.8만' },
+                        { id: '프리미엄', label: '프리미엄 입주청소', sub: '인테리어 공사완료후 분진이 많은 현장', price: '평당 2.0만' },
+                        { id: '거주', label: '거주청소', sub: '거주중 상태청소', price: '평당 1.8만' },
+                        { id: '이사', label: '이사청소', sub: '이사나가고 빈집 청소', price: '평당 1.5만' },
                       ].map(item => (
                         <button
                           key={item.id}
@@ -1030,9 +1030,9 @@ export default function Quote() {
                      
                      <div className="space-y-3 pb-4 border-b border-dashed border-white/10 mb-4">
                        <div className="flex justify-between items-center">
-                          <span className="text-slate-400 text-sm">{isOccupiedCleaning && cleaningType === '일반' ? '거주 청소비 (기본비용 포함)' : '기본 청소비'}</span>
+                          <span className="text-slate-400 text-sm">{cleaningType === '거주' ? '거주 청소비 (기본비용 포함)' : '기본 청소비'}</span>
                           <span className="text-slate-200 font-medium">
-                            {((typeof size === 'number' ? size : 0) * (cleaningType === '일반' ? (isOccupiedCleaning ? 18000 : 15000) : 20000)).toLocaleString()}원
+                            {((typeof size === 'number' ? size : 0) * (cleaningType === '프리미엄' ? 20000 : cleaningType === '거주' ? 18000 : 15000)).toLocaleString()}원
                           </span>
                        </div>
                        {isBetweenCleaning && (

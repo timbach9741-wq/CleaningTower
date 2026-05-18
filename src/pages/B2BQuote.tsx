@@ -168,11 +168,9 @@ export default function Quote() {
     } else if (step === 2) {
       // Step 2: 세부사항 선택 (필수/옵션 추가 시 여기서 밸리데이션 처리)
     } else if (step === 3) {
-      if (!address.trim() && !cleaningDate) {
-        // 둘 다 비어있을 경우 부드럽게 권유
-        setErrorMsg('정확한 견적을 위해 주소나 일정을 입력해주세요. (선택)');
-        // UX: 강제하지 않으려면 return 안 해도 되지만, 경고를 주고 싶다면 한 번 막거나 넘어갈 수 있음.
-        // 강제로 막지 않고 패스시키되, 사용자에게 힌트를 주는 용도로만 활용할 수 있음.
+      if (!address.trim()) {
+        setErrorMsg('견적 알림 및 매칭을 위해 주소를 반드시 입력해주세요.');
+        return;
       }
     } else if (step === 4) {
       if (!contactInfo.trim()) {

@@ -1,6 +1,6 @@
 {
-  "name": "청소타워 파트너스",
-  "short_name": "청소타워 파트너스",
+  "name": "청소타워 파트너",
+  "short_name": "청소타워 파트너",
   "description": "청소타워 파트너 대시보드",
   "start_url": "/partner-dashboard",
   "display": "standalone",

@@ -186,11 +186,9 @@ export default function Quote() {
     } else if (step === 2) {
       // Step 2: 세부사항 선택 (필수/옵션 추가 시 여기서 밸리데이션 처리)
     } else if (step === 3) {
-      if (!address.trim() && !cleaningDate) {
-        // 둘 다 비어있을 경우 부드럽게 권유
-        setErrorMsg('정확한 견적을 위해 주소나 일정을 입력해주세요. (선택)');
-        // UX: 강제하지 않으려면 return 안 해도 되지만, 경고를 주고 싶다면 한 번 막거나 넘어갈 수 있음.
-        // 강제로 막지 않고 패스시키되, 사용자에게 힌트를 주는 용도로만 활용할 수 있음.
+      if (!address.trim()) {
+        setErrorMsg('견적 산출 및 파트너 배정을 위해 정확한 방문 주소를 입력해주세요.');
+        return;
       }
     } else if (step === 4) {
       if (!contactInfo.trim()) {
@@ -227,7 +225,12 @@ export default function Quote() {
     if (detailAddress) memoParts.push(`[상세주소] ${detailAddress}`);
     if (memos) memoParts.push(`[추가메모] ${memos}`);
 
+    // ★ PartnerDashboard가 읽는 필드명(type, date, time, house, detail 등)과
+    //   Quote가 저장하는 필드명(cleaningType, cleaningDate 등) 양쪽 모두 호환되도록
+    //   alias 필드를 함께 저장합니다.
+    const memoText = memoParts.join('\n');
     return {
+      // 원본 필드 (Quote 내부 로직용)
       houseType,
       houseSubType,
       size,
@@ -237,10 +240,21 @@ export default function Quote() {
       cleaningTime,
       address,
       contactInfo,
-      memo: memoParts.join('\n'),
+      memo: memoText,
       totalPrice: totalPriceIncVat,
       status: '대기중',
-      createdAt: new Date()
+      createdAt: new Date(),
+
+      // ★ PartnerDashboard 호환용 alias 필드
+      type: `${cleaningType} 청소`,                              // Dashboard: order.type
+      date: cleaningDate,                                        // Dashboard: order.date
+      time: cleaningTime,                                        // Dashboard: order.time
+      location: address ? `${address} ${detailAddress}`.trim() : '주소 미상', // Dashboard: order.location
+      house: houseSubType ? `${houseType} (${houseSubType})` : houseType, // Dashboard: order.house
+      detail: memoText,                                          // Dashboard: job.detail
+      phone: contactInfo,                                        // Dashboard: job.phone (폴백용)
+      businessName: businessName || '',                           // Dashboard: job.businessName
+      customerName: businessName || '',                           // Dashboard: job.customerName (폴백용)
     };
   };
 
@@ -838,12 +852,12 @@ export default function Quote() {
                 <div className="space-y-6 flex-1">
                   <div>
                     <label className={`block text-sm font-semibold mb-2 flex items-center gap-1.5 ${cleaningType === '프리미엄' ? 'text-amber-300/90' : 'text-slate-300'}`}>
-                      <span className="material-symbols-outlined text-[16px]">business_center</span>
-                      업체명 (인테리어 사업자 등)
+                      <span className="material-symbols-outlined text-[16px]">person</span>
+                      신청자 이름
                     </label>
                     <input
                       type="text"
-                      placeholder="예) 인테리어 디자인하우스"
+                      placeholder="예) 홍길동"
                       value={businessName}
                       onChange={(e) => setBusinessName(e.target.value)}
                       className={`w-full rounded-xl px-4 py-4 text-base text-white placeholder-slate-500 focus:outline-none transition-all ${
@@ -855,7 +869,7 @@ export default function Quote() {
                   </div>
 
                   <div>
-                    <label className="block text-slate-300 text-sm font-semibold mb-2">📞 담당자 연락처 <span className="text-rose-400">*</span></label>
+                    <label className="block text-slate-300 text-sm font-semibold mb-2">📞 신청자 연락처 <span className="text-rose-400">*</span></label>
                     <input
                       type="tel"
                       placeholder="예) 010-0000-0000"

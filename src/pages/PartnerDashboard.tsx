@@ -14,6 +14,7 @@ export interface Order {
   date?: string;
   time?: string;
   location?: string;
+  address?: string;
   house?: string;
   size?: string;
   options?: string[];
@@ -26,12 +27,23 @@ export interface Order {
   name?: string;
   customerName?: string;
   realPhone?: string;
+  contactInfo?: string;      // ★ Quote에서 저장하는 연락처 필드
+  phone?: string;            // ★ 연락처 폴백 필드
   detail?: string;
+  memo?: string;             // ★ Quote에서 저장하는 메모 원본 필드
   completedAt?: string;
   completionItems?: string[];
   completionNote?: string;
   cancelPenalty?: string;
   price?: string;
+  cleaningType?: string;     // ★ Quote 원본 필드
+  cleaningDate?: string;     // ★ Quote 원본 필드
+  cleaningTime?: string;     // ★ Quote 원본 필드
+  houseType?: string;        // ★ Quote 원본 필드
+  houseSubType?: string;     // ★ Quote 원본 필드
+  designatedPartnerName?: string;
+  totalPrice?: number;
+  [key: string]: unknown;    // ★ Firestore에서 오는 추가 필드 허용
 }
 
 export interface PartnerUser {
@@ -43,6 +55,7 @@ export interface PartnerUser {
   status?: 'active' | 'pending' | 'suspended';
   region?: string;
   isNotificationEnabled?: boolean;
+  fcmTokens?: string[];
   notificationRegions?: string[];
   monthlyEvent?: string;
   portfolio?: string[];
@@ -177,15 +190,19 @@ export default function Partner() {
       if (permission === 'granted') {
         const messaging = await getMessagingInstance();
         if (messaging && currentUser && db) {
-          // FCM Token 발급 (옵션) - Firebase 프로젝트의 VAPID 키 필요
-          // let currentToken = '';
-          // try {
-          //   currentToken = await getToken(messaging, { vapidKey: 'YOUR_VAPID_KEY' });
-          // } catch (e) { console.error('Token error:', e); }
+          let currentToken = '';
+          // ★ VAPID 키: Firebase Console > Cloud Messaging > 웹 푸시 인증서에서 생성
+          const VAPID_KEY = 'BKbWKFBpXccjAXlskLV4VmXNG55f3fsywzuo2enZDr2huMcJmnyyvHP_0VVsEdDdH50ZuYVd2F-apJOJYpobwtQ';
+          try {
+            currentToken = await getToken(messaging, { vapidKey: VAPID_KEY });
+          } catch (e) {
+            console.error('Token error:', e);
+            alert('푸시 알림 토큰을 발급받지 못했습니다. 브라우저 환경 설정 문제가 있을 수 있습니다.');
+          }
 
           await updateDoc(doc(db, 'partners', currentUser.id), {
              isNotificationEnabled: true,
-             // fcmToken: currentToken
+             ...(currentToken ? { fcmTokens: [currentToken] } : {})
           });
           alert('알림 설정이 켜졌습니다. 백그라운드에서도 새 오더 알림을 받을 수 있습니다!');
         }
@@ -217,10 +234,24 @@ export default function Partner() {
             if (newQuote.status === '대기중' && (!newQuote.assignedTo || newQuote.assignedTo === loggedInId)) {
               if (Notification.permission === 'granted') {
                 const partnerName = newQuote.designatedPartnerName ? `[지정예약] ` : '';
-                new Notification('새로운 청소 오더 도착!', {
+                const title = '새로운 청소 오더 도착!';
+                const options = {
                   body: `${partnerName}새로운 오더가 접수되었습니다. 대시보드를 확인해주세요.`,
                   icon: '/logo192.png'
-                });
+                };
+                try {
+                  if ('serviceWorker' in navigator) {
+                    navigator.serviceWorker.ready.then(registration => {
+                      registration.showNotification(title, options);
+                    }).catch(() => {
+                      new Notification(title, options);
+                    });
+                  } else {
+                    new Notification(title, options);
+                  }
+                } catch (e) {
+                  console.error('Notification failed:', e);
+                }
               }
             }
           }
@@ -289,8 +320,13 @@ export default function Partner() {
   const myJobs = [...quotes]
     .filter(o => o.assignedTo === currentUser?.id && o.status === '상담완료')
     .sort((a, b) => {
-      const timeA = (a.date && a.time) ? new Date(`${a.date} ${a.time}`).getTime() : 0;
-      const timeB = (b.date && b.time) ? new Date(`${b.date} ${b.time}`).getTime() : 0;
+      // ★ date/cleaningDate 양쪽 폴백 처리 (이전 데이터 호환)
+      const dateA = a.date || a.cleaningDate || '';
+      const timeA_str = a.time || a.cleaningTime || '';
+      const dateB = b.date || b.cleaningDate || '';
+      const timeB_str = b.time || b.cleaningTime || '';
+      const timeA = (dateA && timeA_str) ? new Date(`${dateA} ${timeA_str}`).getTime() : 0;
+      const timeB = (dateB && timeB_str) ? new Date(`${dateB} ${timeB_str}`).getTime() : 0;
       return (timeA || 0) - (timeB || 0);
     });
     
@@ -301,8 +337,13 @@ export default function Partner() {
       if (a.isUrgent && !b.isUrgent) return -1;
       if (!a.isUrgent && b.isUrgent) return 1;
       
-      const timeA = (a.date && a.time) ? new Date(`${a.date} ${a.time}`).getTime() : 0;
-      const timeB = (b.date && b.time) ? new Date(`${b.date} ${b.time}`).getTime() : 0;
+      // ★ date/cleaningDate 양쪽 폴백 처리 (이전 데이터 호환)
+      const dateA = a.date || a.cleaningDate || '';
+      const timeA_str = a.time || a.cleaningTime || '';
+      const dateB = b.date || b.cleaningDate || '';
+      const timeB_str = b.time || b.cleaningTime || '';
+      const timeA = (dateA && timeA_str) ? new Date(`${dateA} ${timeA_str}`).getTime() : 0;
+      const timeB = (dateB && timeB_str) ? new Date(`${dateB} ${timeB_str}`).getTime() : 0;
       return (timeA || 0) - (timeB || 0);
     });
 
@@ -467,9 +508,37 @@ export default function Partner() {
   const handleToggleNotification = async (currentStatus: boolean) => {
     if (!db || !currentUser) return;
     try {
-      await updateDoc(doc(db, 'partners', currentUser.id), {
-        isNotificationEnabled: !currentStatus
-      });
+      const newStatus = !currentStatus;
+      let updateData: any = { isNotificationEnabled: newStatus };
+      
+      if (newStatus) {
+        // ★ 알림을 켤 때: 브라우저 권한이 없으면 먼저 요청
+        let permission = Notification.permission;
+        if (permission !== 'granted') {
+          permission = await Notification.requestPermission();
+        }
+        
+        if (permission === 'granted') {
+          const messaging = await getMessagingInstance();
+          if (messaging) {
+            try {
+              // ★ VAPID 키 필수: 없으면 FCM 토큰 발급 실패
+              const VAPID_KEY = 'BKbWKFBpXccjAXlskLV4VmXNG55f3fsywzuo2enZDr2huMcJmnyyvHP_0VVsEdDdH50ZuYVd2F-apJOJYpobwtQ';
+              const currentToken = await getToken(messaging, { vapidKey: VAPID_KEY });
+              if (currentToken) {
+                updateData.fcmTokens = [currentToken];
+              }
+            } catch (e) {
+              console.error('Token error:', e);
+            }
+          }
+        } else {
+          alert('알림 권한이 거부되었습니다. 브라우저 설정에서 알림 권한을 허용해주세요.');
+          return; // 권한 거부 시 설정 변경 안 함
+        }
+      }
+
+      await updateDoc(doc(db, 'partners', currentUser.id), updateData);
     } catch (e) {
       console.error(e);
       alert('설정 변경 중 오류가 발생했습니다.');
@@ -758,8 +827,8 @@ export default function Partner() {
           </div>
         )}
         
-        {/* 푸시 알림 유도 배너 */}
-        {currentUser && !currentUser.isNotificationEnabled && Notification.permission !== 'granted' && (
+        {/* 푸시 알림 유도 배너 - FCM 토큰이 없거나 알림이 미설정일 때 표시 */}
+        {currentUser && (!currentUser.isNotificationEnabled || !currentUser.fcmTokens || currentUser.fcmTokens?.length === 0) && (
           <div className="mb-8 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-2xl p-4 shadow-sm flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="bg-blue-100 p-2 rounded-xl">
@@ -870,8 +939,8 @@ export default function Partner() {
           </div>
         )}
         
-        {/* 푸시 알림 유도 배너 */}
-        {currentUser && !currentUser.isNotificationEnabled && Notification.permission !== 'granted' && (
+        {/* 푸시 알림 유도 배너 - FCM 토큰이 없거나 알림이 미설정일 때 표시 */}
+        {currentUser && (!currentUser.isNotificationEnabled || !currentUser.fcmTokens || currentUser.fcmTokens?.length === 0) && (
           <div className="mb-5 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-2xl p-4 shadow-sm flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="bg-blue-100 p-2 rounded-xl">
@@ -942,17 +1011,17 @@ export default function Partner() {
                           </span>
                         )}
                         <div className="flex justify-between items-start mb-4">
-                          <span className={`${order.isUrgent ? 'bg-rose-50 text-rose-700 border-rose-100' : 'bg-blue-50 text-blue-700 border-blue-100'} font-bold text-xs px-3 py-1.5 rounded-lg border`}>{order.type}</span>
+                          <span className={`${order.isUrgent ? 'bg-rose-50 text-rose-700 border-rose-100' : 'bg-blue-50 text-blue-700 border-blue-100'} font-bold text-xs px-3 py-1.5 rounded-lg border`}>{order.type || order.cleaningType || '청소'}</span>
                           <span className="text-slate-900 font-black tracking-tight text-xl">{getPartnerPrice(order)}원</span>
                         </div>
                         <div className="space-y-2.5">
                           <div className="flex items-center gap-2.5 text-sm font-medium text-slate-600">
                             <Calendar size={18} className="text-slate-400 shrink-0" />
-                            <span className="text-slate-900">{order.date}</span> <span className="text-blue-600 font-bold">{order.time}</span>
+                            <span className="text-slate-900">{order.date || order.cleaningDate || '일정 미정'}</span> <span className="text-blue-600 font-bold">{order.time || order.cleaningTime || ''}</span>
                           </div>
                           <div className="flex items-center gap-2.5 text-sm font-medium text-slate-600">
                             <MapPin size={18} className="text-slate-400 shrink-0" />
-                            {order.location ? order.location.split(' ').slice(0, 3).join(' ') : '주소 미상'} <span className="text-xs text-rose-500 bg-rose-50 px-1.5 py-0.5 rounded ml-1">상세비공개</span>
+                            {(order.location || order.address) ? (order.location || order.address)!.split(' ').slice(0, 3).join(' ') : '주소 미상'} <span className="text-xs text-rose-500 bg-rose-50 px-1.5 py-0.5 rounded ml-1">상세비공개</span>
                           </div>
                           <div className="flex items-center gap-2.5 text-sm font-medium text-slate-600">
                             <Home size={18} className="text-slate-400 shrink-0" />
@@ -1001,13 +1070,13 @@ export default function Partner() {
                     <div className="p-5 pl-6">
                       <div className="flex justify-between items-center mb-2">
                         <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded">확정완료</span>
-                        <span className="text-xs font-bold text-slate-500">{job.type}</span>
+                        <span className="text-xs font-bold text-slate-500">{job.type || job.cleaningType || '청소'}</span>
                       </div>
                       
                       {/* 1. 시공 날짜 */}
                       <div className="mb-4">
                         <div className="text-xs text-slate-500 font-bold mb-1">시공 날짜</div>
-                        <h3 className="font-black text-slate-900 text-xl tracking-tight">{job.date} <span className="text-emerald-600">{job.time}</span></h3>
+                        <h3 className="font-black text-slate-900 text-xl tracking-tight">{job.date || job.cleaningDate || '일정 미정'} <span className="text-emerald-600">{job.time || job.cleaningTime || ''}</span></h3>
                       </div>
                       
                       {/* 상세 정보 노출 구역 */}
@@ -1016,23 +1085,23 @@ export default function Partner() {
                         {/* 2. 시공 주소 */}
                         <div className="flex flex-col gap-1">
                            <div className="flex items-center gap-1.5 text-xs text-slate-500 font-bold mb-0.5"><MapPin size={14}/> 시공 주소</div>
-                           <span className="text-sm font-bold text-slate-900 leading-snug">{job.location}</span>
+                           <span className="text-sm font-bold text-slate-900 leading-snug">{job.location || job.address}</span>
                         </div>
                         
                         <div className="h-px w-full bg-slate-200"></div>
                         
-                        {/* 2-5. 업체명(담당자) */}
+                        {/* 2-5. 신청자 이름 */}
                         <div className="flex flex-col gap-1">
-                           <div className="flex items-center gap-1.5 text-xs text-slate-500 font-bold mb-0.5"><User size={14}/> 업체명 (담당자)</div>
-                           <span className="text-sm font-bold text-slate-900 leading-snug">{job.businessName || job.name || job.customerName || '고객(이름 미상)'}</span>
+                           <div className="flex items-center gap-1.5 text-xs text-slate-500 font-bold mb-0.5"><User size={14}/> 신청자 이름</div>
+                           <span className="text-sm font-bold text-slate-900 leading-snug">{job.customerName || job.businessName || job.name || '고객(이름 미상)'}</span>
                         </div>
 
                         <div className="h-px w-full bg-slate-200"></div>
                         
-                        {/* 3. 담당자 연락처 */}
+                        {/* 3. 신청자 연락처 */}
                         <div className="flex flex-col gap-1">
-                           <div className="flex items-center gap-1.5 text-xs text-slate-500 font-bold mb-0.5"><Phone size={14}/> 담당자 연락처</div>
-                           <span className="text-sm font-black text-blue-600">{job.realPhone || '010-0000-0000'}</span>
+                           <div className="flex items-center gap-1.5 text-xs text-slate-500 font-bold mb-0.5"><Phone size={14}/> 신청자 연락처</div>
+                           <span className="text-sm font-black text-blue-600">{job.contactInfo || job.phone || job.realPhone || '010-0000-0000'}</span>
                         </div>
                         
                         <div className="h-px w-full bg-slate-200"></div>
@@ -1041,7 +1110,7 @@ export default function Partner() {
                         <div className="flex flex-col gap-1">
                            <div className="flex items-center gap-1.5 text-xs text-slate-500 font-bold mb-0.5"><Info size={14}/> 추가 요청 및 메모</div>
                            <span className="text-[13px] font-medium text-slate-700 leading-relaxed bg-white p-2.5 rounded-lg border border-slate-100 shadow-sm mt-0.5 whitespace-pre-wrap">
-                             {job.detail || '기재된 특이사항이 없습니다.'}
+                             {job.detail || job.memo || '기재된 특이사항이 없습니다.'}
                            </span>
                         </div>
 
@@ -1233,19 +1302,19 @@ export default function Partner() {
               <div className="p-6">
                 <div className="w-12 h-1.5 bg-slate-200 rounded-full mx-auto mb-6"></div>
                 <div className="mb-6">
-                  <span className="bg-blue-50 text-blue-700 font-bold text-xs px-3 py-1 rounded-lg border border-blue-100 mb-3 inline-block">{selectedOrder.type}</span>
-                  <h2 className="text-2xl font-black text-slate-900 mb-1">{selectedOrder.location ? selectedOrder.location.split(' ').slice(0, 3).join(' ') : '주소 미상'}</h2>
+                  <span className="bg-blue-50 text-blue-700 font-bold text-xs px-3 py-1 rounded-lg border border-blue-100 mb-3 inline-block">{selectedOrder.type || selectedOrder.cleaningType || '청소'}</span>
+                  <h2 className="text-2xl font-black text-slate-900 mb-1">{(selectedOrder.location || selectedOrder.address) ? (selectedOrder.location || selectedOrder.address)!.split(' ').slice(0, 3).join(' ') : '주소 미상'}</h2>
                   <p className="text-slate-500 font-medium break-keep">상세 주소는 수락 시 1초 만에 즉시 완전 공개됩니다.</p>
                 </div>
                 
                 <div className="bg-slate-50 rounded-xl p-4 space-y-4 border border-slate-100 mb-6">
                   <div className="flex justify-between items-center">
                     <span className="text-slate-500 font-medium text-sm">일정</span>
-                    <span className="text-slate-900 font-bold">{selectedOrder.date} ({selectedOrder.time})</span>
+                    <span className="text-slate-900 font-bold">{selectedOrder.date || selectedOrder.cleaningDate || '일정 미정'} ({selectedOrder.time || selectedOrder.cleaningTime || ''})</span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-slate-500 font-medium text-sm">주거형태</span>
-                    <span className="text-slate-900 font-bold">{selectedOrder.house} · {selectedOrder.size}평</span>
+                    <span className="text-slate-900 font-bold">{selectedOrder.house || (selectedOrder.houseType ? `${selectedOrder.houseType} ${selectedOrder.houseSubType || ''}` : '정보 없음')} · {selectedOrder.size}평</span>
                   </div>
                   {selectedOrder.options && selectedOrder.options.length > 0 && (
                     <div className="flex flex-col pt-3 border-t border-slate-200">
@@ -1555,7 +1624,7 @@ export default function Partner() {
                 <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
                   <div className="flex justify-between items-center text-sm mb-1">
                      <span className="text-slate-500 font-bold">시공 주소</span>
-                     <span className="text-slate-900 font-black">{jobToComplete.location}</span>
+                     <span className="text-slate-900 font-black">{jobToComplete.location || jobToComplete.address}</span>
                   </div>
                   <div className="flex justify-between items-center text-sm">
                      <span className="text-slate-500 font-bold">진행도</span>

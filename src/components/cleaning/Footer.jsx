@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 
 export default function Footer() {
   return (
-    <footer className="bg-[#f8f9fc] pt-16 pb-8 border-t border-slate-200">
+    <footer className="snap-section bg-[#f8f9fc] pt-16 pb-8 border-t border-slate-200">
       <div className="max-w-6xl mx-auto px-4">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-12">
           

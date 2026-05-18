@@ -22,7 +22,7 @@ export default function CleaningHome() {
   };
 
   return (
-    <div className="min-h-screen bg-white text-slate-800 font-sans relative">
+    <div className="min-h-screen bg-white text-slate-800 font-sans relative snap-scroll-mobile">
       <Header onOpenQuote={openQuoteModal} />
       <HeroSection onOpenQuote={openQuoteModal} />
       <StatsBannerSection />

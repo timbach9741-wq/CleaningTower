@@ -239,7 +239,7 @@ export default function Quote() {
       contactInfo,
       memo: memoParts.join('\n'),
       totalPrice: totalPriceIncVat,
-      status: 'pending',
+      status: '대기중',
       createdAt: new Date()
     };
   };

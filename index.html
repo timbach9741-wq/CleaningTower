@@ -17,6 +17,10 @@
     <meta name="keywords" content="청소타워, 입주청소, 이사청소, 거주청소, 사무실청소, 청소업체, 청소전문가, 프리미엄청소" />
     <meta name="author" content="청소타워" />
     <link rel="canonical" href="https://cheongsotower.kr" />
+    <!-- PWA Settings -->
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="theme-color" content="#0f172a" />
+    <link rel="apple-touch-icon" href="/favicon.svg" />
 
     <!-- Open Graph / Facebook / Kakao -->
     <meta property="og:type" content="website" />
@@ -47,5 +51,28 @@
   <body class="antialiased text-gray-900 bg-white">
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+    <script>
+      // PWA 설치 이벤트를 전역에서 미리 캡처 (React 마운트 전 발생 시 유실 방지)
+      window.deferredPrompt = null;
+      window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        window.deferredPrompt = e;
+        // 커스텀 이벤트를 발생시켜 React 앱에 알림
+        window.dispatchEvent(new Event('pwa-prompt-ready'));
+      });
+
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js').then(
+            (registration) => {
+              console.log('ServiceWorker registration successful');
+            },
+            (err) => {
+              console.log('ServiceWorker registration failed: ', err);
+            }
+          );
+        });
+      }
+    </script>
   </body>
 </html>

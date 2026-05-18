@@ -4,7 +4,7 @@ import { ChevronRight } from 'lucide-react';
 
 export default function CoreServicesSection() {
   return (
-    <section id="services" className="py-24 bg-slate-100">
+    <section id="services" className="snap-section py-24 bg-slate-100">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16">
           <span className="inline-block px-4 py-1 mb-4 text-sm font-bold bg-blue-100 text-blue-700 rounded-full">CORE SERVICES</span>

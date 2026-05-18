@@ -28,7 +28,7 @@ export default function HeroSection({ onOpenQuote }) {
   }, []);
 
   return (
-    <section className="relative w-full min-h-[700px] flex items-center justify-center overflow-hidden bg-gradient-to-b from-blue-50 to-white pt-24 pb-16">
+    <section className="snap-section relative w-full min-h-[700px] flex items-center justify-center overflow-hidden bg-gradient-to-b from-blue-50 to-white pt-24 pb-16">
       <div className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 lg:grid-cols-2 items-center gap-12 lg:gap-16">
           

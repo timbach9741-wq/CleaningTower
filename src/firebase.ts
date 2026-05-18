@@ -4,6 +4,8 @@ import { getFirestore } from 'firebase/firestore';
 import type { Firestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 import type { FirebaseStorage } from 'firebase/storage';
+import { getMessaging, isSupported } from 'firebase/messaging';
+import type { Messaging } from 'firebase/messaging';
 
 // Firebase 파트너 배차 시스템 설정
 const firebaseConfig = {
@@ -24,6 +26,7 @@ const app: FirebaseApp = getApps().length === 0
 // Firestore & Storage 인스턴스 (싱글톤 패턴)
 let _db: Firestore | null = null;
 let _storage: FirebaseStorage | null = null;
+let _messaging: Messaging | null = null;
 
 // 지연 초기화: 실제로 사용될 때만 인스턴스를 생성
 // 왜? → Firebase SDK 트리쉐이킹 + 초기 로딩 시 불필요한 네트워크 연결 방지
@@ -39,6 +42,16 @@ export function getStorageInstance(): FirebaseStorage {
     _storage = getStorage(app);
   }
   return _storage;
+}
+
+export async function getMessagingInstance(): Promise<Messaging | null> {
+  if (!_messaging) {
+    const supported = await isSupported();
+    if (supported) {
+      _messaging = getMessaging(app);
+    }
+  }
+  return _messaging;
 }
 
 // 기존 코드와의 호환성을 위해 즉시 초기화된 export도 유지

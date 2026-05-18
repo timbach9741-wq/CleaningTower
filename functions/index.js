@@ -6,23 +6,34 @@ admin.initializeApp();
 // ★ 관리자(대표) 연락처: 모든 의뢰가 이 번호로 알림 발송됩니다.
 const ADMIN_PHONE = '01012345678';
 
+// ★ 텔레그램 봇 정보
+const TELEGRAM_BOT_TOKEN = '8936248195:AAElU5VfwGa3rWNFLLnknMq13ilpZ4uPMJ4';
+const TELEGRAM_CHAT_ID = '5324471356';
+
 /**
- * ──────────────────────────────────────────────
- * [TODO] 카카오톡 알림톡 연동 (추후 작업 예정)
- * ──────────────────────────────────────────────
- * - 카카오 비즈메시지 API 연동 예정
- * - 알림톡 템플릿 등록 후 자동 발송 구현
- * - 현재는 Mock 모드(콘솔 로그)로 동작
- * ──────────────────────────────────────────────
+ * 텔레그램으로 알림을 전송하는 함수
  */
 async function sendNotification(to, message) {
-  // [Mock 모드] 카카오톡 연동 전까지는 콘솔 로그로 대체
-  console.log('═══════════════════════════════════════');
-  console.log(`📨 [알림 발송 - Mock] 수신자: ${to}`);
-  console.log(`📝 내용:\n${message}`);
-  console.log('═══════════════════════════════════════');
-  console.log('※ 카카오톡 알림톡 연동 후 실제 발송됩니다.');
-  return true;
+  try {
+    // 관리자(ADMIN_PHONE)에게 보내는 메시지일 경우 텔레그램으로 전송
+    if (to === ADMIN_PHONE) {
+      const axios = require('axios');
+      const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
+      await axios.post(url, {
+        chat_id: TELEGRAM_CHAT_ID,
+        text: message
+      });
+      console.log(`[텔레그램 알림 성공] 관리자에게 전송 완료`);
+    } else {
+      // 일반 파트너에게 가는 메시지는 임시로 로그만 남김 (추후 알림톡/문자 연동)
+      console.log(`📨 [알림 발송 - Mock] 수신자: ${to}`);
+      console.log(`📝 내용:\n${message}`);
+    }
+    return true;
+  } catch (error) {
+    console.error(`[알림 발송 실패]`, error.response?.data || error.message);
+    return false;
+  }
 }
 
 /**
@@ -134,7 +145,7 @@ exports.notifyPartnerOnSignup = functions.firestore
 
     try {
       // ★ 관리자에게 새 파트너 가입 알림
-      const adminSignupMsg = `🆕 [데일리하우징] 새 파트너 가입!
+      const adminSignupMsg = `🆕 [청소타워] 파트너스 가입 요청!
 업체명: ${partnerName || '미입력'}
 연락처: ${phone}
 플랜: ${newPartner.plan || 'basic'}
@@ -144,14 +155,14 @@ exports.notifyPartnerOnSignup = functions.firestore
       await sendNotification(ADMIN_PHONE, adminSignupMsg);
 
       // 파트너에게 환영 메시지
-      const msg = `[데일리하우징 파트너 가입 완료]
+      const msg = `[청소타워 파트너 가입 완료]
 ${partnerName} 파트너님, 환영합니다! 🎉
-데일리하우징 파트너 가입이 완료되었습니다.
+청소타워 파트너 가입이 완료되었습니다.
 
 승인이 완료되면 즉시 오더를 수신하실 수 있습니다.
 
-- 문의: 카카오톡 '데일리하우징' 채널
-- 파트너 페이지: https://dailyhousing.co.kr/partner`;
+- 문의: 카카오톡 '청소타워' 채널
+- 파트너 페이지: https://cleantower.kr/partner`;
 
       await sendNotification(phone, msg);
       console.log(`[Signup Notification] ${partnerName} 파트너님께 가입 안내 발송 성공`);

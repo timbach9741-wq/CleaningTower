@@ -2,7 +2,7 @@ import React from 'react';
 
 export default function PromisesSection() {
   return (
-    <section className="py-24 bg-slate-50 border-t border-slate-200">
+    <section className="snap-section py-24 bg-slate-50 border-t border-slate-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16">
           <span className="inline-block px-4 py-1 mb-4 text-sm font-bold bg-indigo-100 text-indigo-700 rounded-full">OUR PROMISE</span>

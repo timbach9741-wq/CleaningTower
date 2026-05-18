@@ -60,6 +60,9 @@ export interface PartnerUser {
   loginPassword?: string;
   phone?: string;
   createdAt?: string;
+  plan?: string;
+  teamSize?: string;
+  mainServices?: string[];
 }
 
 export default function Admin() {
@@ -70,6 +73,7 @@ export default function Admin() {
   const [quotes, setQuotes] = useState<Order[]>([]);
   const [partners, setPartners] = useState<PartnerUser[]>([]);
   const [selectedQuoteDetail, setSelectedQuoteDetail] = useState<Order | null>(null);
+  const [selectedPartnerDetail, setSelectedPartnerDetail] = useState<PartnerUser | null>(null);
   const [showNotifications, setShowNotifications] = useState(false);
   
   // 파트너 수동 계정 생성 관련 상태
@@ -1079,13 +1083,19 @@ export default function Admin() {
                                   ? 'bg-red-100 text-red-700 border-red-200'
                                   : 'bg-amber-100 text-amber-700 border-amber-200'
                               }`}>
-                                {partner.status === 'active' ? '활동 중' : partner.status === 'suspended' ? '활동 정지' : '입금 대기'}
+                                {partner.status === 'active' ? '활동 중' : partner.status === 'suspended' ? '활동 정지' : '승인 대기'}
                               </span>
                             </td>
                             <td className="p-4 text-center">
                               <div className="flex flex-col gap-2">
                                 {partner.status === 'pending' && (
                                   <>
+                                    <button 
+                                      onClick={() => setSelectedPartnerDetail(partner)}
+                                      className="w-full bg-blue-50 hover:bg-blue-100 text-blue-600 font-bold py-2 rounded-lg text-xs border border-blue-200 transition-all active:scale-[0.98]"
+                                    >
+                                      상세 확인
+                                    </button>
                                     <button 
                                       onClick={() => handleApprovePartner(partner.id)}
                                       className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-2 rounded-lg text-xs shadow-md transition-all active:scale-[0.98]"
@@ -1171,7 +1181,7 @@ export default function Admin() {
                                 ? 'bg-red-50 text-red-600 border-red-200/60'
                                 : 'bg-amber-50 text-amber-600 border-amber-200/60'
                             }`}>
-                              {partner.status === 'active' ? '활동 중' : partner.status === 'suspended' ? '활동 정지' : '입금 대기'}
+                              {partner.status === 'active' ? '활동 중' : partner.status === 'suspended' ? '활동 정지' : '승인 대기'}
                             </span>
                           </div>
                           
@@ -1188,20 +1198,28 @@ export default function Admin() {
                           
                           <div className="mt-1 flex gap-2">
                             {partner.status === 'pending' && (
-                              <>
+                              <div className="flex flex-col gap-2 w-full">
                                 <button 
-                                  onClick={() => handleApprovePartner(partner.id)}
-                                  className="flex-1 bg-slate-900 hover:bg-slate-800 text-white font-black py-3 rounded-xl shadow-[0_4px_12px_rgba(0,0,0,0.1)] transition-all active:scale-[0.98] active:shadow-none text-sm"
+                                  onClick={() => setSelectedPartnerDetail(partner)}
+                                  className="w-full bg-blue-50 hover:bg-blue-100 text-blue-600 font-bold py-3 rounded-xl border border-blue-200 transition-all active:scale-[0.98] text-sm"
                                 >
-                                  승인
+                                  상세 확인
                                 </button>
-                                <button 
-                                  onClick={() => handleDeletePartner(partner.id)}
-                                  className="flex-1 bg-red-50 hover:bg-red-100 text-red-600 font-bold py-3 rounded-xl border border-red-200 transition-all active:scale-[0.98] text-sm"
-                                >
-                                  거절
-                                </button>
-                              </>
+                                <div className="flex gap-2 w-full">
+                                  <button 
+                                    onClick={() => handleApprovePartner(partner.id)}
+                                    className="flex-1 bg-slate-900 hover:bg-slate-800 text-white font-black py-3 rounded-xl shadow-[0_4px_12px_rgba(0,0,0,0.1)] transition-all active:scale-[0.98] active:shadow-none text-sm"
+                                  >
+                                    승인
+                                  </button>
+                                  <button 
+                                    onClick={() => handleDeletePartner(partner.id)}
+                                    className="flex-1 bg-red-50 hover:bg-red-100 text-red-600 font-bold py-3 rounded-xl border border-red-200 transition-all active:scale-[0.98] text-sm"
+                                  >
+                                    거절
+                                  </button>
+                                </div>
+                              </div>
                             )}
                             {partner.status === 'active' && (
                               <div className="flex flex-col gap-2 w-full">
@@ -1612,6 +1630,121 @@ export default function Admin() {
             <div className="p-4 border-t border-gray-100 bg-gray-50 flex justify-end gap-3 rounded-b-2xl">
               <button onClick={() => setSelectedQuoteDetail(null)} className="px-5 py-2.5 font-bold text-gray-600 bg-white border border-gray-300 rounded-xl hover:bg-gray-50 shadow-sm transition-all focus:ring-2 focus:ring-gray-200">닫기</button>
               <button onClick={() => window.print()} className="px-5 py-2.5 font-bold text-white bg-blue-600 rounded-xl hover:bg-blue-700 shadow-sm transition-all shadow-blue-600/20 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">발주서 PDF 인쇄</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 파트너 상세 정보 모달 */}
+      {selectedPartnerDetail && (
+        <div className="fixed inset-0 bg-black/60 z-[110] flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-slate-900 text-white">
+              <div>
+                <h3 className="text-lg font-bold">파트너 가입 정보 확인</h3>
+                <p className="text-xs text-slate-300 mt-1">신청한 파트너의 상세 정보를 확인합니다.</p>
+              </div>
+              <button onClick={() => setSelectedPartnerDetail(null)} className="text-slate-300 hover:text-white transition-colors">
+                <X size={24} />
+              </button>
+            </div>
+            
+            <div className="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-xs font-bold text-gray-400 mb-1">업체명</p>
+                  <p className="text-sm font-bold text-gray-800">{selectedPartnerDetail.companyName || '-'}</p>
+                </div>
+                <div>
+                  <p className="text-xs font-bold text-gray-400 mb-1">담당자/대표자명</p>
+                  <p className="text-sm font-bold text-gray-800">{selectedPartnerDetail.managerName || selectedPartnerDetail.name || '-'}</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-xs font-bold text-gray-400 mb-1">연락처</p>
+                  <p className="text-sm font-bold text-gray-800">{selectedPartnerDetail.phone || '-'}</p>
+                </div>
+                <div>
+                  <p className="text-xs font-bold text-gray-400 mb-1">신청 플랜</p>
+                  <p className="text-sm font-bold text-blue-600">{selectedPartnerDetail.plan || '일반'}</p>
+                </div>
+              </div>
+
+              <div>
+                <p className="text-xs font-bold text-gray-400 mb-1">활동 지역</p>
+                <p className="text-sm font-bold text-gray-800">{selectedPartnerDetail.region || '-'}</p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-xs font-bold text-gray-400 mb-1">팀 규모</p>
+                  <p className="text-sm font-bold text-gray-800">{selectedPartnerDetail.teamSize || '-'}</p>
+                </div>
+                <div>
+                  <p className="text-xs font-bold text-gray-400 mb-1">가입일</p>
+                  <p className="text-sm font-bold text-gray-800">
+                    {selectedPartnerDetail.createdAt ? new Date(selectedPartnerDetail.createdAt).toLocaleDateString() : '날짜 없음'}
+                  </p>
+                </div>
+              </div>
+
+              <div>
+                <p className="text-xs font-bold text-gray-400 mb-1">주요 서비스</p>
+                <div className="flex flex-wrap gap-1 mt-1">
+                  {Array.isArray(selectedPartnerDetail.mainServices) ? (
+                    selectedPartnerDetail.mainServices.map((service, index) => (
+                      <span key={index} className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded-md font-medium">
+                        {service}
+                      </span>
+                    ))
+                  ) : (
+                    <p className="text-sm font-bold text-gray-800">{selectedPartnerDetail.mainServices || '-'}</p>
+                  )}
+                </div>
+              </div>
+
+              <div className="bg-gray-50 p-3 rounded-lg border border-gray-100 mt-2">
+                <p className="text-xs font-bold text-gray-500 mb-1">계정 정보</p>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <p className="text-[11px] text-gray-400">ID</p>
+                    <p className="text-xs font-mono font-bold text-gray-700">{selectedPartnerDetail.loginId || '-'}</p>
+                  </div>
+                  <div>
+                    <p className="text-[11px] text-gray-400">PW</p>
+                    <p className="text-xs font-mono font-bold text-gray-700">{selectedPartnerDetail.loginPassword || '-'}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="p-4 border-t border-gray-100 bg-gray-50 flex justify-end gap-2">
+              <button onClick={() => setSelectedPartnerDetail(null)} className="px-4 py-2 font-bold text-gray-600 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 text-sm">닫기</button>
+              
+              {selectedPartnerDetail.status === 'pending' && (
+                <>
+                  <button 
+                    onClick={() => {
+                      handleDeletePartner(selectedPartnerDetail.id);
+                      setSelectedPartnerDetail(null);
+                    }} 
+                    className="px-4 py-2 font-bold text-red-600 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 text-sm"
+                  >
+                    거절 (삭제)
+                  </button>
+                  <button 
+                    onClick={() => {
+                      handleApprovePartner(selectedPartnerDetail.id);
+                      setSelectedPartnerDetail(null);
+                    }} 
+                    className="px-6 py-2 font-bold text-white bg-slate-900 rounded-lg hover:bg-slate-800 shadow-md text-sm"
+                  >
+                    승인 및 활성화
+                  </button>
+                </>
+              )}
             </div>
           </div>
         </div>

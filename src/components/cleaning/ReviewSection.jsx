@@ -120,7 +120,7 @@ export default function ReviewSection() {
   }, [isHovered]);
 
   return (
-    <section id="reviews" className="py-24 bg-neutral-50 overflow-hidden relative">
+    <section id="reviews" className="snap-section py-24 bg-neutral-50 overflow-hidden relative">
       {/* Background Decorative Elements */}
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
         <div className="absolute top-[-10%] left-[-5%] w-[40%] h-[40%] bg-blue-100/40 rounded-full blur-3xl" />

@@ -35,3 +35,41 @@ body > * {
 *, *::before, *::after {
   box-sizing: border-box;
 }
+
+/* =============================================
+ * 모바일 섹션별 스크롤 스냅 (페이지 바이 페이지)
+ * 
+ * 핵심: scroll-snap-type은 반드시 "실제 스크롤이 발생하는 요소"에 적용해야 함.
+ * 기본적으로 스크롤은 html/body에서 발생하므로, 래퍼 div에 걸면 동작 안 함.
+ * → 래퍼 div를 height: 100dvh + overflow-y: auto로 스크롤 컨테이너로 전환.
+ * → body의 스크롤은 :has() 셀렉터로 차단하여 이중 스크롤 방지.
+ * 
+ * - proximity: 강제로 잠기지 않고, 스크롤이 섹션 경계 근처에서만 부드럽게 스냅
+ * - md(768px) 이상에서는 해제되어 데스크톱 환경에 영향 없음
+ * ============================================= */
+@media (max-width: 767px) {
+  /* body의 기본 스크롤을 막고, 래퍼 div가 스크롤을 전담 */
+  body:has(.snap-scroll-mobile) {
+    overflow: hidden;
+  }
+
+  /* 래퍼 div를 실제 스크롤 컨테이너로 전환 */
+  .snap-scroll-mobile {
+    height: 100dvh; /* 모바일 브라우저 주소창 변동 대응 (dynamic viewport height) */
+    overflow-y: auto;
+    scroll-snap-type: y proximity;
+    -webkit-overflow-scrolling: touch; /* iOS 부드러운 관성 스크롤 */
+  }
+
+  /* 각 섹션을 스냅 포인트로 설정 */
+  .snap-section {
+    scroll-snap-align: start;
+    /* 최소 화면 높이를 채워 "한 페이지" 느낌 부여 */
+    min-height: 100dvh;
+  }
+
+  /* StatsBanner 같은 짧은 섹션은 높이 강제 안 함 (자연 높이 유지) */
+  .snap-section-short {
+    scroll-snap-align: start;
+  }
+}

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Building2, User, Upload, ArrowRight, CheckCircle, ShieldCheck } from 'lucide-react';
-import { db } from '../firebase';
+import { getDb } from '../firebase';
 import { collection, addDoc } from 'firebase/firestore';
 import { useNavigate, useLocation } from 'react-router-dom';
 
@@ -52,24 +52,25 @@ export default function PartnerSignup() {
         region: finalRegion, // 배열이 아닌 문자열로 통합 저장
         teamSize: formData.teamSize,
         mainServices: formData.mainServices,
-        status: 'active', // 가입 즉시 완료 상태 부여 (사업자 페이지 URL 전달은 관리자가 별도 진행)
+        status: 'pending', // 가입 시 관리자 승인 대기 상태로 변경
         loginId: formData.phone.replace(/[^0-9]/g, ''), // 연락처(숫자만)를 아이디로 사용
         password: formData.password, // 직접 설정한 비밀번호
         createdAt: new Date().toISOString()
       };
 
-      if (db) {
-        await addDoc(collection(db, 'partners'), firestoreData);
+      const dbInstance = getDb();
+      if (dbInstance) {
+        await addDoc(collection(dbInstance, 'partners'), firestoreData);
       }
       
       setFormData(prev => ({
         ...prev,
-        status: 'active'
+        status: 'pending'
       }));
       setStep(4); // 완료 화면
     } catch (e) {
       console.error(e);
-      alert("신청 중 오류가 발생했습니다.");
+      alert(`신청 중 오류가 발생했습니다: ${e instanceof Error ? e.message : '알 수 없는 오류'}`);
     }
   };
 
@@ -487,7 +488,7 @@ export default function PartnerSignup() {
                     홈으로
                   </button>
                   <button 
-                    onClick={() => navigate('/partner-dashboard')}
+                    onClick={() => navigate('/partner-dashboard', { state: { showLogin: true } })}
                     className="flex-1 py-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-lg shadow-blue-600/20 active:scale-[0.98] transition-transform"
                   >
                     파트너스 로그인하러 가기

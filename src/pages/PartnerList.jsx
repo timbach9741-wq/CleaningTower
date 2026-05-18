@@ -734,7 +734,7 @@ export default function PartnerList() {
                     </h2>
                     <span className="text-slate-400 text-xs lg:text-sm font-medium">총 {sortedPremium.length}건</span>
                   </div>
-                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 lg:gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
                     {currentPremiumPartners.map(partner => (
                       <div 
                         key={partner.id} 
@@ -752,11 +752,11 @@ export default function PartnerList() {
                             <h2 className="text-xs lg:text-base font-bold text-slate-900 line-clamp-1 group-hover:text-blue-700 transition-colors mb-0.5">
                               {partner.name}
                             </h2>
-                            <div className="text-amber-600 font-bold flex items-center gap-0.5 lg:gap-1 text-[8px] lg:text-[11px] mb-1 lg:mb-2">
+                            <div className="text-amber-600 font-bold flex items-center gap-0.5 lg:gap-1 text-[10px] sm:text-[11px] mb-1 lg:mb-2">
                               <span className="text-amber-500">★</span>
                               {partner.rating} ({partner.reviews})
                             </div>
-                            <p className="text-slate-400 text-[8px] lg:text-[10px] mb-1.5 lg:mb-2 font-medium line-clamp-1">{partner.area}</p>
+                            <p className="text-slate-400 text-[10px] lg:text-[10px] mb-1.5 lg:mb-2 font-medium line-clamp-1">{partner.area}</p>
                             <p className="hidden lg:block text-slate-600 text-xs line-clamp-2 mb-3 h-8">
                               {partner.desc}
                             </p>
@@ -769,12 +769,12 @@ export default function PartnerList() {
                             </div>
                           </div>
                           <div className="flex items-center justify-between pt-1.5 lg:pt-3 border-t border-blue-100 mt-auto">
-                            <div className="font-bold text-[9px] lg:text-xs text-blue-700 truncate pr-2">
+                            <div className="font-bold text-[10px] lg:text-xs text-blue-700 truncate pr-2">
                               <span className="text-blue-500 mr-1">💎</span>
                               <span className="hidden lg:inline text-blue-500 mr-1 font-semibold">우리업체의 장점:</span>
                               {partner.tags.map(t => t.replace('#', '')).join(' · ')}
                             </div>
-                            <button onClick={(e) => { e.stopPropagation(); setSelectedPartner(partner); }} className="text-blue-700 font-bold text-[8px] lg:text-xs hover:underline flex items-center shrink-0">
+                            <button onClick={(e) => { e.stopPropagation(); setSelectedPartner(partner); }} className="text-blue-700 font-bold text-[10px] lg:text-xs hover:underline flex items-center shrink-0 min-h-[44px] min-w-[44px] justify-center">
                               상세 보기
                             </button>
                           </div>
@@ -791,7 +791,7 @@ export default function PartnerList() {
                     <h2 className="font-bold text-slate-700 text-base lg:text-lg">일반 파트너</h2>
                     <span className="text-slate-400 text-xs lg:text-sm font-medium">총 {sortedBasic.length}건</span>
                   </div>
-                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 lg:gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
                     {currentBasicPartners.map(partner => (
                       <div 
                         key={partner.id} 
@@ -812,11 +812,11 @@ export default function PartnerList() {
                             <h2 className="text-xs lg:text-base font-bold text-slate-900 line-clamp-1 group-hover:text-blue-700 transition-colors mb-0.5">
                               {partner.name}
                             </h2>
-                            <div className="text-amber-600 font-bold flex items-center gap-0.5 lg:gap-1 text-[8px] lg:text-[11px] mb-1 lg:mb-2">
+                            <div className="text-amber-600 font-bold flex items-center gap-0.5 lg:gap-1 text-[10px] sm:text-[11px] mb-1 lg:mb-2">
                               <span className="text-amber-500">★</span>
                               {partner.rating} ({partner.reviews})
                             </div>
-                            <p className="text-slate-400 text-[8px] lg:text-[10px] mb-1.5 lg:mb-2 font-medium line-clamp-1">{partner.area}</p>
+                            <p className="text-slate-400 text-[10px] lg:text-[10px] mb-1.5 lg:mb-2 font-medium line-clamp-1">{partner.area}</p>
                             <div className="hidden lg:flex flex-wrap gap-1 mb-2 lg:mb-3 h-8 lg:h-12 overflow-hidden content-start">
                               {partner.tags.map(tag => (
                                 <span key={tag} className="bg-slate-50 border border-slate-200 text-slate-500 px-1 lg:px-1.5 py-0.5 rounded text-[8px] lg:text-[10px] font-semibold group-hover:border-blue-200 group-hover:text-blue-600 transition-colors">
@@ -826,12 +826,12 @@ export default function PartnerList() {
                             </div>
                           </div>
                           <div className="flex items-center justify-between pt-1.5 lg:pt-3 border-t border-slate-100 mt-auto">
-                            <div className="font-bold text-[9px] lg:text-xs text-slate-700 truncate pr-2">
+                            <div className="font-bold text-[10px] lg:text-xs text-slate-700 truncate pr-2">
                               <span className="text-amber-500 mr-1">✨</span>
                               <span className="hidden lg:inline text-slate-500 mr-1 font-semibold">우리업체의 장점:</span>
                               {partner.tags.map(t => t.replace('#', '')).join(' · ')}
                             </div>
-                            <button onClick={(e) => { e.stopPropagation(); setSelectedPartner(partner); }} className="text-blue-600 font-bold text-[8px] lg:text-xs hover:underline flex items-center shrink-0">
+                            <button onClick={(e) => { e.stopPropagation(); setSelectedPartner(partner); }} className="text-blue-600 font-bold text-[10px] lg:text-xs hover:underline flex items-center shrink-0 min-h-[44px] min-w-[44px] justify-center">
                               상세 보기
                             </button>
                           </div>
@@ -851,7 +851,7 @@ export default function PartnerList() {
                   </h2>
                   <span className="text-slate-400 text-xs lg:text-sm font-medium">총 {mixedPartners.length}건</span>
                 </div>
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 lg:gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
                   {currentMixedPartners.map(partner => (
                     <div 
                       key={partner.id} 
@@ -871,11 +871,11 @@ export default function PartnerList() {
                           <h2 className="text-xs lg:text-base font-bold text-slate-900 line-clamp-1 group-hover:text-blue-700 transition-colors mb-0.5">
                             {partner.name}
                           </h2>
-                          <div className="text-amber-600 font-bold flex items-center gap-0.5 lg:gap-1 text-[8px] lg:text-[11px] mb-1 lg:mb-2">
+                          <div className="text-amber-600 font-bold flex items-center gap-0.5 lg:gap-1 text-[10px] sm:text-[11px] mb-1 lg:mb-2">
                             <span className="text-amber-500">★</span>
                             {partner.rating} ({partner.reviews})
                           </div>
-                          <p className="text-slate-400 text-[8px] lg:text-[10px] mb-1.5 lg:mb-2 font-medium line-clamp-1">{partner.area}</p>
+                          <p className="text-slate-400 text-[10px] lg:text-[10px] mb-1.5 lg:mb-2 font-medium line-clamp-1">{partner.area}</p>
                           <div className="hidden lg:flex flex-wrap gap-1 mb-2 lg:mb-3 h-8 lg:h-12 overflow-hidden content-start">
                             {partner.tags.map(tag => (
                               <span key={tag} className="bg-slate-50 border border-slate-200 text-slate-500 px-1 lg:px-1.5 py-0.5 rounded text-[8px] lg:text-[10px] font-semibold group-hover:border-blue-200 group-hover:text-blue-600 transition-colors">
@@ -885,12 +885,12 @@ export default function PartnerList() {
                           </div>
                         </div>
                         <div className="flex items-center justify-between pt-1.5 lg:pt-3 border-t border-slate-100 mt-auto">
-                          <div className="font-bold text-[9px] lg:text-xs text-slate-700 truncate pr-2">
+                          <div className="font-bold text-[10px] lg:text-xs text-slate-700 truncate pr-2">
                             <span className="text-amber-500 mr-1">✨</span>
                             <span className="hidden lg:inline text-slate-500 mr-1 font-semibold">우리업체의 장점:</span>
                             {partner.tags.map(t => t.replace('#', '')).join(' · ')}
                           </div>
-                          <button onClick={(e) => { e.stopPropagation(); setSelectedPartner(partner); }} className="text-blue-600 font-bold text-[8px] lg:text-xs hover:underline flex items-center shrink-0">
+                          <button onClick={(e) => { e.stopPropagation(); setSelectedPartner(partner); }} className="text-blue-600 font-bold text-[10px] lg:text-xs hover:underline flex items-center shrink-0 min-h-[44px] min-w-[44px] justify-center">
                             상세 보기
                           </button>
                         </div>

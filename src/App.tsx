@@ -1,5 +1,5 @@
 import React, { Suspense, lazy } from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import ScrollToTopButton from './components/common/ScrollToTopButton';
 import ScrollToAnchor from './components/common/ScrollToAnchor';
 
@@ -58,6 +58,7 @@ function App() {
           <Route path="/partners/join" element={<PartnerLanding />} />
           <Route path="/partners/register" element={<PartnerSignup />} />
           <Route path="/partner-dashboard" element={<PartnerDashboard />} />
+          <Route path="/partner" element={<Navigate to="/partner-dashboard" replace />} />
           <Route path="/admin" element={<AdminDashboard />} />
           <Route path="/cleaning/move-in" element={<CleaningMoveIn />} />
           <Route path="/cleaning/sick-building" element={<CleaningSickBuilding />} />

@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MapPin, Calendar, CheckCircle, AlertTriangle, Phone, Home, List, User, Briefcase, Info, Bell } from 'lucide-react';
-import { db, storage } from '../firebase';
+import { db, storage, getMessagingInstance } from '../firebase';
+import { getToken } from 'firebase/messaging';
 import { collection, onSnapshot, doc, updateDoc, getDocs, query, where } from 'firebase/firestore';
 import type { Unsubscribe } from 'firebase/firestore';
 import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
@@ -95,6 +96,110 @@ export default function Partner() {
   const [showLogin, setShowLogin] = useState(location.state?.showLogin || false);
   const [loginForm, setLoginForm] = useState({ id: '', password: '' });
 
+  // PWA 설치 관련 상태
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [isInstallable, setIsInstallable] = useState(false);
+  const [isInstalled, setIsInstalled] = useState(false);
+
+  useEffect(() => {
+    const handleBeforeInstallPrompt = (e: any) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+      setIsInstallable(true);
+    };
+
+    const handleAppInstalled = () => {
+      setIsInstalled(true);
+      setIsInstallable(false);
+      setDeferredPrompt(null);
+    };
+
+    // 전역 변수에 이미 캡처된 이벤트가 있는지 확인
+    const globalPrompt = (window as any).deferredPrompt;
+    if (globalPrompt) {
+      setDeferredPrompt(globalPrompt);
+      setIsInstallable(true);
+    }
+
+    // 커스텀 이벤트 리스너 등록 (index.html에서 발생)
+    window.addEventListener('pwa-prompt-ready', () => {
+      const gPrompt = (window as any).deferredPrompt;
+      if (gPrompt) {
+        setDeferredPrompt(gPrompt);
+        setIsInstallable(true);
+      }
+    });
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    window.addEventListener('appinstalled', handleAppInstalled);
+
+    if (window.matchMedia('(display-mode: standalone)').matches) {
+      setIsInstalled(true);
+    }
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+      window.removeEventListener('appinstalled', handleAppInstalled);
+      window.removeEventListener('pwa-prompt-ready', () => {});
+    };
+  }, []);
+
+  const handleInstallApp = async () => {
+    // 1. 이미 앱 브라우저(카카오, 네이버)인 경우
+    const isKakao = /KAKAOTALK/i.test(navigator.userAgent);
+    const isNaver = /NAVER/i.test(navigator.userAgent);
+    const isInAppBrowser = isKakao || isNaver;
+
+    if (isInAppBrowser) {
+      alert('카카오톡/네이버 브라우저에서는 앱 설치가 지원되지 않습니다.\n우측 하단(또는 상단)의 [점 3개] 메뉴를 눌러\n[다른 브라우저로 열기]를 선택하신 후 진행해주세요.');
+      return;
+    }
+
+    // 2. 안드로이드 크롬 등에서 정상적으로 이벤트가 캡처된 경우
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      if (outcome === 'accepted') {
+        setIsInstallable(false);
+      }
+      setDeferredPrompt(null);
+      (window as any).deferredPrompt = null;
+      return;
+    }
+    
+    // 3. 이벤트가 캡처되지 않았지만 설치를 시도하는 경우 (iOS 사파리 등)
+    alert('Safari: 하단 공유 버튼(네모 안 화살표) 탭 -> "홈 화면에 추가"\nChrome: 우측 상단 메뉴 버튼(점 3개) 탭 -> "홈 화면에 추가"\n(또는 이미 설치된 앱일 수 있습니다)');
+  };
+
+  const requestNotificationPermission = async () => {
+    try {
+      const permission = await Notification.requestPermission();
+      if (permission === 'granted') {
+        const messaging = await getMessagingInstance();
+        if (messaging && currentUser && db) {
+          // FCM Token 발급 (옵션) - Firebase 프로젝트의 VAPID 키 필요
+          // let currentToken = '';
+          // try {
+          //   currentToken = await getToken(messaging, { vapidKey: 'YOUR_VAPID_KEY' });
+          // } catch (e) { console.error('Token error:', e); }
+
+          await updateDoc(doc(db, 'partners', currentUser.id), {
+             isNotificationEnabled: true,
+             // fcmToken: currentToken
+          });
+          alert('알림 설정이 켜졌습니다. 백그라운드에서도 새 오더 알림을 받을 수 있습니다!');
+        }
+      } else {
+        alert('알림 권한이 거부되었습니다. 브라우저 설정에서 알림 권한을 허용해주세요.');
+      }
+    } catch (e) {
+      console.error(e);
+      alert('알림 설정 중 오류가 발생했습니다. 브라우저 환경을 확인해주세요.');
+    }
+  };
+
+  const isInitialQuotesLoad = React.useRef(true);
+
   useEffect(() => {
     if (!db) {
       setTimeout(() => setIsLoading(false), 0);
@@ -103,6 +208,26 @@ export default function Partner() {
     const unsubscribe = onSnapshot(collection(db, 'quotes'), (snapshot) => {
       const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       setQuotes(data);
+
+      if (!isInitialQuotesLoad.current) {
+        snapshot.docChanges().forEach((change) => {
+          if (change.type === 'added') {
+            const newQuote = change.doc.data();
+            const loggedInId = localStorage.getItem('partnerId');
+            if (newQuote.status === '대기중' && (!newQuote.assignedTo || newQuote.assignedTo === loggedInId)) {
+              if (Notification.permission === 'granted') {
+                const partnerName = newQuote.designatedPartnerName ? `[지정예약] ` : '';
+                new Notification('새로운 청소 오더 도착!', {
+                  body: `${partnerName}새로운 오더가 접수되었습니다. 대시보드를 확인해주세요.`,
+                  icon: '/logo192.png'
+                });
+              }
+            }
+          }
+        });
+      } else {
+        isInitialQuotesLoad.current = false;
+      }
     });
     
     const loggedInId = localStorage.getItem('partnerId');
@@ -584,7 +709,7 @@ export default function Partner() {
               매월 <span className="text-blue-400">오더 걱정 없이</span><br/>청소에만 집중하세요
             </h1>
             <p className="text-slate-300 font-medium mb-10 text-sm leading-relaxed break-keep">
-              클린파트너스는 검증된 사업자 및 프리랜서 반장님들과 함께합니다. 가입만 하시면 지역별 안정적인 오더를 즉각 배정해 드립니다.
+              청소타워 파트너스는 검증된 사업자 및 프리랜서 반장님들과 함께합니다. 가입만 하시면 지역별 안정적인 오더를 즉각 배정해 드립니다.
             </p>
             <button 
               onClick={() => navigate('/partners/join')}
@@ -611,11 +736,54 @@ export default function Partner() {
   // 승인 대기중일 경우 락 스크린 표시
   if (currentUser && currentUser.status === 'pending') {
     return (
-      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-6 text-center font-sans tracking-tight max-w-md mx-auto shadow-2xl">
-        <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mb-6 shadow-sm border border-blue-200">
-          <Info size={36} className="text-blue-500" />
-        </div>
-        <h1 className="text-2xl font-black text-slate-900 mb-3">가입 심사 중입니다</h1>
+      <div className="min-h-screen bg-slate-50 flex flex-col p-6 font-sans tracking-tight max-w-md mx-auto shadow-2xl">
+        {/* PWA 설치 유도 배너 */}
+        {!isInstalled && (
+          <div className="mt-8 mb-4 bg-gradient-to-r from-slate-800 to-slate-900 rounded-2xl p-4 text-white shadow-lg flex items-center justify-between border border-slate-700">
+            <div className="flex items-center gap-3">
+              <div className="bg-slate-700/50 p-2 rounded-xl">
+                <Home size={20} className="text-blue-400" />
+              </div>
+              <div className="text-left">
+                <h3 className="font-bold text-sm mb-0.5">앱 설치하고 1초만에 접속하기</h3>
+                <p className="text-[11px] text-slate-300">승인 즉시 확인하기 위해 필수!</p>
+              </div>
+            </div>
+            <button 
+              onClick={handleInstallApp}
+              className="bg-blue-500 hover:bg-blue-600 text-white font-bold text-xs px-4 py-2.5 rounded-xl shadow-sm active:scale-95 transition-all whitespace-nowrap"
+            >
+              설치하기
+            </button>
+          </div>
+        )}
+        
+        {/* 푸시 알림 유도 배너 */}
+        {currentUser && !currentUser.isNotificationEnabled && Notification.permission !== 'granted' && (
+          <div className="mb-8 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-2xl p-4 shadow-sm flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="bg-blue-100 p-2 rounded-xl">
+                <Bell size={20} className="text-blue-600 animate-bounce" />
+              </div>
+              <div className="text-left">
+                <h3 className="font-bold text-sm text-slate-800 mb-0.5">실시간 오더 알림 받기</h3>
+                <p className="text-[11px] text-slate-500">앱을 켜지 않아도 알림을 보내드려요.</p>
+              </div>
+            </div>
+            <button 
+              onClick={requestNotificationPermission}
+              className="bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs px-4 py-2.5 rounded-xl shadow-sm active:scale-95 transition-all whitespace-nowrap"
+            >
+              알림 켜기
+            </button>
+          </div>
+        )}
+
+        <div className="flex-1 flex flex-col items-center justify-center text-center pb-20">
+          <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mb-6 shadow-sm border border-blue-200">
+            <Info size={36} className="text-blue-500" />
+          </div>
+          <h1 className="text-2xl font-black text-slate-900 mb-3">가입 심사 중입니다</h1>
         <p className="text-slate-600 mb-8 font-medium break-keep leading-relaxed text-sm">
           <span className="font-bold text-slate-800 tracking-wide text-base">
             {currentUser.businessType === 'business' ? currentUser.companyName : currentUser.name}
@@ -651,6 +819,7 @@ export default function Partner() {
             관리자 승인을 기다리는 중입니다...
           </div>
         </div>
+        </div>
       </div>
     );
   }
@@ -666,7 +835,7 @@ export default function Partner() {
         )}
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-2xl font-black tracking-tight text-slate-900">클린파트너스</h1>
+            <h1 className="text-2xl font-black tracking-tight text-slate-900">청소타워 파트너스</h1>
             <p className="text-slate-500 text-sm font-medium mt-0.5">환영합니다, {currentUser?.businessType === 'business' ? currentUser?.managerName : currentUser?.name} 파트너님</p>
           </div>
           <div className="text-right bg-emerald-50 px-3 py-2 rounded-xl border border-emerald-100">
@@ -680,6 +849,48 @@ export default function Partner() {
 
       {/* 내부 컨텐츠 영역 */}
       <main className="flex-1 p-5 overflow-y-auto">
+        {/* PWA 설치 유도 배너 */}
+        {!isInstalled && (
+          <div className="mb-5 bg-gradient-to-r from-slate-800 to-slate-900 rounded-2xl p-4 text-white shadow-lg flex items-center justify-between border border-slate-700">
+            <div className="flex items-center gap-3">
+              <div className="bg-slate-700/50 p-2 rounded-xl">
+                <Home size={20} className="text-blue-400" />
+              </div>
+              <div>
+                <h3 className="font-bold text-sm mb-0.5">앱 설치하고 1초만에 접속하기</h3>
+                <p className="text-[11px] text-slate-300">빠른 오더 수락을 위해 필수!</p>
+              </div>
+            </div>
+            <button 
+              onClick={handleInstallApp}
+              className="bg-blue-500 hover:bg-blue-600 text-white font-bold text-xs px-4 py-2.5 rounded-xl shadow-sm active:scale-95 transition-all whitespace-nowrap"
+            >
+              설치하기
+            </button>
+          </div>
+        )}
+        
+        {/* 푸시 알림 유도 배너 */}
+        {currentUser && !currentUser.isNotificationEnabled && Notification.permission !== 'granted' && (
+          <div className="mb-5 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-2xl p-4 shadow-sm flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="bg-blue-100 p-2 rounded-xl">
+                <Bell size={20} className="text-blue-600 animate-bounce" />
+              </div>
+              <div>
+                <h3 className="font-bold text-sm text-slate-800 mb-0.5">실시간 오더 알림 받기</h3>
+                <p className="text-[11px] text-slate-500">앱을 켜지 않아도 알림을 보내드려요.</p>
+              </div>
+            </div>
+            <button 
+              onClick={requestNotificationPermission}
+              className="bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs px-4 py-2.5 rounded-xl shadow-sm active:scale-95 transition-all whitespace-nowrap"
+            >
+              알림 켜기
+            </button>
+          </div>
+        )}
+
         <AnimatePresence mode="wait">
           {activeTab === 'new' && (
             <motion.div 

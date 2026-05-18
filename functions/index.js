@@ -45,7 +45,7 @@ async function sendPushNotification(tokens, title, body) {
       },
       tokens: Array.isArray(tokens) ? tokens : [tokens]
     };
-    const response = await admin.messaging().sendMulticast(message);
+    const response = await admin.messaging().sendEachForMulticast(message);
     console.log(`[푸시 알림 발송] 성공: ${response.successCount}, 실패: ${response.failureCount}`);
     
     // 실패한 토큰 정리 등 추가 로직 구현 가능
@@ -102,8 +102,8 @@ exports.notifyAdminOnNewOrder = functions.firestore
 ⚡ 바로 업체를 찾아 매칭해주세요!`;
 
       // 관리자(대표)에게 텔레그램 알림 발송 (문자발송 제외 요청)
-      // await sendAdminNotification(adminMsg);
-      // console.log(`[관리자 알림 발송 완료] 의뢰번호: ${quoteId}, 선택업체: ${selectedPartner}`);
+      await sendAdminNotification(adminMsg);
+      console.log(`[관리자 알림 발송 완료] 의뢰번호: ${quoteId}, 선택업체: ${selectedPartner}`);
 
       // ────────────────────────────────────────────
       // 지역 매칭된 파트너에게 푸시 알림(FCM) 발송

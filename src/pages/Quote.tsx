@@ -191,6 +191,10 @@ export default function Quote() {
         return;
       }
     } else if (step === 4) {
+      if (!businessName.trim()) {
+        setErrorMsg('신청자 이름은 필수 항목입니다!');
+        return;
+      }
       if (!contactInfo.trim()) {
         setErrorMsg('모바일 연락처는 필수 항목입니다!');
         return;
@@ -853,7 +857,7 @@ export default function Quote() {
                   <div>
                     <label className={`block text-sm font-semibold mb-2 flex items-center gap-1.5 ${cleaningType === '프리미엄' ? 'text-amber-300/90' : 'text-slate-300'}`}>
                       <span className="material-symbols-outlined text-[16px]">person</span>
-                      신청자 이름
+                      신청자 이름 <span className="text-rose-400">*</span>
                     </label>
                     <input
                       type="text"

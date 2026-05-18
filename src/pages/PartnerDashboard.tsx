@@ -320,31 +320,28 @@ export default function Partner() {
   const myJobs = [...quotes]
     .filter(o => o.assignedTo === currentUser?.id && o.status === '상담완료')
     .sort((a, b) => {
-      // ★ date/cleaningDate 양쪽 폴백 처리 (이전 데이터 호환)
       const dateA = a.date || a.cleaningDate || '';
-      const timeA_str = a.time || a.cleaningTime || '';
       const dateB = b.date || b.cleaningDate || '';
-      const timeB_str = b.time || b.cleaningTime || '';
-      const timeA = (dateA && timeA_str) ? new Date(`${dateA} ${timeA_str}`).getTime() : 0;
-      const timeB = (dateB && timeB_str) ? new Date(`${dateB} ${timeB_str}`).getTime() : 0;
-      return (timeA || 0) - (timeB || 0);
+      
+      if (dateA !== dateB) {
+        return dateA.localeCompare(dateB);
+      }
+      
+      const createdA = a.createdAt || '';
+      const createdB = b.createdAt || '';
+      return createdB.localeCompare(createdA);
     });
     
-  // 대기중인 오더: 긴급 오더 최우선, 그 다음 날짜 오름차순
+  // 대기중인 오더: 긴급 오더 최우선, 그 다음 최신 생성일 순
   const remainingOrders = [...quotes]
-    .filter(o => o.status === '대기중' && (!o.assignedTo || o.assignedTo === currentUser?.id))
+    .filter(o => (o.status === '대기중' || o.status === 'pending') && (!o.assignedTo || o.assignedTo === currentUser?.id))
     .sort((a, b) => {
       if (a.isUrgent && !b.isUrgent) return -1;
       if (!a.isUrgent && b.isUrgent) return 1;
       
-      // ★ date/cleaningDate 양쪽 폴백 처리 (이전 데이터 호환)
-      const dateA = a.date || a.cleaningDate || '';
-      const timeA_str = a.time || a.cleaningTime || '';
-      const dateB = b.date || b.cleaningDate || '';
-      const timeB_str = b.time || b.cleaningTime || '';
-      const timeA = (dateA && timeA_str) ? new Date(`${dateA} ${timeA_str}`).getTime() : 0;
-      const timeB = (dateB && timeB_str) ? new Date(`${dateB} ${timeB_str}`).getTime() : 0;
-      return (timeA || 0) - (timeB || 0);
+      const createdA = a.createdAt || '';
+      const createdB = b.createdAt || '';
+      return createdB.localeCompare(createdA);
     });
 
   // 페널티 정책 함수 (보증금 제도 폐지로 문구 수정)
@@ -1337,7 +1334,7 @@ export default function Partner() {
                 <div className="mb-8">
                   <h3 className="font-bold text-slate-800 text-sm mb-2 flex items-center gap-1.5"><Info size={16}/> 고객 특이사항</h3>
                   <div className="bg-amber-50 text-amber-800 p-3 rounded-lg text-sm font-medium border border-amber-100 whitespace-pre-wrap">
-                    {selectedOrder.detail}
+                    {selectedOrder.detail || selectedOrder.memo || '기재된 특이사항이 없습니다.'}
                   </div>
                 </div>
 

@@ -36,6 +36,9 @@ export interface Order {
   name?: string;
   customerName?: string;
   realPhone?: string;
+  contactInfo?: string;
+  cleaningDate?: string;
+  cleaningType?: string;
   detail?: string;
   completedAt?: string;
   completionItems?: string[];
@@ -126,14 +129,27 @@ export default function Admin() {
   useEffect(() => {
     if (!db) return;
     const unsubscribe = onSnapshot(collection(db, 'quotes'), (snapshot) => {
-      const data = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-      data.sort((a: Order, b: Order) => new Date(b.date || 0).getTime() - new Date(a.date || 0).getTime());
+      const data = snapshot.docs.map(d => ({ id: d.id, ...d.data() })) as Order[];
+      data.sort((a: Order, b: Order) => {
+        const dateA = a.date || a.cleaningDate || '';
+        const dateB = b.date || b.cleaningDate || '';
+        if (dateA !== dateB) {
+          return dateB.localeCompare(dateA); // 최신 날짜순
+        }
+        const createdA = a.createdAt || '';
+        const createdB = b.createdAt || '';
+        return createdB.localeCompare(createdA); // 최신 등록순
+      });
       setQuotes(data);
     });
     
     const unsubscribePartners = onSnapshot(collection(db, 'partners'), (snapshot) => {
-      const data = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-      data.sort((a: PartnerUser, b: PartnerUser) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
+      const data = snapshot.docs.map(d => ({ id: d.id, ...d.data() })) as PartnerUser[];
+      data.sort((a: PartnerUser, b: PartnerUser) => {
+        const createdA = a.createdAt || '';
+        const createdB = b.createdAt || '';
+        return createdB.localeCompare(createdA); // 최신 등록순
+      });
       setPartners(data);
     });
 
@@ -784,9 +800,9 @@ export default function Admin() {
                         filteredQuotesList.map((quote) => (
                           <tr key={quote.id} className="hover:bg-gray-50/50 transition-colors">
                           <td className="px-4 lg:px-6 py-3 lg:py-4 text-xs lg:text-sm text-gray-500">#{quote.id.slice(0,6)}</td>
-                          <td className="px-4 lg:px-6 py-3 lg:py-4 text-xs lg:text-sm text-gray-600">{quote.date}</td>
-                          <td className="px-4 lg:px-6 py-3 lg:py-4 text-xs lg:text-sm font-medium text-gray-800">{quote.name}</td>
-                          <td className="px-4 lg:px-6 py-3 lg:py-4 text-xs lg:text-sm text-gray-600">{quote.type}</td>
+                          <td className="px-4 lg:px-6 py-3 lg:py-4 text-xs lg:text-sm text-gray-600">{quote.date || quote.cleaningDate || '미지정'}</td>
+                          <td className="px-4 lg:px-6 py-3 lg:py-4 text-xs lg:text-sm font-medium text-gray-800">{quote.name || quote.customerName || '이름 없음'}</td>
+                          <td className="px-4 lg:px-6 py-3 lg:py-4 text-xs lg:text-sm text-gray-600">{quote.type || quote.cleaningType || '일반 청소'}</td>
                           <td className="px-4 lg:px-6 py-3 lg:py-4">
                              {quote.assignedTo ? (
                                <span className="text-xs lg:text-sm font-bold text-blue-600">
@@ -836,10 +852,10 @@ export default function Admin() {
                           <div>
                             <span className="text-xs font-bold text-gray-400 bg-gray-100 px-2 py-0.5 rounded-md">#{quote.id.slice(0,6)}</span>
                             <div className="flex items-center gap-2 mt-1">
-                              <h4 className="font-bold text-gray-900 text-lg">{quote.name}</h4>
-                              <span className="text-xs font-bold bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full border border-blue-100">{quote.type}</span>
+                              <h4 className="font-bold text-gray-900 text-lg">{quote.name || quote.customerName || '이름 없음'}</h4>
+                              <span className="text-xs font-bold bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full border border-blue-100">{quote.type || quote.cleaningType || '일반 청소'}</span>
                             </div>
-                            <div className="text-xs text-gray-500 mt-0.5 font-medium">{quote.date} ({quote.time})</div>
+                            <div className="text-xs text-gray-500 mt-0.5 font-medium">{quote.date || quote.cleaningDate || '미지정'} ({quote.time || '시간협의'})</div>
                           </div>
                           {/* 진행 상태 select */}
                           <select 
@@ -896,25 +912,31 @@ export default function Admin() {
               <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6 overflow-hidden">
                 <p className="text-gray-500 mb-4">최근 상담/계약 고객 목록입니다.</p>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {quotes.map((quote) => (
-                    <div key={quote.id} className="border border-gray-200 rounded-lg p-5 flex flex-col justify-between hover:border-blue-300 transition-colors cursor-pointer shadow-sm">
-                      <div>
-                        <div className="flex justify-between items-start mb-3">
-                          <h4 className="font-bold text-gray-800 text-lg">{quote.name}</h4>
-                          <span className={`text-xs px-2 py-1 rounded-full font-medium ${quote.status === '청소완료' ? 'bg-indigo-50 text-indigo-700' : 'bg-blue-50 text-blue-700'}`}>
-                            {quote.status === '청소완료' ? '단골가능성' : '신규고객'}
-                          </span>
-                        </div>
-                        <p className="text-sm text-gray-600 mb-1">연락처: 010-1234-567{quote.id}</p>
-                        <p className="text-sm text-gray-600 mb-1">최근 서비스: {quote.type}</p>
-                        <p className="text-sm text-gray-600">누적 이용: <span className="font-semibold text-gray-800">{quote.status === '청소완료' ? '1회' : '상담중'}</span></p>
-                      </div>
-                      <div className="mt-5 pt-4 border-t border-gray-100 flex justify-between items-center">
-                        <button className="text-sm font-medium text-blue-600 hover:text-blue-800 flex items-center gap-1">메시지 전송</button>
-                        <button className="text-sm font-medium text-gray-500 hover:text-gray-800">상세정보보기</button>
-                      </div>
+                  {quotes.length === 0 ? (
+                    <div className="col-span-full text-center py-8 text-gray-500">
+                      등록된 고객이 없습니다.
                     </div>
-                  ))}
+                  ) : (
+                    quotes.map((quote) => (
+                      <div key={quote.id} className="border border-gray-200 rounded-lg p-5 flex flex-col justify-between hover:border-blue-300 transition-colors cursor-pointer shadow-sm">
+                        <div>
+                          <div className="flex justify-between items-start mb-3">
+                            <h4 className="font-bold text-gray-800 text-lg">{quote.name || quote.customerName || '이름 없음'}</h4>
+                            <span className={`text-xs px-2 py-1 rounded-full font-medium ${quote.status === '청소완료' ? 'bg-indigo-50 text-indigo-700' : 'bg-blue-50 text-blue-700'}`}>
+                              {quote.status === '청소완료' ? '단골가능성' : '신규고객'}
+                            </span>
+                          </div>
+                          <p className="text-sm text-gray-600 mb-1">연락처: {quote.realPhone || quote.contactInfo || `010-1234-567${quote.id.slice(0,4)}`}</p>
+                          <p className="text-sm text-gray-600 mb-1">최근 서비스: {quote.type || quote.cleaningType || '일반 청소'}</p>
+                          <p className="text-sm text-gray-600">누적 이용: <span className="font-semibold text-gray-800">{quote.status === '청소완료' ? '1회' : '상담중'}</span></p>
+                        </div>
+                        <div className="mt-5 pt-4 border-t border-gray-100 flex justify-between items-center">
+                          <button className="text-sm font-medium text-blue-600 hover:text-blue-800 flex items-center gap-1">메시지 전송</button>
+                          <button className="text-sm font-medium text-gray-500 hover:text-gray-800">상세정보보기</button>
+                        </div>
+                      </div>
+                    ))
+                  )}
                 </div>
               </div>
             </div>

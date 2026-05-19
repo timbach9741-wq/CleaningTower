@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Check, ChevronRight, UserCircle, Smartphone, Lock, ArrowRight, CheckCircle2, FileUp, Loader2, Mail } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { db } from '../firebase';
 
 export default function Signup() {
   const navigate = useNavigate();
@@ -126,7 +128,24 @@ export default function Signup() {
         });
       }
       
-      // 2. 임시 로컬 처리 (로그인 상태로 변경)
+      // 2. Firebase Firestore에 파트너 정보 저장 (관리자 연동)
+      try {
+        await addDoc(collection(db, "partners"), {
+          name: formData.name,
+          phone: formData.phone,
+          email: formData.email,
+          businessNumber: formData.businessNumber,
+          status: isVerified ? 'active' : 'pending', // 진위확인이 되었으면 자동 승인(active)
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        });
+      } catch (fbError) {
+        console.error("Firebase 저장 중 오류:", fbError);
+        // Firebase 저장 실패 시에도 일단 로컬 로그인은 진행하도록 할 수 있으나, 
+        // 실제 운영 시에는 이 부분을 더 엄격하게 처리해야 할 수 있습니다.
+      }
+
+      // 3. 임시 로컬 처리 (로그인 상태로 변경)
       localStorage.setItem('isLoggedIn', 'true');
       localStorage.setItem('userName', formData.name);
       localStorage.setItem('userType', 'partner');

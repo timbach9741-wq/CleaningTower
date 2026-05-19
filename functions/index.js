@@ -121,30 +121,50 @@ exports.notifyAdminOnNewOrder = functions.firestore
       console.log(`[관리자 알림 발송 완료] 의뢰번호: ${quoteId}, 선택업체: ${selectedPartner}`);
 
       // ────────────────────────────────────────────
-      // 지역 매칭된 파트너에게 푸시 알림(FCM) 발송
+      // 파트너에게 푸시 알림(FCM) 발송 (지정 배정 vs 일반 지역 매칭)
       // ────────────────────────────────────────────
       const partnersRef = admin.firestore().collection('partners');
-      const partnerSnapshot = await partnersRef.where('isNotificationEnabled', '==', true).get();
 
-      if (!partnerSnapshot.empty) {
-        for (const doc of partnerSnapshot.docs) {
-          const partner = doc.data();
-          const regions = partner.notificationRegions && partner.notificationRegions.length > 0
-            ? partner.notificationRegions
-            : (partner.region ? [partner.region] : []);
+      if (order.assignedTo) {
+        // [케이스 1] 고객이 특정 파트너를 콕 집어 의뢰한 경우 (지정 오더)
+        const assignedPartnerDoc = await partnersRef.doc(order.assignedTo).get();
+        if (assignedPartnerDoc.exists) {
+          const partner = assignedPartnerDoc.data();
+          const partnerName = partner.companyName || partner.name || '파트너';
+          const partnerMsg = `[⭐️지정 의뢰 도착]\n${partnerName} 파트너님을 지정하여 들어온 새로운 의뢰입니다!\n\n- 고객: ${customerName}\n- 주소: ${orderAddress}\n- 일정: ${orderDate} ${orderTime}\n- 유형: ${orderType}\n\n고객님이 대표님의 연락을 기다리고 있습니다! 앱에서 확인해주세요.`;
+          
+          const tokens = partner.fcmTokens || (partner.fcmToken ? [partner.fcmToken] : []);
+          if (tokens.length > 0) {
+            await sendPushNotification(tokens, '⭐️ 단독 지정 의뢰가 도착했습니다!', partnerMsg);
+            console.log(`[지정 푸시 알림 발송 완료] 파트너: ${partnerName}`);
+          } else {
+            console.log(`[푸시 알림 보류] ${partnerName} 파트너의 FCM 토큰이 없습니다.`);
+          }
+        }
+      } else {
+        // [케이스 2] 특정 파트너가 지정되지 않은 경우 -> 조건(지역)에 맞는 파트너들에게 발송
+        const partnerSnapshot = await partnersRef.where('isNotificationEnabled', '==', true).get();
 
-          const isMatch = regions.some(region => orderAddress.includes(region));
+        if (!partnerSnapshot.empty) {
+          for (const doc of partnerSnapshot.docs) {
+            const partner = doc.data();
+            const regions = partner.notificationRegions && partner.notificationRegions.length > 0
+              ? partner.notificationRegions
+              : (partner.region ? [partner.region] : []);
 
-          if (isMatch) {
-            const partnerName = partner.companyName || partner.name || '파트너';
-            const partnerMsg = `[데일리하우징 새 오더 도착]\n${partnerName} 파트너님! 희망 지역에 새로운 청소 의뢰가 접수되었습니다.\n\n- 주소: ${orderAddress}\n- 일정: ${orderDate} ${orderTime}\n- 평수: ${order.size || ''}평\n- 유형: ${orderType}\n\n지금 바로 파트너 앱에 접속하여 오더를 확인하세요!`;
-            
-            // 파트너 앱 푸시 발송
-            const tokens = partner.fcmTokens || (partner.fcmToken ? [partner.fcmToken] : []);
-            if (tokens.length > 0) {
-              await sendPushNotification(tokens, '새로운 청소 의뢰 도착!', partnerMsg);
-            } else {
-              console.log(`[푸시 알림 보류] ${partnerName} 파트너의 FCM 토큰이 없어 앱 푸시를 보낼 수 없습니다.`);
+            const isMatch = regions.some(region => orderAddress.includes(region));
+
+            if (isMatch) {
+              const partnerName = partner.companyName || partner.name || '파트너';
+              const partnerMsg = `[데일리하우징 새 오더 도착]\n${partnerName} 파트너님! 희망 지역에 새로운 청소 의뢰가 접수되었습니다.\n\n- 주소: ${orderAddress}\n- 일정: ${orderDate} ${orderTime}\n- 평수: ${order.size || ''}평\n- 유형: ${orderType}\n\n지금 바로 파트너 앱에 접속하여 오더를 확인하세요!`;
+              
+              // 파트너 앱 푸시 발송
+              const tokens = partner.fcmTokens || (partner.fcmToken ? [partner.fcmToken] : []);
+              if (tokens.length > 0) {
+                await sendPushNotification(tokens, '새로운 청소 의뢰 도착!', partnerMsg);
+              } else {
+                console.log(`[푸시 알림 보류] ${partnerName} 파트너의 FCM 토큰이 없어 앱 푸시를 보낼 수 없습니다.`);
+              }
             }
           }
         }

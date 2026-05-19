@@ -21,11 +21,11 @@ export default function PartnerLanding() {
             <span className="text-amber-400 font-black tracking-wider text-sm md:text-base mb-4 block uppercase px-4 py-1 border border-amber-400/30 rounded-full inline-block bg-amber-400/10 backdrop-blur-md">
               청소타워 Partners
             </span>
-            <h1 className="text-4xl md:text-6xl font-extrabold mb-6 leading-tight tracking-tight">
+            <h1 className="text-4xl md:text-6xl font-extrabold mb-6 leading-tight tracking-tight break-keep">
               청소 전문가님, <br className="md:hidden" />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-300 to-yellow-500">안정적인 오더</span>가 필요하신가요?
             </h1>
-            <p className="text-lg md:text-2xl text-blue-100 mb-10 max-w-3xl mx-auto leading-relaxed opacity-90 font-medium">
+            <p className="text-lg md:text-2xl text-blue-100 mb-10 max-w-3xl mx-auto leading-relaxed opacity-90 font-medium break-keep">
               가입비 0원, 초기 세팅비 0원. <br className="hidden md:block" />
               대한민국 1등 입주청소 플랫폼 '청소타워'과 함께 확실한 매출 성장을 경험하세요.
             </p>

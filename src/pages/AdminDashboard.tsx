@@ -62,6 +62,7 @@ export interface PartnerUser {
   notificationRegions?: string[];
   loginId?: string;
   loginPassword?: string;
+  password?: string;
   phone?: string;
   createdAt?: string;
   plan?: string;
@@ -132,13 +133,14 @@ export default function Admin() {
     const unsubscribe = onSnapshot(collection(db, 'quotes'), (snapshot) => {
       const data = snapshot.docs.map(d => ({ id: d.id, ...d.data() })) as Order[];
       data.sort((a: Order, b: Order) => {
-        const dateA = a.date || a.cleaningDate || '';
-        const dateB = b.date || b.cleaningDate || '';
+        const getStr = (v: any) => typeof v === 'string' ? v : (v && v.toDate ? v.toDate().toISOString() : String(v || ''));
+        const dateA = getStr(a.date || a.cleaningDate);
+        const dateB = getStr(b.date || b.cleaningDate);
         if (dateA !== dateB) {
           return dateB.localeCompare(dateA); // 최신 날짜순
         }
-        const createdA = a.createdAt || '';
-        const createdB = b.createdAt || '';
+        const createdA = getStr(a.createdAt);
+        const createdB = getStr(b.createdAt);
         return createdB.localeCompare(createdA); // 최신 등록순
       });
       setQuotes(data);
@@ -147,8 +149,9 @@ export default function Admin() {
     const unsubscribePartners = onSnapshot(collection(db, 'partners'), (snapshot) => {
       const data = snapshot.docs.map(d => ({ id: d.id, ...d.data() })) as PartnerUser[];
       data.sort((a: PartnerUser, b: PartnerUser) => {
-        const createdA = a.createdAt || '';
-        const createdB = b.createdAt || '';
+        const getStr = (v: any) => typeof v === 'string' ? v : (v && v.toDate ? v.toDate().toISOString() : String(v || ''));
+        const createdA = getStr(a.createdAt);
+        const createdB = getStr(b.createdAt);
         return createdB.localeCompare(createdA); // 최신 등록순
       });
       setPartners(data);
@@ -191,7 +194,7 @@ export default function Admin() {
 
   const handleSendBusinessUrl = (partner: PartnerUser) => {
     const businessUrl = `https://clean-partner.dailyhousing.kr`;
-    const message = `[입주청소 파트너스]\n${partner.companyName || partner.name}님, 사업자 전용 페이지 주소가 발송되었습니다.\n\nURL: ${businessUrl}\n아이디: ${partner.loginId}\n비밀번호: ${partner.loginPassword}`;
+    const message = `[입주청소 파트너스]\n${partner.companyName || partner.name}님, 사업자 전용 페이지 주소가 발송되었습니다.\n\nURL: ${businessUrl}\n아이디: ${partner.loginId}\n비밀번호: ${partner.loginPassword || partner.password}`;
     alert(`아래 내용으로 파트너에게 URL 발송이 시뮬레이션 되었습니다. (추후 카카오톡 연동 예정)\n\n${message}`);
   };
 
@@ -419,7 +422,7 @@ export default function Admin() {
     // 1. 상태 필터
     if (partnerFilterStatus !== '전체') {
       if (partnerFilterStatus === 'active' && p.status !== 'active') return false;
-      if (partnerFilterStatus === 'pending' && p.status === 'active') return false;
+      if (partnerFilterStatus === 'pending' && p.status !== 'pending') return false;
     }
     
     // 2. 지역 필터
@@ -430,11 +433,11 @@ export default function Admin() {
     // 3. 검색어 필터
     if (partnerSearchTerm) {
       const term = partnerSearchTerm.toLowerCase();
-      const matchName = (p.name || '').toLowerCase().includes(term);
-      const matchCompany = (p.companyName || '').toLowerCase().includes(term);
-      const matchManager = (p.managerName || '').toLowerCase().includes(term);
-      const matchPhone = (p.phone || '').toLowerCase().includes(term);
-      const matchRegion = (p.region || '').toLowerCase().includes(term);
+      const matchName = String(p.name || '').toLowerCase().includes(term);
+      const matchCompany = String(p.companyName || '').toLowerCase().includes(term);
+      const matchManager = String(p.managerName || '').toLowerCase().includes(term);
+      const matchPhone = String(p.phone || '').toLowerCase().includes(term);
+      const matchRegion = String(p.region || '').toLowerCase().includes(term);
       
       if (!matchName && !matchCompany && !matchManager && !matchPhone && !matchRegion) {
         return false;
@@ -1293,7 +1296,7 @@ export default function Admin() {
                               {partner.loginId || <span className="text-gray-400 text-xs">-</span>}
                             </td>
                             <td className="p-4 text-sm font-mono text-slate-500 bg-blue-50/20">
-                              {partner.loginPassword || <span className="text-gray-400 text-xs">-</span>}
+                              {(partner.loginPassword || partner.password) || <span className="text-gray-400 text-xs">-</span>}
                             </td>
                             <td className="p-4 text-sm text-gray-600">
                               {partner.region}
@@ -1937,7 +1940,7 @@ export default function Admin() {
                   </div>
                   <div>
                     <p className="text-[11px] text-gray-400">PW</p>
-                    <p className="text-xs font-mono font-bold text-gray-700">{selectedPartnerDetail.loginPassword || '-'}</p>
+                    <p className="text-xs font-mono font-bold text-gray-700">{selectedPartnerDetail.loginPassword || selectedPartnerDetail.password || '-'}</p>
                   </div>
                 </div>
               </div>

@@ -800,12 +800,14 @@ export default function Partner() {
     return <div className="min-h-screen bg-slate-50 flex items-center justify-center text-slate-500 font-bold max-w-md mx-auto shadow-2xl">로딩중...</div>;
   }
 
-  // 승인 대기중일 경우 락 스크린 표시
-  if (currentUser && currentUser.status === 'pending') {
+  // 승인 대기중이거나 정지된 경우 락 스크린 표시
+  if (currentUser && currentUser.status !== 'active') {
+    const isSuspended = currentUser.status === 'suspended';
+
     return (
       <div className="min-h-screen bg-slate-50 flex flex-col p-6 font-sans tracking-tight max-w-md mx-auto shadow-2xl">
         {/* PWA 설치 유도 배너 */}
-        {!isInstalled && (
+        {!isInstalled && !isSuspended && (
           <div className="mt-8 mb-4 bg-gradient-to-r from-slate-800 to-slate-900 rounded-2xl p-4 text-white shadow-lg flex items-center justify-between border border-slate-700">
             <div className="flex items-center gap-3">
               <div className="bg-slate-700/50 p-2 rounded-xl">
@@ -826,7 +828,7 @@ export default function Partner() {
         )}
         
         {/* 푸시 알림 유도 배너 - FCM 토큰이 없거나 알림이 미설정일 때 표시 */}
-        {currentUser && (!currentUser.isNotificationEnabled || !currentUser.fcmTokens || currentUser.fcmTokens?.length === 0) && (
+        {currentUser && !isSuspended && (!currentUser.isNotificationEnabled || !currentUser.fcmTokens || currentUser.fcmTokens?.length === 0) && (
           <div className="mb-8 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-2xl p-4 shadow-sm flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="bg-blue-100 p-2 rounded-xl">
@@ -847,45 +849,61 @@ export default function Partner() {
         )}
 
         <div className="flex-1 flex flex-col items-center justify-center text-center pb-20">
-          <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mb-6 shadow-sm border border-blue-200">
-            <Info size={36} className="text-blue-500" />
+          <div className={`w-20 h-20 ${isSuspended ? 'bg-rose-100 border-rose-200' : 'bg-blue-100 border-blue-200'} rounded-full flex items-center justify-center mb-6 shadow-sm border`}>
+            {isSuspended ? <AlertTriangle size={36} className="text-rose-500" /> : <Info size={36} className="text-blue-500" />}
           </div>
-          <h1 className="text-2xl font-black text-slate-900 mb-3">가입 심사 중입니다</h1>
-        <p className="text-slate-600 mb-8 font-medium break-keep leading-relaxed text-sm">
-          <span className="font-bold text-slate-800 tracking-wide text-base">
-            {currentUser.businessType === 'business' ? currentUser.companyName : currentUser.name}
-          </span> 파트너님, 가입 신청이 완료되었습니다.<br/>
-          현재 관리자가 기입해주신 정보를 바탕으로 심사를 진행 중입니다.<br/>
-          승인이 완료되면 즉시 오더 수주가 가능합니다.
-        </p>
+          <h1 className="text-2xl font-black text-slate-900 mb-3">
+            {isSuspended ? '계정이 정지되었습니다' : '가입 심사 중입니다'}
+          </h1>
+          <p className="text-slate-600 mb-8 font-medium break-keep leading-relaxed text-sm">
+            <span className="font-bold text-slate-800 tracking-wide text-base">
+              {currentUser.businessType === 'business' ? currentUser.companyName : currentUser.name}
+            </span> 파트너님,
+            {isSuspended ? (
+              <><br/>현재 서비스 이용이 임시 정지된 상태입니다.<br/>자세한 사유는 본사 고객센터로 문의해주세요.</>
+            ) : (
+              <><br/>가입 신청이 완료되었습니다.<br/>현재 관리자가 기입해주신 정보를 바탕으로 심사를 진행 중입니다.<br/>승인이 완료되면 즉시 오더 수주가 가능합니다.</>
+            )}
+          </p>
 
-        <div className="bg-white w-full max-w-sm rounded-2xl p-6 text-left mb-8 shadow-sm border border-slate-200">
-          <p className="text-xs text-slate-400 font-bold mb-2 text-center">심사 안내</p>
-          <ul className="text-xs text-slate-500 space-y-2 font-medium">
-            <li className="flex gap-2">
-              <CheckCircle size={14} className="text-emerald-500 shrink-0" />
-              <span>영업일 기준 1~2일 내로 승인이 완료됩니다.</span>
-            </li>
-            <li className="flex gap-2">
-              <CheckCircle size={14} className="text-emerald-500 shrink-0" />
-              <span>정보가 부족할 경우 본사에서 해피콜을 드릴 수 있습니다.</span>
-            </li>
-            <li className="flex gap-2">
-              <CheckCircle size={14} className="text-emerald-500 shrink-0" />
-              <span>승인 완료 시 카카오톡으로 알림을 보내드립니다.</span>
-            </li>
-          </ul>
-        </div>
+          {!isSuspended && (
+            <div className="bg-white w-full max-w-sm rounded-2xl p-6 text-left mb-8 shadow-sm border border-slate-200">
+              <p className="text-xs text-slate-400 font-bold mb-2 text-center">심사 안내</p>
+              <ul className="text-xs text-slate-500 space-y-2 font-medium">
+                <li className="flex gap-2">
+                  <CheckCircle size={14} className="text-emerald-500 shrink-0" />
+                  <span>영업일 기준 1~2일 내로 승인이 완료됩니다.</span>
+                </li>
+                <li className="flex gap-2">
+                  <CheckCircle size={14} className="text-emerald-500 shrink-0" />
+                  <span>정보가 부족할 경우 본사에서 해피콜을 드릴 수 있습니다.</span>
+                </li>
+                <li className="flex gap-2">
+                  <CheckCircle size={14} className="text-emerald-500 shrink-0" />
+                  <span>승인 완료 시 카카오톡으로 알림을 보내드립니다.</span>
+                </li>
+              </ul>
+            </div>
+          )}
 
-        <div className="w-full flex justify-center mt-4">
-          <div className="bg-blue-50 text-blue-700 px-5 py-3 rounded-xl text-xs font-bold animate-pulse shadow-sm border border-blue-100 flex items-center gap-2">
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
-            </span>
-            관리자 승인을 기다리는 중입니다...
+          <div className="w-full flex justify-center mt-4 flex-col items-center gap-6">
+            <div className={`px-5 py-3 rounded-xl text-xs font-bold shadow-sm border flex items-center gap-2 ${isSuspended ? 'bg-rose-50 text-rose-700 border-rose-100' : 'bg-blue-50 text-blue-700 border-blue-100 animate-pulse'}`}>
+              {!isSuspended && (
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
+                </span>
+              )}
+              {isSuspended ? '본사 관리자에게 문의해주세요' : '관리자 승인을 기다리는 중입니다...'}
+            </div>
+            
+            <button 
+              onClick={handleLogout}
+              className="text-slate-400 hover:text-slate-600 font-bold text-sm underline decoration-slate-300 underline-offset-4 transition-colors"
+            >
+              다른 계정으로 로그인
+            </button>
           </div>
-        </div>
         </div>
       </div>
     );

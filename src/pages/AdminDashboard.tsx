@@ -47,6 +47,7 @@ export interface Order {
   price?: string;
   cancelPenalty?: string;
   designatedPartnerName?: string;
+  createdAt?: string;
 }
 
 export interface PartnerUser {
@@ -698,20 +699,45 @@ export default function Admin() {
             <div className="space-y-6">
               <h2 className="text-xl lg:text-2xl font-bold text-gray-800">대시보드 개요</h2>
               
-              {/* Stat Cards (반응형 다이내믹 그리드) */}
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-6">
-                {[
-                  { label: '신규 견적요청', value: '12건', color: 'text-blue-600', bg: 'bg-blue-50' },
-                  { label: '이번주 예약', value: '8건', color: 'text-emerald-600', bg: 'bg-emerald-50' },
-                  { label: '이번달 예약매출', value: '₩1,245만', color: 'text-purple-600', bg: 'bg-purple-50' },
-                  { label: '전체 고객수', value: '1,248명', color: 'text-orange-600', bg: 'bg-orange-50' },
-                ].map((stat, i) => (
-                  <div key={i} className="bg-white p-4 lg:p-6 rounded-xl border border-gray-100 shadow-sm flex flex-col justify-center">
-                    <p className="text-gray-500 font-medium text-xs lg:text-sm mb-1">{stat.label}</p>
-                    <p className={`text-xl lg:text-2xl font-bold ${stat.color}`}>{stat.value}</p>
+              {/* Stat Cards - Firestore 실시간 데이터 기반 */}
+              {(() => {
+                // 왜: 하드코딩된 더미값 대신 Firestore quotes 데이터로 실통계 계산
+                const now = new Date();
+                const thisMonthStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+                
+                // 이번주 시작일 계산 (월요일 기준)
+                const weekStart = new Date(now);
+                weekStart.setDate(now.getDate() - now.getDay() + (now.getDay() === 0 ? -6 : 1));
+                const weekStartStr = weekStart.toISOString().slice(0, 10);
+                
+                const pendingCount = quotes.filter(q => q.status === '대기중').length;
+                const weekQuotes = quotes.filter(q => (q.date || '') >= weekStartStr);
+                const monthRevenue = quotes
+                  .filter(q => (q.date || '').startsWith(thisMonthStr) && q.status !== '취소')
+                  .reduce((sum, q) => sum + (parseInt(String(q.price || '0').replace(/[^0-9]/g, ''), 10) || 0), 0);
+                const uniquePhones = new Set(quotes.map(q => q.realPhone || q.contactInfo).filter(Boolean));
+
+                return (
+                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-6">
+                    <div className="bg-white p-4 lg:p-6 rounded-xl border border-gray-100 shadow-sm flex flex-col justify-center">
+                      <p className="text-gray-500 font-medium text-xs lg:text-sm mb-1">대기중 견적</p>
+                      <p className="text-xl lg:text-2xl font-bold text-blue-600">{pendingCount}건</p>
+                    </div>
+                    <div className="bg-white p-4 lg:p-6 rounded-xl border border-gray-100 shadow-sm flex flex-col justify-center">
+                      <p className="text-gray-500 font-medium text-xs lg:text-sm mb-1">이번주 예약</p>
+                      <p className="text-xl lg:text-2xl font-bold text-emerald-600">{weekQuotes.length}건</p>
+                    </div>
+                    <div className="bg-white p-4 lg:p-6 rounded-xl border border-gray-100 shadow-sm flex flex-col justify-center">
+                      <p className="text-gray-500 font-medium text-xs lg:text-sm mb-1">이번달 예약매출</p>
+                      <p className="text-xl lg:text-2xl font-bold text-purple-600">₩{(monthRevenue / 10000).toFixed(0)}만</p>
+                    </div>
+                    <div className="bg-white p-4 lg:p-6 rounded-xl border border-gray-100 shadow-sm flex flex-col justify-center">
+                      <p className="text-gray-500 font-medium text-xs lg:text-sm mb-1">전체 고객수</p>
+                      <p className="text-xl lg:text-2xl font-bold text-orange-600">{uniquePhones.size}명</p>
+                    </div>
                   </div>
-                ))}
-              </div>
+                );
+              })()}
 
               {/* Recent Quotes Table */}
               <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden mt-6 lg:mt-8">
@@ -905,42 +931,217 @@ export default function Admin() {
             </div>
           )}
 
-          {/* Customers Tab */}
-          {activeTab === 'customers' && (
+          {/* Customers Tab - 고객 관리 (realPhone 기준 중복 제거, 검색, 상세 모달 지원) */}
+          {activeTab === 'customers' && (() => {
+            // 왜: 같은 고객이 여러 견적을 넣으면 중복 표시되므로, realPhone 기준으로 그룹핑
+            const customerMap = new Map<string, { name: string; phone: string; orders: Order[]; totalSpent: number; completedCount: number; latestDate: string }>();
+            
+            quotes.forEach(q => {
+              const phone = q.realPhone || q.contactInfo || '';
+              if (!phone) return; // 연락처가 없는 건은 제외
+              
+              const existing = customerMap.get(phone);
+              const orderDate = q.date || q.cleaningDate || '';
+              const price = parseInt(String(q.price || '0').replace(/[^0-9]/g, ''), 10) || 0;
+              const isCompleted = q.status === '청소완료';
+              
+              if (existing) {
+                existing.orders.push(q);
+                existing.totalSpent += isCompleted ? price : 0;
+                existing.completedCount += isCompleted ? 1 : 0;
+                if (orderDate > existing.latestDate) {
+                  existing.latestDate = orderDate;
+                  existing.name = q.name || q.customerName || existing.name;
+                }
+              } else {
+                customerMap.set(phone, {
+                  name: q.name || q.customerName || '이름 없음',
+                  phone,
+                  orders: [q],
+                  totalSpent: isCompleted ? price : 0,
+                  completedCount: isCompleted ? 1 : 0,
+                  latestDate: orderDate,
+                });
+              }
+            });
+
+            const allCustomers = Array.from(customerMap.values())
+              .sort((a, b) => b.latestDate.localeCompare(a.latestDate));
+
+            // 검색 필터 적용
+            const customerSearchTerm = (document.getElementById('customer-search-input') as HTMLInputElement)?.value?.toLowerCase() || '';
+            const filteredCustomers = allCustomers.filter(c => {
+              if (!customerSearchTerm) return true;
+              return c.name.toLowerCase().includes(customerSearchTerm) || 
+                     c.phone.includes(customerSearchTerm);
+            });
+
+            return (
             <div className="space-y-6">
-              <h2 className="text-xl lg:text-2xl font-bold text-gray-800">고객 관리</h2>
-              <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6 overflow-hidden">
-                <p className="text-gray-500 mb-4">최근 상담/계약 고객 목록입니다.</p>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {quotes.length === 0 ? (
-                    <div className="col-span-full text-center py-8 text-gray-500">
-                      등록된 고객이 없습니다.
+              <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+                <div>
+                  <h2 className="text-xl lg:text-2xl font-bold text-gray-800 border-b border-purple-600 inline-block pb-1">고객 관리 (CRM)</h2>
+                  <p className="text-gray-500 mt-2 text-sm">연락처 기준으로 고객을 자동 분류합니다. 총 <strong className="text-purple-600">{allCustomers.length}</strong>명의 고객</p>
+                </div>
+                <div className="flex items-center gap-2 w-full md:w-96 relative">
+                  <Search size={18} className="text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
+                  <input 
+                    id="customer-search-input"
+                    type="text" 
+                    placeholder="고객명, 연락처 검색..." 
+                    className="w-full border border-gray-300 rounded-lg pl-10 pr-4 py-2.5 text-sm font-medium focus:border-purple-500 outline-none bg-white text-gray-700 placeholder:text-gray-400 shadow-sm"
+                    onChange={() => {
+                      // 왜: React의 forceUpdate 대신 간단하게 상태 트리거로 리렌더
+                      setActiveTab('customers');
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* 고객 통계 요약 카드 */}
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
+                <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
+                  <p className="text-gray-500 font-medium text-xs mb-1">전체 고객 수</p>
+                  <p className="text-2xl font-bold text-purple-600">{allCustomers.length}명</p>
+                </div>
+                <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
+                  <p className="text-gray-500 font-medium text-xs mb-1">시공 완료 고객</p>
+                  <p className="text-2xl font-bold text-emerald-600">{allCustomers.filter(c => c.completedCount > 0).length}명</p>
+                </div>
+                <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
+                  <p className="text-gray-500 font-medium text-xs mb-1">단골 고객 (2회+)</p>
+                  <p className="text-2xl font-bold text-orange-600">{allCustomers.filter(c => c.completedCount >= 2).length}명</p>
+                </div>
+                <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
+                  <p className="text-gray-500 font-medium text-xs mb-1">누적 매출액</p>
+                  <p className="text-2xl font-bold text-blue-600">₩{allCustomers.reduce((sum, c) => sum + c.totalSpent, 0).toLocaleString()}</p>
+                </div>
+              </div>
+              
+              <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+                {/* 데스크탑 뷰: 테이블 */}
+                <div className="overflow-x-auto">
+                  <table className="hidden lg:table w-full text-left min-w-[800px]">
+                    <thead>
+                      <tr className="bg-gray-50 border-b border-gray-200 text-sm text-gray-500">
+                        <th className="p-4 font-bold">고객명</th>
+                        <th className="p-4 font-bold">연락처</th>
+                        <th className="p-4 font-bold text-center">총 문의</th>
+                        <th className="p-4 font-bold text-center">시공 완료</th>
+                        <th className="p-4 font-bold">최근 이용일</th>
+                        <th className="p-4 font-bold text-right">누적 결제</th>
+                        <th className="p-4 font-bold text-center">등급</th>
+                        <th className="p-4 font-bold text-center">상세</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {filteredCustomers.length === 0 ? (
+                        <tr>
+                          <td colSpan={8} className="p-12 text-center text-gray-400 font-medium">
+                            {customerSearchTerm ? '검색 결과가 없습니다.' : '등록된 고객이 없습니다.'}
+                          </td>
+                        </tr>
+                      ) : (
+                        filteredCustomers.map((customer) => {
+                          // 왜: 고객 등급을 이용 횟수 기반으로 자동 분류
+                          const grade = customer.completedCount >= 3 ? 'VIP' : customer.completedCount >= 1 ? '단골' : '신규';
+                          const gradeStyle = grade === 'VIP' 
+                            ? 'bg-amber-50 text-amber-700 border-amber-200' 
+                            : grade === '단골' 
+                            ? 'bg-indigo-50 text-indigo-700 border-indigo-200' 
+                            : 'bg-gray-100 text-gray-600 border-gray-200';
+                          
+                          return (
+                            <tr key={customer.phone} className="hover:bg-slate-50 transition-colors">
+                              <td className="p-4 font-bold text-gray-800">{customer.name}</td>
+                              <td className="p-4 text-sm font-medium text-gray-600 tracking-wide">{customer.phone}</td>
+                              <td className="p-4 text-sm font-bold text-center text-gray-700">{customer.orders.length}건</td>
+                              <td className="p-4 text-sm font-bold text-center text-emerald-600">{customer.completedCount}건</td>
+                              <td className="p-4 text-sm text-gray-600">{customer.latestDate || '-'}</td>
+                              <td className="p-4 text-sm font-bold text-right text-gray-800">
+                                {customer.totalSpent > 0 ? `₩${customer.totalSpent.toLocaleString()}` : '-'}
+                              </td>
+                              <td className="p-4 text-center">
+                                <span className={`px-2.5 py-1 rounded-full text-xs font-bold border ${gradeStyle}`}>
+                                  {grade}
+                                </span>
+                              </td>
+                              <td className="p-4 text-center">
+                                <button 
+                                  onClick={() => setSelectedQuoteDetail(customer.orders[0])}
+                                  className="text-blue-600 hover:text-blue-800 text-sm font-bold hover:underline"
+                                >
+                                  보기
+                                </button>
+                              </td>
+                            </tr>
+                          );
+                        })
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* 모바일 뷰: 카드 레이아웃 */}
+                <div className="lg:hidden divide-y divide-gray-100">
+                  {filteredCustomers.length === 0 ? (
+                    <div className="p-12 text-center text-gray-400 font-medium">
+                      {customerSearchTerm ? '검색 결과가 없습니다.' : '등록된 고객이 없습니다.'}
                     </div>
                   ) : (
-                    quotes.map((quote) => (
-                      <div key={quote.id} className="border border-gray-200 rounded-lg p-5 flex flex-col justify-between hover:border-blue-300 transition-colors cursor-pointer shadow-sm">
-                        <div>
-                          <div className="flex justify-between items-start mb-3">
-                            <h4 className="font-bold text-gray-800 text-lg">{quote.name || quote.customerName || '이름 없음'}</h4>
-                            <span className={`text-xs px-2 py-1 rounded-full font-medium ${quote.status === '청소완료' ? 'bg-indigo-50 text-indigo-700' : 'bg-blue-50 text-blue-700'}`}>
-                              {quote.status === '청소완료' ? '단골가능성' : '신규고객'}
-                            </span>
+                    filteredCustomers.map((customer) => {
+                      const grade = customer.completedCount >= 3 ? 'VIP' : customer.completedCount >= 1 ? '단골' : '신규';
+                      const gradeStyle = grade === 'VIP' 
+                        ? 'bg-amber-50 text-amber-700 border-amber-200' 
+                        : grade === '단골' 
+                        ? 'bg-indigo-50 text-indigo-700 border-indigo-200' 
+                        : 'bg-gray-100 text-gray-600 border-gray-200';
+                      
+                      return (
+                        <div key={customer.phone} className="p-4 flex flex-col gap-3 hover:bg-slate-50 transition-colors">
+                          <div className="flex justify-between items-start">
+                            <div>
+                              <div className="flex items-center gap-2 mb-1">
+                                <h4 className="font-bold text-gray-900 text-lg">{customer.name}</h4>
+                                <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${gradeStyle}`}>
+                                  {grade}
+                                </span>
+                              </div>
+                              <p className="text-xs text-gray-500 font-medium tracking-wide">{customer.phone}</p>
+                            </div>
+                            <span className="text-xs text-gray-400 font-medium">{customer.latestDate || '-'}</span>
                           </div>
-                          <p className="text-sm text-gray-600 mb-1">연락처: {quote.realPhone || quote.contactInfo || `010-1234-567${quote.id.slice(0,4)}`}</p>
-                          <p className="text-sm text-gray-600 mb-1">최근 서비스: {quote.type || quote.cleaningType || '일반 청소'}</p>
-                          <p className="text-sm text-gray-600">누적 이용: <span className="font-semibold text-gray-800">{quote.status === '청소완료' ? '1회' : '상담중'}</span></p>
+                          
+                          <div className="bg-white border border-gray-100 shadow-sm p-3 rounded-lg grid grid-cols-3 gap-2 text-sm">
+                            <div className="text-center">
+                              <p className="text-[10px] text-gray-400 font-bold mb-0.5">문의</p>
+                              <p className="text-gray-800 font-bold">{customer.orders.length}건</p>
+                            </div>
+                            <div className="text-center">
+                              <p className="text-[10px] text-gray-400 font-bold mb-0.5">완료</p>
+                              <p className="text-emerald-600 font-bold">{customer.completedCount}건</p>
+                            </div>
+                            <div className="text-center">
+                              <p className="text-[10px] text-gray-400 font-bold mb-0.5">누적 결제</p>
+                              <p className="text-gray-800 font-bold">{customer.totalSpent > 0 ? `₩${(customer.totalSpent / 10000).toFixed(0)}만` : '-'}</p>
+                            </div>
+                          </div>
+
+                          <button 
+                            onClick={() => setSelectedQuoteDetail(customer.orders[0])}
+                            className="w-full mt-1 bg-white border border-gray-200 text-gray-700 py-2.5 rounded-lg text-sm font-bold hover:bg-gray-50 active:bg-gray-100 transition-colors"
+                          >
+                            최근 이용 상세 보기
+                          </button>
                         </div>
-                        <div className="mt-5 pt-4 border-t border-gray-100 flex justify-between items-center">
-                          <button className="text-sm font-medium text-blue-600 hover:text-blue-800 flex items-center gap-1">메시지 전송</button>
-                          <button className="text-sm font-medium text-gray-500 hover:text-gray-800">상세정보보기</button>
-                        </div>
-                      </div>
-                    ))
+                      );
+                    })
                   )}
                 </div>
               </div>
             </div>
-          )}
+            );
+          })()}
 
           {/* Settings Tab */}
           {activeTab === 'settings' && (

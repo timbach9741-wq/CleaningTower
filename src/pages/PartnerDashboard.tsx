@@ -43,6 +43,7 @@ export interface Order {
   houseSubType?: string;     // ★ Quote 원본 필드
   designatedPartnerName?: string;
   totalPrice?: number;
+  createdAt?: string;
   [key: string]: unknown;    // ★ Firestore에서 오는 추가 필드 허용
 }
 

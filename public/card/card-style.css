@@ -1,0 +1,433 @@
+/* ============================
+   청소타워 전자 명함 공통 스타일
+   왜 분리? → 두 명함 페이지에서 동일한 디자인을 재사용하여 유지보수 용이
+   ============================ */
+
+*, *::before, *::after {
+  margin: 0; padding: 0; box-sizing: border-box;
+}
+
+:root {
+  --primary: #2563eb;
+  --primary-dark: #1d4ed8;
+  --accent: #0ea5e9;
+  --dark: #0f172a;
+  --dark-card: #1e293b;
+  --dark-border: #334155;
+  --text-primary: #f8fafc;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+  --gold: #f59e0b;
+}
+
+body {
+  font-family: 'Noto Sans KR', -apple-system, sans-serif;
+  background: var(--dark);
+  color: var(--text-primary);
+  min-height: 100vh;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* 컨테이너 */
+.card-container {
+  max-width: 480px;
+  margin: 0 auto;
+  min-height: 100vh;
+}
+
+/* 히어로 */
+.hero-section {
+  position: relative;
+  height: 300px;
+  overflow: hidden;
+}
+
+.hero-bg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: brightness(0.55);
+}
+
+.hero-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, rgba(15,23,42,0.2) 0%, rgba(15,23,42,0.5) 50%, rgba(15,23,42,1) 100%);
+}
+
+.hero-logo {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.hero-logo img {
+  height: 40px;
+  opacity: 1;
+}
+
+.hero-logo span {
+  font-size: 18px;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: 0.5px;
+}
+
+/* 프로필 카드 */
+.profile-card {
+  position: relative;
+  margin-top: -80px;
+  z-index: 10;
+  padding: 0 20px;
+}
+
+.profile-inner {
+  background: var(--dark-card);
+  border: 1px solid var(--dark-border);
+  border-radius: 24px;
+  padding: 28px 24px;
+  text-align: center;
+  box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
+}
+
+.avatar-ring {
+  width: 92px;
+  height: 92px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, var(--primary), var(--accent));
+  padding: 3px;
+  margin: 0 auto 16px;
+  animation: pulse-ring 3s ease-in-out infinite;
+}
+
+@keyframes pulse-ring {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(37,99,235,0.4); }
+  50% { box-shadow: 0 0 0 12px rgba(37,99,235,0); }
+}
+
+.avatar-inner {
+  width: 100%;
+  height: 100%;
+  border-radius: 12px;
+  background: var(--dark-card);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 34px;
+  font-weight: 900;
+  color: var(--primary);
+}
+
+.profile-name {
+  font-size: 26px;
+  font-weight: 900;
+  letter-spacing: -0.5px;
+  margin-bottom: 4px;
+}
+
+.profile-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--accent);
+  margin-bottom: 4px;
+}
+
+.profile-company {
+  font-size: 16px;
+  color: var(--accent);
+  font-weight: 600;
+  letter-spacing: 1px;
+}
+
+.badge-row {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 16px;
+  flex-wrap: wrap;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(37,99,235,0.15);
+  color: var(--accent);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 6px 12px;
+  border-radius: 20px;
+  border: 1px solid rgba(37,99,235,0.25);
+}
+
+.badge.gold {
+  background: rgba(245,158,11,0.12);
+  color: var(--gold);
+  border-color: rgba(245,158,11,0.25);
+}
+
+/* 빠른 연락 버튼 */
+.quick-actions {
+  padding: 24px 20px 12px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.action-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  background: var(--dark-card);
+  border: 1px solid var(--dark-border);
+  border-radius: 16px;
+  padding: 18px 12px;
+  text-decoration: none;
+  color: var(--text-primary);
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.action-btn:active {
+  transform: scale(0.95);
+  background: rgba(37,99,235,0.1);
+  border-color: var(--primary);
+}
+
+.action-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+}
+
+.action-icon.call { background: linear-gradient(135deg, #10b981, #059669); }
+.action-icon.sms { background: linear-gradient(135deg, #3b82f6, #2563eb); }
+.action-icon.email { background: linear-gradient(135deg, #f59e0b, #d97706); }
+
+.action-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+
+/* 연락처 정보 */
+.info-section {
+  padding: 12px 20px 20px;
+}
+
+.info-card {
+  background: var(--dark-card);
+  border: 1px solid var(--dark-border);
+  border-radius: 20px;
+  overflow: hidden;
+}
+
+.info-header {
+  padding: 16px 20px 8px;
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.info-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 20px;
+  text-decoration: none;
+  color: var(--text-primary);
+  transition: background 0.15s;
+  border-bottom: 1px solid rgba(51,65,85,0.5);
+}
+
+.info-item:last-child { border-bottom: none; }
+.info-item:active { background: rgba(37,99,235,0.08); }
+
+.info-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: rgba(37,99,235,0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.info-text { flex: 1; min-width: 0; }
+
+.info-label {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+
+.info-value {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.info-arrow {
+  color: var(--text-muted);
+  font-size: 18px;
+  font-weight: 300;
+}
+
+/* 서비스 태그 */
+.services-section {
+  padding: 0 20px 20px;
+}
+
+.services-card {
+  background: var(--dark-card);
+  border: 1px solid var(--dark-border);
+  border-radius: 20px;
+  padding: 20px;
+}
+
+.services-title {
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 14px;
+}
+
+.service-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.service-tag {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(37,99,235,0.08);
+  border: 1px solid rgba(37,99,235,0.2);
+  padding: 8px 14px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.service-tag .dot {
+  width: 6px;
+  height: 6px;
+  background: var(--primary);
+  border-radius: 50%;
+}
+
+/* CTA 버튼 */
+.cta-section {
+  padding: 0 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.cta-primary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  color: white;
+  font-size: 16px;
+  font-weight: 800;
+  padding: 16px;
+  border-radius: 16px;
+  border: none;
+  cursor: pointer;
+  text-decoration: none;
+  box-shadow: 0 8px 24px -4px rgba(37,99,235,0.4);
+  transition: all 0.2s;
+  font-family: inherit;
+}
+
+.cta-primary:active { transform: scale(0.97); }
+
+.cta-secondary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: var(--dark-card);
+  border: 1px solid var(--dark-border);
+  color: var(--text-primary);
+  font-size: 14px;
+  font-weight: 700;
+  padding: 14px;
+  border-radius: 16px;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.2s;
+  font-family: inherit;
+}
+
+.cta-secondary:active {
+  transform: scale(0.97);
+  border-color: var(--primary);
+}
+
+/* 푸터 */
+.card-footer {
+  text-align: center;
+  padding: 20px;
+  border-top: 1px solid var(--dark-border);
+  margin: 0 20px;
+}
+
+.footer-logo {
+  height: 26px;
+  opacity: 0.4;
+  filter: brightness(10);
+  margin-bottom: 8px;
+}
+
+.footer-text {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-weight: 500;
+  line-height: 1.6;
+}
+
+/* 애니메이션 */
+.fade-up {
+  opacity: 0;
+  transform: translateY(20px);
+  animation: fadeUp 0.6s ease forwards;
+}
+
+@keyframes fadeUp {
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.delay-1 { animation-delay: 0.1s; }
+.delay-2 { animation-delay: 0.2s; }
+.delay-3 { animation-delay: 0.3s; }
+.delay-4 { animation-delay: 0.4s; }
+.delay-5 { animation-delay: 0.5s; }
+.delay-6 { animation-delay: 0.6s; }
+
+/* iPhone 노치 대응 */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  .card-container { padding-bottom: env(safe-area-inset-bottom); }
+}

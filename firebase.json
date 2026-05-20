@@ -27,6 +27,24 @@
         "headers": [
           { "key": "Cache-Control", "value": "public, max-age=3600" }
         ]
+      },
+      {
+        "source": "**/*.@(html|js|json|webmanifest)",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "no-cache, no-store, must-revalidate"
+          }
+        ]
+      },
+      {
+        "source": "/assets/**",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "public, max-age=31536000, immutable"
+          }
+        ]
       }
     ]
   },

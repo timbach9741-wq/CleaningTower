@@ -48,15 +48,11 @@ export async function getMessagingInstance(): Promise<Messaging | null> {
   if (!_messaging) {
     const supported = await isSupported();
     if (supported) {
-      // ★ Service Worker를 명시적으로 등록하여 FCM이 올바른 SW를 사용하도록 설정
-      // 이렇게 해야 백그라운드 알림 수신이 정상적으로 작동합니다.
-      try {
-        if ('serviceWorker' in navigator) {
-          await navigator.serviceWorker.register('/firebase-messaging-sw.js');
-        }
-      } catch (e) {
-        console.warn('[Firebase] Service Worker 등록 실패:', e);
-      }
+      // ★ 별도 서비스 워커 등록을 하지 않음
+      // index.html에서 이미 sw.js(통합 서비스 워커)를 등록했으므로,
+      // FCM은 해당 서비스 워커를 자동으로 사용합니다.
+      // 기존에 firebase-messaging-sw.js를 여기서 별도 등록하면
+      // sw.js와 scope 충돌이 발생하여 FCM 토큰 발급이 실패했음.
       _messaging = getMessaging(app);
     }
   }

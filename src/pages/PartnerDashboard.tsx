@@ -197,7 +197,14 @@ export default function Partner() {
           // ★ VAPID 키: Firebase Console > Cloud Messaging > 웹 푸시 인증서에서 생성
           const VAPID_KEY = 'BKbWKFBpXccjAXlskLV4VmXNG55f3fsywzuo2enZDr2huMcJmnyyvHP_0VVsEdDdH50ZuYVd2F-apJOJYpobwtQ';
           try {
-            currentToken = await getToken(messaging, { vapidKey: VAPID_KEY });
+            // ★ 핵심 수정: 이미 등록된 sw.js(통합 서비스 워커)를 가져와 FCM에 전달
+            // 이렇게 해야 FCM이 별도의 firebase-messaging-sw.js를 찾지 않고
+            // 기존 sw.js를 통해 정상적으로 토큰을 발급받습니다.
+            const swRegistration = await navigator.serviceWorker.ready;
+            currentToken = await getToken(messaging, {
+              vapidKey: VAPID_KEY,
+              serviceWorkerRegistration: swRegistration
+            });
           } catch (e) {
             console.error('Token error:', e);
             alert('푸시 알림 토큰을 발급받지 못했습니다. 브라우저 환경 설정 문제가 있을 수 있습니다.');
@@ -527,7 +534,12 @@ export default function Partner() {
             try {
               // ★ VAPID 키 필수: 없으면 FCM 토큰 발급 실패
               const VAPID_KEY = 'BKbWKFBpXccjAXlskLV4VmXNG55f3fsywzuo2enZDr2huMcJmnyyvHP_0VVsEdDdH50ZuYVd2F-apJOJYpobwtQ';
-              const currentToken = await getToken(messaging, { vapidKey: VAPID_KEY });
+              // ★ 통합 서비스 워커(sw.js)를 통해 토큰 발급
+              const swRegistration = await navigator.serviceWorker.ready;
+              const currentToken = await getToken(messaging, {
+                vapidKey: VAPID_KEY,
+                serviceWorkerRegistration: swRegistration
+              });
               if (currentToken) {
                 updateData.fcmTokens = [currentToken];
               }

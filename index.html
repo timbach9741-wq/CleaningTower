@@ -63,12 +63,14 @@
 
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/sw.js').then(
+          // ★ 통합 서비스 워커 등록 (PWA + FCM을 하나로)
+          // scope: '/'로 설정하여 모든 경로에서 동작하도록 함
+          navigator.serviceWorker.register('/sw.js', { scope: '/' }).then(
             (registration) => {
-              console.log('ServiceWorker registration successful');
+              console.log('[PWA] 서비스워커 등록 성공, scope:', registration.scope);
             },
             (err) => {
-              console.log('ServiceWorker registration failed: ', err);
+              console.error('[PWA] 서비스워커 등록 실패:', err);
             }
           );
         });

@@ -3,6 +3,8 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import ScrollToTopButton from './components/common/ScrollToTopButton';
 import ScrollToAnchor from './components/common/ScrollToAnchor';
 
+import ErrorBoundary from './components/common/ErrorBoundary';
+
 // 코드 스플리팅: 각 페이지를 별도 청크로 분리하여 초기 로딩 속도 개선
 // 사용자가 해당 페이지에 접근할 때만 JS를 다운로드함
 const CleaningHome = lazy(() => import('./pages/CleaningHome'));
@@ -47,11 +49,12 @@ function PageLoader() {
 
 function App() {
   return (
-    <BrowserRouter>
-      <ScrollToTopButton />
-      <ScrollToAnchor />
-      <Suspense fallback={<PageLoader />}>
-        <Routes>
+    <ErrorBoundary>
+      <BrowserRouter>
+        <ScrollToTopButton />
+        <ScrollToAnchor />
+        <Suspense fallback={<PageLoader />}>
+          <Routes>
           <Route path="/" element={<CleaningHome />} />
           <Route path="/service" element={<ServiceGuide />} />
           <Route path="/partners" element={<PartnerList />} />
@@ -74,7 +77,8 @@ function App() {
           <Route path="/review-write/:orderId" element={<ReviewWrite />} />
         </Routes>
       </Suspense>
-    </BrowserRouter>
+      </BrowserRouter>
+    </ErrorBoundary>
   );
 }
 

@@ -86,6 +86,8 @@ export default function Partner() {
   const [quotes, setQuotes] = useState<Order[]>([]);
   const [currentUser, setCurrentUser] = useState<PartnerUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  // ★ partnerId를 상태로 관리하여, 로그인 시 onSnapshot 리스너가 자동으로 재부착되도록 함
+  const [partnerId, setPartnerId] = useState<string | null>(localStorage.getItem('partnerId'));
   const [showLanding, setShowLanding] = useState(!localStorage.getItem('partnerId'));
   
   // 홍보 정보 수정 모달 상태
@@ -218,11 +220,9 @@ export default function Partner() {
 
   const isInitialQuotesLoad = React.useRef(true);
 
+  // ★ [리스너 1] Quotes(견적) 컬렉션 실시간 감지 — 페이지 최초 로드 시 1회만 부착
   useEffect(() => {
-    if (!db) {
-      setTimeout(() => setIsLoading(false), 0);
-      return;
-    }
+    if (!db) return;
     const unsubscribe = onSnapshot(collection(db, 'quotes'), (snapshot) => {
       const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       setQuotes(data);
@@ -261,31 +261,36 @@ export default function Partner() {
         isInitialQuotesLoad.current = false;
       }
     });
-    
-    const loggedInId = localStorage.getItem('partnerId');
-    let unsubscribeUser: Unsubscribe | null = null;
-    
-    if (loggedInId) {
-      unsubscribeUser = onSnapshot(doc(db, 'partners', loggedInId), (docSnapshot) => {
+    return () => unsubscribe();
+  }, []);
+
+  // ★ [리스너 2] 파트너 문서 실시간 감지 — partnerId가 바뀔 때마다 리스너 재부착
+  // 왜 분리했나: 로그인 전에는 partnerId가 null이라 리스너가 안 붙고,
+  // 로그인 성공 시 setPartnerId()가 호출되면 이 useEffect가 다시 실행되어
+  // 해당 파트너 문서의 status 변화(pending → active)를 실시간으로 감지합니다.
+  useEffect(() => {
+    if (!db) {
+      setTimeout(() => setIsLoading(false), 0);
+      return;
+    }
+    if (partnerId) {
+      const unsubscribeUser = onSnapshot(doc(db, 'partners', partnerId), (docSnapshot) => {
         if (docSnapshot.exists()) {
           setCurrentUser({ id: docSnapshot.id, ...docSnapshot.data() } as PartnerUser);
         } else {
           // 문서가 없으면 로그아웃 처리
           localStorage.removeItem('partnerId');
+          setPartnerId(null);
           setShowLanding(true);
           setShowLogin(true);
         }
         setIsLoading(false);
       });
+      return () => unsubscribeUser();
     } else {
       setTimeout(() => setIsLoading(false), 0);
     }
-
-    return () => {
-      unsubscribe();
-      if (unsubscribeUser) unsubscribeUser();
-    };
-  }, []);
+  }, [partnerId]);
 
   const mockSettlements = [
     {
@@ -570,8 +575,17 @@ export default function Partner() {
       const querySnapshot = await getDocs(q);
       
       if (!querySnapshot.empty) {
-        const partnerDoc = querySnapshot.docs[0];
+        // ★ 동일 loginId 중복 방지: 같은 아이디/비번으로 여러 문서가 존재할 수 있으므로
+        // 가장 최근에 생성된 문서를 기준으로 로그인 처리 (createdAt 내림차순)
+        const sortedDocs = [...querySnapshot.docs].sort((a, b) => {
+          const createdA = (a.data().createdAt as string) || '';
+          const createdB = (b.data().createdAt as string) || '';
+          return createdB.localeCompare(createdA);
+        });
+        const partnerDoc = sortedDocs[0];
         localStorage.setItem('partnerId', partnerDoc.id);
+        // ★ partnerId 상태를 업데이트하여 onSnapshot 리스너가 자동 부착되도록 트리거
+        setPartnerId(partnerDoc.id);
         setCurrentUser({ id: partnerDoc.id, ...partnerDoc.data() });
         setShowLogin(false);
         setShowLanding(false);
@@ -588,6 +602,8 @@ export default function Partner() {
 
   const handleLogout = () => {
     localStorage.removeItem('partnerId');
+    // ★ partnerId 상태를 null로 변경하여 기존 onSnapshot 리스너가 정리(cleanup)되도록 함
+    setPartnerId(null);
     setCurrentUser(null);
     setShowLanding(true);
     setShowLogin(true); // 바로 로그인 화면을 띄워줌

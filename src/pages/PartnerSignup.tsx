@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Building2, User, Upload, ArrowRight, CheckCircle, ShieldCheck } from 'lucide-react';
 import { getDb } from '../firebase';
-import { collection, addDoc } from 'firebase/firestore';
+import { collection, addDoc, query, where, getDocs } from 'firebase/firestore';
 import { useNavigate, useLocation } from 'react-router-dom';
 
 const REGIONS = [
@@ -60,6 +60,16 @@ export default function PartnerSignup() {
 
       const dbInstance = getDb();
       if (dbInstance) {
+        // ★ 중복 가입 방지: 같은 전화번호(loginId)로 이미 가입된 계정이 있는지 확인
+        const duplicateQuery = query(
+          collection(dbInstance, 'partners'),
+          where('loginId', '==', firestoreData.loginId)
+        );
+        const duplicateSnapshot = await getDocs(duplicateQuery);
+        if (!duplicateSnapshot.empty) {
+          alert('이미 해당 연락처로 가입된 계정이 존재합니다.\n파트너스 페이지에서 기존 계정으로 로그인해주세요.');
+          return;
+        }
         await addDoc(collection(dbInstance, 'partners'), firestoreData);
       }
       

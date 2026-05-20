@@ -337,12 +337,16 @@ export default function Partner() {
       const dateB = b.date || b.cleaningDate || '';
       
       if (dateA !== dateB) {
-        return dateA.localeCompare(dateB);
+        const timeA = typeof dateA === 'object' && typeof (dateA as any).toMillis === 'function' ? (dateA as any).toMillis() : new Date(dateA || 0).getTime();
+        const timeB = typeof dateB === 'object' && typeof (dateB as any).toMillis === 'function' ? (dateB as any).toMillis() : new Date(dateB || 0).getTime();
+        return timeA - timeB;
       }
       
-      const createdA = a.createdAt || '';
-      const createdB = b.createdAt || '';
-      return createdB.localeCompare(createdA);
+      const createdA = a.createdAt;
+      const createdB = b.createdAt;
+      const timeA = createdA && typeof (createdA as any).toMillis === 'function' ? (createdA as any).toMillis() : new Date(createdA || 0).getTime();
+      const timeB = createdB && typeof (createdB as any).toMillis === 'function' ? (createdB as any).toMillis() : new Date(createdB || 0).getTime();
+      return timeB - timeA;
     });
     
   // 대기중인 오더: 긴급 오더 최우선, 그 다음 최신 생성일 순
@@ -352,9 +356,11 @@ export default function Partner() {
       if (a.isUrgent && !b.isUrgent) return -1;
       if (!a.isUrgent && b.isUrgent) return 1;
       
-      const createdA = a.createdAt || '';
-      const createdB = b.createdAt || '';
-      return createdB.localeCompare(createdA);
+      const createdA = a.createdAt;
+      const createdB = b.createdAt;
+      const timeA = createdA && typeof (createdA as any).toMillis === 'function' ? (createdA as any).toMillis() : new Date(createdA || 0).getTime();
+      const timeB = createdB && typeof (createdB as any).toMillis === 'function' ? (createdB as any).toMillis() : new Date(createdB || 0).getTime();
+      return timeB - timeA;
     });
 
   // 페널티 정책 함수 (보증금 제도 폐지로 문구 수정)
@@ -590,9 +596,11 @@ export default function Partner() {
         // ★ 동일 loginId 중복 방지: 같은 아이디/비번으로 여러 문서가 존재할 수 있으므로
         // 가장 최근에 생성된 문서를 기준으로 로그인 처리 (createdAt 내림차순)
         const sortedDocs = [...querySnapshot.docs].sort((a, b) => {
-          const createdA = (a.data().createdAt as string) || '';
-          const createdB = (b.data().createdAt as string) || '';
-          return createdB.localeCompare(createdA);
+          const createdA = a.data().createdAt;
+          const createdB = b.data().createdAt;
+          const timeA = createdA && typeof createdA.toMillis === 'function' ? createdA.toMillis() : new Date(createdA || 0).getTime();
+          const timeB = createdB && typeof createdB.toMillis === 'function' ? createdB.toMillis() : new Date(createdB || 0).getTime();
+          return timeB - timeA;
         });
         const partnerDoc = sortedDocs[0];
         localStorage.setItem('partnerId', partnerDoc.id);

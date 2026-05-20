@@ -14,6 +14,7 @@ import {
   Wallet,
   MessageSquare,
   FileText,
+  Star,
 } from 'lucide-react';
 import { db } from '../firebase';
 import { collection, onSnapshot, doc, updateDoc, addDoc, deleteDoc } from 'firebase/firestore';
@@ -70,6 +71,21 @@ export interface PartnerUser {
   mainServices?: string[];
 }
 
+export interface Review {
+  id: string;
+  orderId?: string;
+  partnerId?: string;
+  partnerName?: string;
+  customerName?: string;
+  rating?: number;
+  content?: string;
+  images?: string[];
+  createdAt?: any;
+  serviceType?: string;
+  location?: string;
+  isHidden?: boolean;
+}
+
 export default function Admin() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -77,6 +93,7 @@ export default function Admin() {
   const [loginForm, setLoginForm] = useState({ id: '', password: '' });
   const [quotes, setQuotes] = useState<Order[]>([]);
   const [partners, setPartners] = useState<PartnerUser[]>([]);
+  const [reviews, setReviews] = useState<Review[]>([]);
   const [selectedQuoteDetail, setSelectedQuoteDetail] = useState<Order | null>(null);
   const [selectedPartnerDetail, setSelectedPartnerDetail] = useState<PartnerUser | null>(null);
   const [showNotifications, setShowNotifications] = useState(false);
@@ -169,11 +186,41 @@ export default function Admin() {
       setPartners(data);
     });
 
+    const unsubscribeReviews = onSnapshot(collection(db, 'reviews'), (snapshot) => {
+      const data = snapshot.docs.map(d => ({ id: d.id, ...d.data() })) as Review[];
+      data.sort((a: Review, b: Review) => {
+        const getTimestamp = (v: any) => {
+          if (!v) return 0;
+          if (v.toDate) return v.toDate().getTime();
+          if (v.seconds) return v.seconds * 1000;
+          if (v instanceof Date) return v.getTime();
+          if (typeof v === 'string') return new Date(v).getTime();
+          return 0;
+        };
+        return getTimestamp(b.createdAt) - getTimestamp(a.createdAt);
+      });
+      setReviews(data);
+    });
+
     return () => {
       unsubscribe();
       unsubscribePartners();
+      unsubscribeReviews();
     };
   }, []);
+
+  const handleDeleteReview = async (id: string) => {
+    if (!db) return;
+    if (confirm("이 리뷰를 영구 삭제하시겠습니까? 삭제 후에는 복구할 수 없습니다.")) {
+      try {
+        await deleteDoc(doc(db, 'reviews', id));
+        alert("리뷰가 정상적으로 삭제되었습니다.");
+      } catch (err) {
+        console.error("리뷰 삭제 실패:", err);
+        alert("리뷰 삭제 중 오류가 발생했습니다.");
+      }
+    }
+  };
 
   const handleStatusChange = async (id: string, newStatus: string) => {
     if (!db) return;
@@ -593,6 +640,13 @@ export default function Admin() {
           >
             <Users size={20} />
             <span className="font-medium">고객 관리</span>
+          </button>
+          <button 
+            onClick={() => { setActiveTab('reviews'); setIsMobileMenuOpen(false); }}
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'reviews' ? 'bg-blue-600 text-white' : 'text-slate-300 hover:bg-slate-800'}`}
+          >
+            <Star size={20} />
+            <span className="font-medium">리뷰/CS 관리</span>
           </button>
           <button 
             onClick={() => { setActiveTab('finance'); setIsMobileMenuOpen(false); }}
@@ -1626,6 +1680,69 @@ export default function Admin() {
                     </tbody>
                   </table>
                 </div>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'reviews' && (
+            <div className="space-y-6 animate-in fade-in zoom-in-95 duration-300">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <h2 className="text-xl lg:text-2xl font-bold text-gray-800 border-b border-blue-600 inline-block pb-1">리뷰 / CS 관리</h2>
+                <div className="bg-white rounded-lg border border-gray-200 px-4 py-2 flex items-center gap-2 shadow-sm">
+                  <span className="text-sm font-bold text-gray-600">총 리뷰 수:</span>
+                  <span className="text-lg font-black text-blue-600">{reviews.length}개</span>
+                </div>
+              </div>
+
+              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                <div className="p-4 bg-gray-50 border-b border-gray-100">
+                  <p className="text-sm text-gray-600 font-medium">고객이 작성한 리뷰 내역입니다. 문제가 있는 악성 리뷰는 영구 삭제할 수 있습니다.</p>
+                </div>
+                {reviews.length === 0 ? (
+                  <div className="p-10 text-center text-gray-500 font-medium">작성된 리뷰가 없습니다.</div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse">
+                      <thead>
+                        <tr className="bg-gray-50 border-b border-gray-200 text-gray-600 text-sm">
+                          <th className="p-4 font-bold whitespace-nowrap">작성일</th>
+                          <th className="p-4 font-bold whitespace-nowrap">고객명</th>
+                          <th className="p-4 font-bold whitespace-nowrap">담당 파트너</th>
+                          <th className="p-4 font-bold whitespace-nowrap">별점</th>
+                          <th className="p-4 font-bold min-w-[300px]">리뷰 내용</th>
+                          <th className="p-4 font-bold text-center whitespace-nowrap">관리</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {reviews.map((r) => (
+                          <tr key={r.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors group">
+                            <td className="p-4 text-sm text-gray-600 whitespace-nowrap">
+                              {r.createdAt ? new Date(r.createdAt.toDate ? r.createdAt.toDate() : (r.createdAt.seconds ? r.createdAt.seconds * 1000 : r.createdAt)).toLocaleDateString() : '날짜 없음'}
+                            </td>
+                            <td className="p-4 text-sm font-bold text-gray-800 whitespace-nowrap">{r.customerName}</td>
+                            <td className="p-4 text-sm font-bold text-blue-600 whitespace-nowrap">{r.partnerName}</td>
+                            <td className="p-4 whitespace-nowrap">
+                              <div className="flex text-amber-400">
+                                {[...Array(5)].map((_, i) => (
+                                  <Star key={i} size={16} fill={i < (r.rating || 0) ? 'currentColor' : 'none'} strokeWidth={1.5} />
+                                ))}
+                              </div>
+                            </td>
+                            <td className="p-4 text-sm text-gray-700 whitespace-pre-wrap break-keep">{r.content}</td>
+                            <td className="p-4 text-center whitespace-nowrap">
+                              <button 
+                                onClick={() => handleDeleteReview(r.id)}
+                                className="px-3 py-1.5 bg-red-50 text-red-600 rounded-lg text-xs font-bold hover:bg-red-100 transition-colors opacity-100 lg:opacity-0 lg:group-hover:opacity-100"
+                              >
+                                삭제
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
               </div>
             </div>
           )}

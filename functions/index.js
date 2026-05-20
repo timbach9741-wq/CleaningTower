@@ -33,6 +33,21 @@ async function sendAdminNotification(message) {
 }
 
 /**
+ * 🟡 추후 구현 예정: 카카오 알림톡(비즈메시지) API 연동 플레이스홀더
+ * 고객에게 배정 완료, 예약 확정 등의 안내 메시지를 카카오톡으로 발송합니다.
+ * (사업자 등록 이후 알리고(Aligo) 또는 솔라피(Solapi) API 연동 시 실제 코드로 대체)
+ */
+async function sendCustomerKakaoNotification(phone, templateCode, templateData) {
+  if (!phone || phone === '미입력') return false;
+  
+  // TODO: 실제 API 발송 로직 추가 (axios.post)
+  console.log(`[카카오 알림톡 발송 대기] 수신처: ${phone}, 템플릿: ${templateCode}`);
+  console.log(`[메시지 내용 시뮬레이션]\n${templateData}`);
+  
+  return true;
+}
+
+/**
  * 파트너 앱으로 푸시 알림(FCM)을 전송하는 함수
  * 왜 sendEachForMulticast: 여러 토큰에 한번에 발송하고, 개별 성공/실패를 추적할 수 있음
  */
@@ -210,6 +225,13 @@ exports.notifyOnOrderStatusChange = functions.firestore
 
 ✔️ 파트너가 오더를 수락했습니다. 고객에게 안내해주세요.`;
           await sendAdminNotification(msg);
+          
+          // 🟡 고객에게 '파트너 배정 완료' 카카오톡 발송 (추후 실제 API 연동 시 활성화)
+          const customerPhone = after.contactInfo || after.phone || after.realPhone || '미입력';
+          const kakaoMessage = `[청소타워 - 배정 완료 안내]\n\n${customerName} 고객님, 요청하신 청소 의뢰에 파트너가 배정되었습니다!\n\n▶ 배정된 파트너: ${partnerName}\n▶ 서비스 일정: ${orderDate}\n\n곧 담당 파트너가 고객님께 직접 연락을 드릴 예정입니다. 감사합니다.`;
+          
+          await sendCustomerKakaoNotification(customerPhone, 'ASSIGN_COMPLETE', kakaoMessage);
+          
           break;
         }
         

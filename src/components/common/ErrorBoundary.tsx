@@ -25,18 +25,20 @@ class ErrorBoundary extends Component<Props, State> {
     console.error('Uncaught error:', error, errorInfo);
     
     // ChunkLoadError 처리: 배포 후 이전 버전의 JS 청크를 불러오지 못할 때 자동 새로고침
-    if (
-      error.message.includes('Failed to fetch dynamically imported module') ||
-      error.message.includes('Importing a module script failed') ||
-      error.name === 'ChunkLoadError'
-    ) {
+    // iOS Safari 등 다양한 브라우저의 에러 메시지를 포괄하기 위해, 
+    // 그리고 알 수 없는 렌더링 오류의 일시적 해소를 위해 1회 자동 새로고침을 시도합니다.
+    const hasReloaded = sessionStorage.getItem('error_reloaded');
+    
+    if (!hasReloaded) {
+      sessionStorage.setItem('error_reloaded', 'true');
       window.location.reload();
+      return;
     }
   }
 
   public render() {
     if (this.state.hasError) {
-      // ChunkLoadError가 아닌 다른 에러의 경우 폴백 UI 표시
+      // 1회 새로고침 후에도 에러가 발생한 경우 폴백 UI 표시
       return (
         <div style={{
           minHeight: '100vh',

@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { MapPin, Calendar, CheckCircle, AlertTriangle, Phone, Home, List, User, Briefcase, Info, Bell } from 'lucide-react';
 import { db, storage, getMessagingInstance } from '../firebase';
 import { getToken } from 'firebase/messaging';
-import { collection, onSnapshot, doc, updateDoc, getDocs, query, where } from 'firebase/firestore';
+import { collection, onSnapshot, doc, updateDoc, getDocs, query, where, deleteDoc } from 'firebase/firestore';
 import type { Unsubscribe } from 'firebase/firestore';
 import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -1625,8 +1625,17 @@ export default function Partner() {
 
               <div className="flex flex-col gap-2 p-6 pt-0">
                 <button 
-                  onClick={() => {
-                    alert('성공적으로 탈퇴되었습니다.');
+                  onClick={async () => {
+                    if (db && currentUser) {
+                      try {
+                        await deleteDoc(doc(db, 'partners', currentUser.id));
+                        alert('성공적으로 탈퇴되었습니다.');
+                        handleLogout();
+                      } catch (e) {
+                        console.error(e);
+                        alert('탈퇴 처리 중 오류가 발생했습니다.');
+                      }
+                    }
                     setShowLeaveModal(false);
                   }}
                   className="w-full py-4 bg-slate-100 hover:bg-slate-200 text-slate-800 font-black rounded-xl active:scale-[0.98] transition-transform"

@@ -268,77 +268,10 @@ export default function Quote() {
       let assignedToId = selectedPartnerId;
       let assignedPartnerName = selectedPartnerName;
 
-      // 자동 배정(Fast Booking)인 경우: 독점(exclusive) -> 프리미엄(premium) -> 일반(basic) 순으로 배정
+      // 자동 배정(Fast Booking)인 경우: 배정 로직 없이 전체 파트너에게 알림 전송 (Broadcasting)
       if (!assignedToId && address) {
-        try {
-          const q = query(
-            collection(db, 'partners'), 
-            where('status', '==', 'active')
-          );
-          const querySnapshot = await getDocs(q);
-          const allApprovedPartners = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() as PartnerData }));
-
-          const addressParts = address.split(' ');
-          const city = addressParts[0]; 
-          const gu = addressParts[1];   
-          const cityKey = city ? city.substring(0, 2) : ''; // '서울', '경기' 등
-          const guKey = gu ? gu.replace(/시$|구$|군$/, '') : ''; // '서초', '강남' 등
-
-          // 지역 매칭 점수 계산 (높을수록 우선순위)
-          const getMatchScore = (pData: PartnerData) => {
-            const pRegion = pData.region || pData.area || '';
-            if (!pRegion) return 0;
-            if (pRegion.includes('전국')) return 1; // 전국구는 기본 점수
-            
-            let score = 0;
-            // 시/도 매칭 확인 (예: '서울', '경기')
-            if (cityKey && pRegion.includes(cityKey)) {
-              score += 10; // 시/도 일치 시 10점
-              
-              // 구/군 매칭 확인 (예: '서초', '강남')
-              if (guKey && pRegion.includes(guKey)) {
-                score += 50; // 구/군까지 일치하면 50점 가산
-              } else if (pRegion.includes('전지역')) {
-                score += 20; // 시/도 전지역이면 20점 가산
-              } else if (pRegion.includes('일부')) {
-                score += 5; // 일부 지역이면 5점 가산
-              }
-            }
-            return score;
-          };
-
-          // 파트너 필터링 및 점수 계산
-          const eligiblePartners = allApprovedPartners
-            .map(p => {
-              const matchScore = getMatchScore(p);
-              // [추가] 지역 독점 파트너에게 강력한 우선순위 가중치 부여 (지역 매칭이 된 경우에만)
-              let finalScore = matchScore;
-              if (p.plan === 'exclusive' && matchScore >= 10) {
-                finalScore += 1000; // 독점 파트너는 지역만 맞으면 압도적 우선순위
-              } else if (p.plan === 'premium' && matchScore >= 10) {
-                finalScore += 500;  // 프리미엄 파트너 가중치
-              }
-              
-              return { ...p, matchScore, finalScore };
-            })
-            .filter(p => p.matchScore > 0);
-
-          // 우선순위 정렬: 1. 최종 점수(가중치 포함 높은 순), 2. 매칭 점수(순수 지역 매칭), 3. 랜덤
-          const sortedPartners = eligiblePartners.sort((a, b) => {
-            if (b.finalScore !== a.finalScore) return b.finalScore - a.finalScore;
-            if (b.matchScore !== a.matchScore) return b.matchScore - a.matchScore;
-            return Math.random() - 0.5; // 동일 조건 시 랜덤
-          });
-
-          if (sortedPartners.length > 0) {
-            const selectedPartner = sortedPartners[0];
-            assignedToId = selectedPartner.id;
-            assignedPartnerName = selectedPartner.companyName || selectedPartner.name || '추천 파트너';
-            console.log(`[자동 배정 완료] ${selectedPartner.plan} 등급 / 매칭점수 ${selectedPartner.matchScore} / 최종점수 ${selectedPartner.finalScore}: ${assignedPartnerName}`);
-          }
-        } catch (e) {
-          console.error("Error during auto-assignment logic", e);
-        }
+        assignedPartnerName = '추천 파트너 (전체 알림 발송됨)';
+        console.log(`[빠른 배정] 특정 업체 지정 없이 지역 내 전체 파트너에게 알림을 발송합니다.`);
       }
 
       // 최종 견적 데이터 저장

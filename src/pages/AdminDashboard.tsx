@@ -133,15 +133,27 @@ export default function Admin() {
     const unsubscribe = onSnapshot(collection(db, 'quotes'), (snapshot) => {
       const data = snapshot.docs.map(d => ({ id: d.id, ...d.data() })) as Order[];
       data.sort((a: Order, b: Order) => {
+        // createdAt을 기준으로 최신순 정렬 (가장 최근에 들어온 견적이 위로 오도록)
+        const getTimestamp = (v: any) => {
+          if (!v) return 0;
+          if (v.toDate) return v.toDate().getTime();
+          if (v.seconds) return v.seconds * 1000;
+          if (v instanceof Date) return v.getTime();
+          if (typeof v === 'string') return new Date(v).getTime();
+          return 0;
+        };
+        const timeA = getTimestamp(a.createdAt);
+        const timeB = getTimestamp(b.createdAt);
+        
+        if (timeA !== timeB) {
+          return timeB - timeA; // 최신 요청이 위로
+        }
+        
+        // createdAt이 같거나 없는 경우 date(청소일) 역순 정렬
         const getStr = (v: any) => typeof v === 'string' ? v : (v && v.toDate ? v.toDate().toISOString() : String(v || ''));
         const dateA = getStr(a.date || a.cleaningDate);
         const dateB = getStr(b.date || b.cleaningDate);
-        if (dateA !== dateB) {
-          return dateB.localeCompare(dateA); // 최신 날짜순
-        }
-        const createdA = getStr(a.createdAt);
-        const createdB = getStr(b.createdAt);
-        return createdB.localeCompare(createdA); // 최신 등록순
+        return dateB.localeCompare(dateA);
       });
       setQuotes(data);
     });

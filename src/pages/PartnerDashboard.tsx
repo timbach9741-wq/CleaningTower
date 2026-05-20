@@ -7,6 +7,12 @@ import { collection, onSnapshot, doc, updateDoc, getDocs, query, where, deleteDo
 import type { Unsubscribe } from 'firebase/firestore';
 import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { REGION_DATA } from '../data/regions';
+
+type RegionData = { [key: string]: string[] };
+const regionsData = REGION_DATA as RegionData;
+
+import RegionSelector from '../components/common/RegionSelector';
 
 export interface Order {
   id: string;
@@ -66,6 +72,7 @@ export interface PartnerUser {
   mainServices?: string[];
   tags?: string[];
   image?: string;
+  regions?: string[];
 }
 
 export default function Partner() {
@@ -89,6 +96,7 @@ export default function Partner() {
   // ★ partnerId를 상태로 관리하여, 로그인 시 onSnapshot 리스너가 자동으로 재부착되도록 함
   const [partnerId, setPartnerId] = useState<string | null>(localStorage.getItem('partnerId'));
   const [showLanding, setShowLanding] = useState(!localStorage.getItem('partnerId'));
+  const [notiRegions, setNotiRegions] = useState<string[]>([]);
   
   // 홍보 정보 수정 모달 상태
   const [showEditProfileModal, setShowEditProfileModal] = useState(false);
@@ -97,6 +105,7 @@ export default function Partner() {
     companyName: '',
     managerName: '',
     region: '',
+    regions: [] as string[],
     monthlyEvent: '',
     portfolio: [] as string[],
     description: '',
@@ -283,7 +292,9 @@ export default function Partner() {
     if (partnerId) {
       const unsubscribeUser = onSnapshot(doc(db, 'partners', partnerId), (docSnapshot) => {
         if (docSnapshot.exists()) {
-          setCurrentUser({ id: docSnapshot.id, ...docSnapshot.data() } as PartnerUser);
+          const userData = { id: docSnapshot.id, ...docSnapshot.data() } as PartnerUser;
+          setCurrentUser(userData);
+          setNotiRegions(userData.notificationRegions || []);
         } else {
           // 문서가 없으면 로그아웃 처리
           localStorage.removeItem('partnerId');
@@ -566,10 +577,9 @@ export default function Partner() {
     }
   };
 
-  const handleSaveRegions = async (value: string) => {
+  const handleSaveRegions = async (regionsArray: string[]) => {
     if (!db || !currentUser) return;
     try {
-      const regionsArray = value.split(',').map(r => r.trim()).filter(r => r.length > 0);
       await updateDoc(doc(db, 'partners', currentUser.id), {
         notificationRegions: regionsArray
       });
@@ -664,6 +674,7 @@ export default function Partner() {
       companyName: currentUser?.companyName || currentUser?.name || '',
       managerName: currentUser?.managerName || '',
       region: currentUser?.region || '',
+      regions: currentUser?.regions || currentUser?.notificationRegions || [],
       monthlyEvent: currentUser?.monthlyEvent || '',
       portfolio: currentUser?.portfolio || [],
       description: currentUser?.description || '',
@@ -683,7 +694,8 @@ export default function Partner() {
         companyName: editProfileForm.companyName,
         name: editProfileForm.companyName, // 닉네임/업체명 동시 업데이트
         managerName: editProfileForm.managerName,
-        region: editProfileForm.region,
+        region: editProfileForm.regions.join(', '),
+        regions: editProfileForm.regions,
         monthlyEvent: editProfileForm.monthlyEvent,
         portfolio: editProfileForm.portfolio,
         description: editProfileForm.description,
@@ -720,13 +732,33 @@ export default function Partner() {
     setCustomService('');
   };
 
-  const handleMockPortfolioUpload = () => {
-    const mockImages = ['/clean1.jpg', '/clean2.jpg', '/clean3.jpg'];
-    const newImage = mockImages[editProfileForm.portfolio.length % mockImages.length];
-    setEditProfileForm(prev => ({
-      ...prev,
-      portfolio: [...prev.portfolio, newImage]
-    }));
+  const handlePortfolioUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+    if (!storage) {
+      alert("스토리지 설정이 안 되어 있습니다.");
+      return;
+    }
+
+    files.forEach(file => {
+      const storageRef = ref(storage, `partner_portfolio/${currentUser?.id || Date.now()}_${file.name}`);
+      const uploadTask = uploadBytesResumable(storageRef, file);
+      
+      uploadTask.on('state_changed',
+        null,
+        (error) => {
+          console.error("Portfolio upload error:", error);
+        },
+        () => {
+          getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
+            setEditProfileForm(prev => ({
+              ...prev,
+              portfolio: [...prev.portfolio, downloadURL]
+            }));
+          });
+        }
+      );
+    });
   };
 
   if (showLanding) {
@@ -1281,20 +1313,14 @@ export default function Partner() {
                 <div className="mb-2">
                   <h3 className="font-bold text-slate-800 text-sm mb-1 flex items-center gap-1.5"><MapPin size={16} className="text-slate-400"/> 알림 수신 희망 지역</h3>
                   <p className="text-[11px] text-slate-400 mb-3 font-medium">설정된 지역의 오더만 알림을 받습니다.</p>
-                  <div className="flex gap-2">
-                    <input 
-                      type="text" 
-                      id="regionInput"
-                      placeholder="예: 강남구, 서초구" 
-                      defaultValue={currentUser?.notificationRegions ? currentUser.notificationRegions.join(', ') : (currentUser?.region || '')}
-                      className="flex-1 bg-slate-50 border border-slate-200 text-sm px-3 py-2.5 rounded-xl outline-none focus:border-blue-400 transition-colors font-medium"
-                    />
+                  <RegionSelector 
+                    selectedRegions={notiRegions} 
+                    onChange={setNotiRegions} 
+                  />
+                  <div className="mt-2 flex justify-end">
                     <button 
-                      onClick={() => {
-                        const input = document.getElementById('regionInput') as HTMLInputElement;
-                        if (input) handleSaveRegions(input.value);
-                      }}
-                      className="bg-slate-900 text-white font-bold text-xs px-4 rounded-xl active:scale-[0.98] transition-transform"
+                      onClick={() => handleSaveRegions(notiRegions)}
+                      className="bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs px-4 py-2 rounded-xl active:scale-[0.98] transition-all"
                     >
                       저장
                     </button>
@@ -1826,12 +1852,9 @@ export default function Partner() {
                     </div>
                     <div>
                       <label className="block text-xs font-bold text-slate-500 mb-1.5">주 활동 지역</label>
-                      <input 
-                        type="text"
-                        value={editProfileForm.region}
-                        onChange={(e) => setEditProfileForm({...editProfileForm, region: e.target.value})}
-                        placeholder="예) 서울 서초구 전지역"
-                        className="w-full border border-slate-200 rounded-xl p-3 text-sm outline-none focus:border-blue-500"
+                      <RegionSelector 
+                        selectedRegions={editProfileForm.regions} 
+                        onChange={(arr) => setEditProfileForm({...editProfileForm, regions: arr})} 
                       />
                     </div>
                   </div>
@@ -1987,12 +2010,16 @@ export default function Partner() {
                     <h3 className="font-bold text-slate-900 flex items-center gap-1.5">
                       📸 포트폴리오 사진 ({editProfileForm.portfolio.length}장)
                     </h3>
-                    <button 
-                      onClick={handleMockPortfolioUpload}
-                      className="text-xs font-bold text-blue-600 bg-blue-50 px-2.5 py-1.5 rounded-lg"
-                    >
-                      + 사진 추가 (테스트)
-                    </button>
+                    <label className="text-xs font-bold text-blue-600 bg-blue-50 px-2.5 py-1.5 rounded-lg cursor-pointer hover:bg-blue-100 transition-colors">
+                      + 사진 추가
+                      <input 
+                        type="file" 
+                        multiple 
+                        accept="image/*" 
+                        className="hidden" 
+                        onChange={handlePortfolioUpload} 
+                      />
+                    </label>
                   </div>
                   <div className="flex gap-3 overflow-x-auto pb-2 mt-3">
                     {editProfileForm.portfolio.length === 0 ? (

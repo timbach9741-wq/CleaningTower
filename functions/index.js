@@ -1,4 +1,4 @@
-﻿const functions = require('firebase-functions');
+const functions = require('firebase-functions');
 const admin = require('firebase-admin');
 // 왜: 함수 실행마다 require하면 cold start가 느려지므로 최상단에서 한 번만 로딩
 const axios = require('axios');
@@ -150,10 +150,10 @@ exports.notifyAdminOnNewOrder = functions.firestore
             const partner = doc.data();
             const regions = partner.notificationRegions && partner.notificationRegions.length > 0
               ? partner.notificationRegions
-              : (partner.region ? [partner.region] : []);
+              : (partner.regions && partner.regions.length > 0 ? partner.regions : (partner.region ? [partner.region] : []));
 
-            // '강남구/서초구' 등 복수 지역이 슬래시로 묶여있을 수 있으므로 분리
-            const regionList = regions.flatMap(r => r.split('/').map(x => x.trim()));
+            // '강남구/서초구' 등 복수 지역(슬래시) 또는 다중 선택(쉼표) 분리
+            const regionList = regions.flatMap(r => r.split(/[/,]/).map(x => x.trim()));
             const isMatch = regionList.some(region => orderAddress.includes(region));
 
             if (isMatch) {
@@ -289,7 +289,7 @@ exports.notifyPartnerOnSignup = functions.firestore
 업체명: ${partnerName || '미입력'}
 연락처: ${phone || '미입력'}
 플랜: ${newPartner.plan || 'basic'}
-지역: ${newPartner.region || '미입력'}
+지역: ${newPartner.regions ? newPartner.regions.join(', ') : (newPartner.region || '미입력')}
 가입일: ${new Date().toLocaleString('ko-KR')}`;
 
       await sendAdminNotification(adminSignupMsg);
@@ -309,5 +309,3 @@ exports.notifyPartnerOnSignup = functions.firestore
     }
   });
 
-
-exports.enforcePartnerPendingStatus = functions.firestore.document('partners/{partnerId}').onCreate(async (snap, context) => { const data = snap.data(); if (data.status === 'active' && data.isNotificationEnabled === true) { await snap.ref.update({ status: 'pending' }); console.log('Forced status to pending'); } });

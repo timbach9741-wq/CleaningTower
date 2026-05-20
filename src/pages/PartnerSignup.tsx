@@ -5,18 +5,19 @@ import { getDb } from '../firebase';
 import { collection, addDoc, query, where, getDocs } from 'firebase/firestore';
 import { useNavigate, useLocation } from 'react-router-dom';
 
-const REGIONS = [
-  '전국', '서울', '경기', '인천', '안산', '화성', '강원', 
-  '충북', '충남', '대전', '세종',
-  '전북', '전남', '광주', 
-  '경북', '경남', '대구', '울산', '부산', '제주'
-];
+import { REGION_DATA } from '../data/regions';
+import RegionSelector from '../components/common/RegionSelector';
+
+// Define a type for REGION_DATA if not available
+type RegionData = { [key: string]: string[] };
+const regionsData = REGION_DATA as RegionData;
 
 export default function PartnerSignup() {
   const navigate = useNavigate();
   const location = useLocation();
   const initialPlan = location.state?.plan || 'basic';
   const [step, setStep] = useState(1);
+
   const [formData, setFormData] = useState({
     plan: initialPlan,
     businessType: '', // 'business' or 'individual'
@@ -40,7 +41,8 @@ export default function PartnerSignup() {
 
   const handleSubmit = async () => {
     try {
-      const finalRegion = [formData.region.join('/'), formData.regionDetail.trim()].filter(Boolean).join(' ');
+      const finalRegionArray = formData.region; // Array of 'SIDO SIGUNGU'
+      const finalRegionString = [finalRegionArray.join(', '), formData.regionDetail.trim()].filter(Boolean).join(' ');
 
       const firestoreData = {
         plan: formData.plan,
@@ -49,14 +51,15 @@ export default function PartnerSignup() {
         managerName: formData.managerName,
         name: formData.name,
         phone: formData.phone,
-        region: finalRegion, // 배열이 아닌 문자열로 통합 저장
+        region: finalRegionString, // 화면 표시용 (기존 하위 호환)
+        regions: finalRegionArray, // 필터링용 배열 신규 추가
         teamSize: formData.teamSize,
         mainServices: formData.mainServices,
-        status: 'pending', // 관리자 승인 후 활성화
+        status: formData.plan === 'exclusive' ? 'pending' : 'active', // 지역독점은 승인 대기, 나머지는 자동 승인
         loginId: formData.phone.replace(/[^0-9]/g, ''), // 연락처(숫자만)를 아이디로 사용
         password: formData.password, // 직접 설정한 비밀번호
         isNotificationEnabled: true,
-        notificationRegions: [finalRegion],
+        notificationRegions: finalRegionArray,
         createdAt: new Date().toISOString()
       };
 
@@ -77,7 +80,7 @@ export default function PartnerSignup() {
       
       setFormData(prev => ({
         ...prev,
-        status: 'pending'
+        status: formData.plan === 'exclusive' ? 'pending' : 'active'
       }));
       setStep(4); // 완료 화면
     } catch (e) {
@@ -225,28 +228,11 @@ export default function PartnerSignup() {
                   </div>
                   <div>
                     <label className="block text-sm font-bold text-slate-700 mb-2">주 활동 지역 (다중 선택 가능) <span className="text-rose-500">*</span></label>
-                    <div className="flex flex-wrap gap-2 mb-3">
-                      {REGIONS.map(r => (
-                        <button
-                          key={r}
-                          type="button"
-                          onClick={() => {
-                            const current = formData.region;
-                            if (current.includes(r)) {
-                              setFormData({ ...formData, region: current.filter(item => item !== r) });
-                            } else {
-                              setFormData({ ...formData, region: [...current, r] });
-                            }
-                          }}
-                          className={`px-3 py-2 rounded-xl text-sm font-bold transition-all duration-200 border-2 ${
-                            formData.region.includes(r)
-                              ? 'bg-blue-50 text-blue-600 border-blue-500'
-                              : 'bg-white text-slate-600 border-slate-200 hover:border-blue-300'
-                          }`}
-                        >
-                          {r}
-                        </button>
-                      ))}
+                    <div className="mb-3">
+                      <RegionSelector 
+                        selectedRegions={formData.region}
+                        onChange={(regions) => setFormData({ ...formData, region: regions })}
+                      />
                     </div>
                     <input
                       type="text"

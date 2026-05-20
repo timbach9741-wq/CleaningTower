@@ -4,6 +4,9 @@ import Header from '../components/cleaning/Header';
 import { db } from '../firebase';
 import { collection, getDocs, query, where, addDoc } from 'firebase/firestore';
 import { mockPartners } from '../data/mockPartnersData';
+import { REGION_DATA } from '../data/regions';
+
+import RegionSelector from '../components/common/RegionSelector';
 
 const PartnerDetailModal = ({ partner, onClose, quoteData }) => {
   const navigate = useNavigate();
@@ -289,7 +292,7 @@ export default function PartnerList() {
   const quoteData = location.state?.quoteData || null;
 
   const [sortBy, setSortBy] = useState('추천순');
-  const [selectedRegion, setSelectedRegion] = useState('');
+  const [selectedRegions, setSelectedRegions] = useState([]);
   const [isRegionDropdownOpen, setIsRegionDropdownOpen] = useState(false);
   const [isSortDropdownOpen, setIsSortDropdownOpen] = useState(false);
   const [realPartners, setRealPartners] = useState([]);
@@ -312,7 +315,7 @@ export default function PartnerList() {
     setPremiumPage(1);
     setBasicPage(1);
     setMixedPage(1);
-  }, [sortBy, selectedRegion, itemsPerPage]);
+  }, [sortBy, selectedRegions, itemsPerPage]);
 
   // 모달 오픈 시 뒤로가기 대응
   useEffect(() => {
@@ -347,7 +350,7 @@ export default function PartnerList() {
   useEffect(() => {
     const fetchPartners = async () => {
       try {
-        const q = query(collection(db, 'partners'), where('status', '==', 'approved'));
+        const q = query(collection(db, 'partners'), where('status', '==', 'active'));
         const querySnapshot = await getDocs(q);
         const fetched = querySnapshot.docs.map(doc => {
           const data = doc.data();
@@ -372,6 +375,10 @@ export default function PartnerList() {
             isReal: true,
             ...data
           };
+        }).sort((a, b) => {
+          const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+          const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+          return dateB - dateA;
         });
         setRealPartners(fetched);
       } catch (error) {
@@ -381,18 +388,14 @@ export default function PartnerList() {
     fetchPartners();
   }, []);
 
-  const matchRegion = (partnerArea, selectedRegion) => {
-    if (!selectedRegion) return true;
+  const matchRegion = (partnerArea, selectedRegions) => {
+    if (!selectedRegions || selectedRegions.length === 0) return true;
     if (!partnerArea) return false;
     
     const area = partnerArea;
     if (area.includes('전국')) return true;
 
-    // 선택된 지역의 키워드 추출 (예: "경기 안산/시흥/광명" -> ["경기", "안산", "시흥", "광명"])
-    const keywords = selectedRegion.split(/[\s/(),]+/).filter(k => k.length > 1);
-    
-    // 파트너의 area에 선택된 키워드 중 하나라도 포함되어 있는지 확인
-    return keywords.some(k => area.includes(k));
+    return selectedRegions.some(region => area.includes(region));
   };
 
   const {
@@ -408,7 +411,7 @@ export default function PartnerList() {
     totalBasicPages,
     totalMixedPages
   } = React.useMemo(() => {
-    const filtered = [...realPartners, ...mockPartners].filter(p => matchRegion(p.area, selectedRegion));
+    const filtered = [...realPartners, ...mockPartners].filter(p => matchRegion(p.area, selectedRegions));
     const exclusive = filtered.filter(p => p.tier === 'EXCLUSIVE').slice(0, 2);
     const rest = filtered.filter(p => p.tier !== 'EXCLUSIVE');
 
@@ -446,7 +449,7 @@ export default function PartnerList() {
       totalBasicPages: tBasicPages,
       totalMixedPages: tMixedPages
     };
-  }, [realPartners, selectedRegion, sortBy, itemsPerPage, premiumPage, basicPage, mixedPage]);
+  }, [realPartners, selectedRegions, sortBy, itemsPerPage, premiumPage, basicPage, mixedPage]);
 
   // 페이지네이션 번호 계산 로직 (모바일 대응을 위해 현재 페이지 주변만 표시)
   const getPageNumbers = (currentPage, totalPages) => {
@@ -523,8 +526,8 @@ export default function PartnerList() {
                 </div>
                 
                 <p className="text-slate-500 text-xs sm:text-sm font-medium mt-1">
-                  {selectedRegion ? (
-                    <><span className="text-blue-900 font-bold">{selectedRegion}</span> 지역에 </>
+                  {selectedRegions.length > 0 ? (
+                    <><span className="text-blue-900 font-bold">{selectedRegions.length}개</span> 지역에 </>
                   ) : (
                     <><span className="text-blue-900 font-bold">전국</span>에 </>
                   )}
@@ -568,7 +571,13 @@ export default function PartnerList() {
                   className="flex-1 lg:flex-none flex justify-center items-center gap-1 bg-white border border-slate-200 text-slate-700 hover:text-blue-600 hover:border-blue-400 hover:bg-blue-50 font-bold px-2 lg:px-5 py-3 rounded-xl text-[13px] sm:text-sm shadow-sm transition-all overflow-hidden"
                 >
                   <span className="flex-shrink-0">📍</span>
-                  <span className="truncate">내동네 전문가 찾기</span>
+                  <span className="truncate">
+                    {selectedRegions.length === 0 
+                      ? '내동네 전문가 찾기' 
+                      : selectedRegions.length === 1 
+                        ? selectedRegions[0] 
+                        : `${selectedRegions[0].split(' ')[1]} 외 ${selectedRegions.length - 1}곳`}
+                  </span>
                   <svg className={`flex-shrink-0 fill-current h-3.5 w-3.5 sm:h-4 sm:w-4 ml-0.5 transition-transform ${isRegionDropdownOpen ? 'rotate-180' : ''}`} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
                 </button>
 
@@ -583,50 +592,26 @@ export default function PartnerList() {
 
               {/* 지역 선택 드롭다운 메뉴 (PC/Mobile 공통) */}
               {isRegionDropdownOpen && (
-                <div className="absolute top-full left-0 right-0 lg:left-auto lg:right-0 mt-2 lg:w-[480px] bg-white border border-slate-200 rounded-2xl shadow-2xl z-50 p-4 lg:p-6 grid grid-cols-1 md:grid-cols-2 gap-2 max-h-[60vh] overflow-y-auto">
-                  <button
-                    onClick={() => { setSelectedRegion(''); setIsRegionDropdownOpen(false); }}
-                    className={`text-left px-4 py-3 rounded-xl text-sm font-bold transition-all shadow-sm
-                      ${selectedRegion === '' 
-                        ? 'bg-blue-600 text-white shadow-blue-200' 
-                        : 'bg-slate-50 text-slate-700 border border-slate-200 hover:border-blue-400 hover:text-blue-600'
-                      }`}
-                  >
-                    전국 전체보기
-                  </button>
-                  {[
-                    '서울 강남/서초/송파/강동', 
-                    '서울 마포/용산/성동/광진', 
-                    '서울 강서/영등포/양천/구로', 
-                    '서울 노원/도봉/강북/성북', 
-                    '서울 은평/서대문/종로/중구', 
-                    '경기 수원/성남/용인', 
-                    '경기 안산/시흥/광명',
-                    '경기 화성/오산 (동탄)',
-                    '경기 오산/평택/안성',
-                    '경기 시흥/광명/안양',
-                    '경기 서부 (부천/김포)', 
-                    '경기 북부 (고양/파주)', 
-                    '경기 동부 (구리/남양주/하남)', 
-                    '인천 전지역',
-                    '대전/세종/충청권',
-                    '대구/경북권',
-                    '부산/울산/경남권',
-                    '광주/전라권',
-                    '강원/제주권'
-                  ].map(region => (
+                <div className="absolute top-full left-0 right-0 lg:left-auto lg:right-0 mt-2 lg:w-[480px] bg-white border border-slate-200 rounded-2xl shadow-2xl z-50 p-4 lg:p-6 flex flex-col gap-4 max-h-[70vh] overflow-y-auto">
+                  <div className="flex justify-between items-center mb-2">
+                    <h3 className="font-bold text-slate-800">지역 선택 (다중 선택 가능)</h3>
                     <button
-                      key={region}
-                      onClick={() => { setSelectedRegion(region); setIsRegionDropdownOpen(false); }}
-                      className={`text-left px-4 py-3 rounded-xl text-sm font-bold transition-all shadow-sm
-                        ${selectedRegion === region 
-                          ? 'bg-white text-blue-600 ring-2 ring-blue-500 shadow-blue-100' 
-                          : 'bg-slate-50 text-slate-600 border border-slate-200 hover:border-blue-400 hover:text-blue-600 hover:bg-white'
-                        }`}
+                      onClick={() => { setSelectedRegions([]); setIsRegionDropdownOpen(false); }}
+                      className="text-xs bg-slate-100 hover:bg-slate-200 text-slate-600 px-3 py-1.5 rounded-lg font-bold"
                     >
-                      {region}
+                      전국 전체보기 (초기화)
                     </button>
-                  ))}
+                  </div>
+                  <RegionSelector 
+                    selectedRegions={selectedRegions} 
+                    onChange={setSelectedRegions} 
+                  />
+                  <button
+                    onClick={() => setIsRegionDropdownOpen(false)}
+                    className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl shadow-md transition-colors mt-2"
+                  >
+                    {selectedRegions.length > 0 ? `${selectedRegions.length}개 지역 적용하기` : '적용하기'}
+                  </button>
                 </div>
               )}
 

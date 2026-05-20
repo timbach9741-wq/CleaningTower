@@ -58,8 +58,17 @@ class ErrorBoundary extends Component<Props, State> {
             네트워크 연결이 불안정하거나 앱이 업데이트 되었습니다.<br/>
             새로고침 버튼을 눌러 다시 시도해주세요.
           </p>
+          
+          <div style={{ marginBottom: '20px', padding: '10px', backgroundColor: '#fee2e2', color: '#991b1b', borderRadius: '8px', fontSize: '12px', maxWidth: '300px', wordBreak: 'break-word', textAlign: 'left' }}>
+            <strong>상세 오류 정보:</strong><br/>
+            {this.state.errorMessage}
+          </div>
+
           <button 
-            onClick={() => window.location.reload()}
+            onClick={() => {
+              sessionStorage.removeItem('error_reloaded');
+              window.location.reload();
+            }}
             style={{
               padding: '12px 24px',
               backgroundColor: '#3b82f6',

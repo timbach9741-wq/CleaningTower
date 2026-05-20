@@ -273,7 +273,7 @@ export default function Quote() {
         try {
           const q = query(
             collection(db, 'partners'), 
-            where('status', '==', 'approved')
+            where('status', '==', 'active')
           );
           const querySnapshot = await getDocs(q);
           const allApprovedPartners = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() as PartnerData }));

@@ -240,6 +240,8 @@ export default function Admin() {
           ...newPartnerForm,
           name: newPartnerForm.managerName || newPartnerForm.companyName, // 호환성
           status: 'active', // 관리자가 직접 생성하므로 바로 활동 가능 상태
+          isNotificationEnabled: true,
+          notificationRegions: [newPartnerForm.region],
           createdAt: new Date().toISOString()
         });
         

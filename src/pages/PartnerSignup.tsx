@@ -55,6 +55,8 @@ export default function PartnerSignup() {
         status: 'pending', // 가입 시 관리자 승인 대기 상태로 변경
         loginId: formData.phone.replace(/[^0-9]/g, ''), // 연락처(숫자만)를 아이디로 사용
         password: formData.password, // 직접 설정한 비밀번호
+        isNotificationEnabled: true,
+        notificationRegions: [finalRegion],
         createdAt: new Date().toISOString()
       };
 

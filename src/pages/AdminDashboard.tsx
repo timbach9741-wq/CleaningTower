@@ -17,7 +17,7 @@ import {
   Star,
 } from 'lucide-react';
 import { db } from '../firebase';
-import { collection, onSnapshot, doc, updateDoc, addDoc, deleteDoc } from 'firebase/firestore';
+import { collection, onSnapshot, doc, updateDoc, addDoc, deleteDoc, setDoc } from 'firebase/firestore';
 
 export interface Order {
   id: string;
@@ -143,6 +143,22 @@ export default function Admin() {
     detail: '',
   });
   
+  // CRM 고도화용 상태
+  const [customersData, setCustomersData] = useState<any[]>([]);
+  const [selectedCustomerPhones, setSelectedCustomerPhones] = useState<string[]>([]);
+  const [customerSort, setCustomerSort] = useState<'latest' | 'totalSpent'>('latest');
+  const [isCustomerNoteModalOpen, setIsCustomerNoteModalOpen] = useState(false);
+  const [selectedCustomerForNote, setSelectedCustomerForNote] = useState<any>(null);
+  const [isBulkMessageModalOpen, setIsBulkMessageModalOpen] = useState(false);
+  const [bulkMessageText, setBulkMessageText] = useState('');
+  const [settingsForm, setSettingsForm] = useState({
+    companyName: 'Clean Expert',
+    contactNumber: '010-0000-0000',
+    businessHours: '평일 09:00 - 18:00 (주말 휴무)',
+    priceNormal: 15000,
+    pricePremium: 20000
+  });
+  
   const adminNotifications = quotes.filter(q => q.cancelReason && !q.adminReviewedCancel);
   
   useEffect(() => {
@@ -202,10 +218,23 @@ export default function Admin() {
       setReviews(data);
     });
 
+    const unsubscribeCustomers = onSnapshot(collection(db, 'customers'), (snapshot) => {
+      const data = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+      setCustomersData(data);
+    });
+
+    const unsubscribeSettings = onSnapshot(doc(db, 'settings', 'general'), (docSnap) => {
+      if (docSnap.exists()) {
+        setSettingsForm(prev => ({ ...prev, ...docSnap.data() }));
+      }
+    });
+
     return () => {
       unsubscribe();
       unsubscribePartners();
       unsubscribeReviews();
+      unsubscribeCustomers();
+      unsubscribeSettings();
     };
   }, []);
 
@@ -578,6 +607,47 @@ export default function Admin() {
       </div>
     );
   }
+
+  const handleSaveCustomerNote = async () => {
+    if (!db || !selectedCustomerForNote) return;
+    try {
+      const phone = selectedCustomerForNote.phone;
+      await setDoc(doc(db, 'customers', phone), {
+        note: selectedCustomerForNote.note || '',
+        isBlacklist: selectedCustomerForNote.isBlacklist || false,
+        updatedAt: new Date()
+      }, { merge: true });
+      alert('고객 특이사항이 저장되었습니다.');
+      setIsCustomerNoteModalOpen(false);
+    } catch (err) {
+      console.error('Error saving customer note:', err);
+      alert('저장 중 오류가 발생했습니다.');
+    }
+  };
+
+  const handleBulkMessageSubmit = () => {
+    if (!bulkMessageText.trim()) {
+      alert('발송할 메시지를 입력해주세요.');
+      return;
+    }
+    console.log(`[Mock 발송] 대상: ${selectedCustomerPhones.length}명`, selectedCustomerPhones);
+    console.log(`[Mock 내용]: ${bulkMessageText}`);
+    alert(`총 ${selectedCustomerPhones.length}명에게 메시지 발송(Mock)을 완료했습니다.\n\n* 실제 API 발송은 추후 연동됩니다.`);
+    setIsBulkMessageModalOpen(false);
+    setBulkMessageText('');
+    setSelectedCustomerPhones([]);
+  };
+
+  const handleSaveSettings = async () => {
+    if (!db) return;
+    try {
+      await setDoc(doc(db, 'settings', 'general'), settingsForm, { merge: true });
+      alert('사이트 설정이 저장되었습니다.');
+    } catch (err) {
+      console.error('Error saving settings:', err);
+      alert('설정 저장 중 오류가 발생했습니다.');
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 flex overflow-hidden">
@@ -1036,8 +1106,27 @@ export default function Admin() {
               }
             });
 
-            const allCustomers = Array.from(customerMap.values())
-              .sort((a, b) => b.latestDate.localeCompare(a.latestDate));
+            const allCustomers = Array.from(customerMap.values()).map(c => {
+              const cData = customersData.find(d => d.id === c.phone) || {};
+              return { ...c, note: cData.note || '', isBlacklist: !!cData.isBlacklist };
+            }).sort((a, b) => {
+              if (customerSort === 'totalSpent') return b.totalSpent - a.totalSpent;
+              return b.latestDate.localeCompare(a.latestDate);
+            });
+
+            const handleToggleCustomer = (phone: string) => {
+              setSelectedCustomerPhones(prev => 
+                prev.includes(phone) ? prev.filter(p => p !== phone) : [...prev, phone]
+              );
+            };
+
+            const handleToggleAllCustomers = () => {
+              if (selectedCustomerPhones.length === filteredCustomers.length && filteredCustomers.length > 0) {
+                setSelectedCustomerPhones([]);
+              } else {
+                setSelectedCustomerPhones(filteredCustomers.map(c => c.phone));
+              }
+            };
 
             // 검색 필터 적용
             const customerSearchTerm = (document.getElementById('customer-search-input') as HTMLInputElement)?.value?.toLowerCase() || '';
@@ -1054,18 +1143,28 @@ export default function Admin() {
                   <h2 className="text-xl lg:text-2xl font-bold text-gray-800 border-b border-purple-600 inline-block pb-1">고객 관리 (CRM)</h2>
                   <p className="text-gray-500 mt-2 text-sm">연락처 기준으로 고객을 자동 분류합니다. 총 <strong className="text-purple-600">{allCustomers.length}</strong>명의 고객</p>
                 </div>
-                <div className="flex items-center gap-2 w-full md:w-96 relative">
-                  <Search size={18} className="text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
-                  <input 
-                    id="customer-search-input"
-                    type="text" 
-                    placeholder="고객명, 연락처 검색..." 
-                    className="w-full border border-gray-300 rounded-lg pl-10 pr-4 py-2.5 text-sm font-medium focus:border-purple-500 outline-none bg-white text-gray-700 placeholder:text-gray-400 shadow-sm"
-                    onChange={() => {
-                      // 왜: React의 forceUpdate 대신 간단하게 상태 트리거로 리렌더
-                      setActiveTab('customers');
-                    }}
-                  />
+                <div className="flex flex-col md:flex-row items-center gap-2 w-full md:w-auto">
+                  <select
+                    value={customerSort}
+                    onChange={(e) => setCustomerSort(e.target.value as 'latest' | 'totalSpent')}
+                    className="border border-gray-300 rounded-lg px-3 py-2.5 text-sm font-medium focus:border-purple-500 outline-none bg-gray-50 text-gray-700 w-full md:w-auto"
+                  >
+                    <option value="latest">최근 이용순</option>
+                    <option value="totalSpent">누적 결제액순</option>
+                  </select>
+                  <div className="flex items-center gap-2 w-full md:w-96 relative">
+                    <Search size={18} className="text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
+                    <input 
+                      id="customer-search-input"
+                      type="text" 
+                      placeholder="고객명, 연락처 검색..." 
+                      className="w-full border border-gray-300 rounded-lg pl-10 pr-4 py-2.5 text-sm font-medium focus:border-purple-500 outline-none bg-white text-gray-700 placeholder:text-gray-400 shadow-sm"
+                      onChange={() => {
+                        // 왜: React의 forceUpdate 대신 간단하게 상태 트리거로 리렌더
+                        setActiveTab('customers');
+                      }}
+                    />
+                  </div>
                 </div>
               </div>
 
@@ -1095,13 +1194,20 @@ export default function Admin() {
                   <table className="hidden lg:table w-full text-left min-w-[800px]">
                     <thead>
                       <tr className="bg-gray-50 border-b border-gray-200 text-sm text-gray-500">
+                        <th className="p-4 w-12 text-center">
+                          <input 
+                            type="checkbox" 
+                            className="w-4 h-4 text-purple-600 rounded border-gray-300 focus:ring-purple-500"
+                            checked={filteredCustomers.length > 0 && selectedCustomerPhones.length === filteredCustomers.length}
+                            onChange={handleToggleAllCustomers}
+                          />
+                        </th>
                         <th className="p-4 font-bold">고객명</th>
                         <th className="p-4 font-bold">연락처</th>
-                        <th className="p-4 font-bold text-center">총 문의</th>
-                        <th className="p-4 font-bold text-center">시공 완료</th>
-                        <th className="p-4 font-bold">최근 이용일</th>
+                        <th className="p-4 font-bold text-center">총 문의/완료</th>
                         <th className="p-4 font-bold text-right">누적 결제</th>
                         <th className="p-4 font-bold text-center">등급</th>
+                        <th className="p-4 font-bold">메모/특이사항</th>
                         <th className="p-4 font-bold text-center">상세</th>
                       </tr>
                     </thead>
@@ -1114,8 +1220,9 @@ export default function Admin() {
                         </tr>
                       ) : (
                         filteredCustomers.map((customer) => {
-                          // 왜: 고객 등급을 이용 횟수 기반으로 자동 분류
-                          const grade = customer.completedCount >= 3 ? 'VIP' : customer.completedCount >= 1 ? '단골' : '신규';
+                          // 왜: 고객 등급을 이용 횟수 및 누적 매출 기반으로 자동 분류 (50만원 이상 또는 3회 이상)
+                          const isVIP = customer.completedCount >= 3 || customer.totalSpent >= 500000;
+                          const grade = isVIP ? 'VIP' : customer.completedCount >= 1 ? '단골' : '신규';
                           const gradeStyle = grade === 'VIP' 
                             ? 'bg-amber-50 text-amber-700 border-amber-200' 
                             : grade === '단골' 
@@ -1123,12 +1230,23 @@ export default function Admin() {
                             : 'bg-gray-100 text-gray-600 border-gray-200';
                           
                           return (
-                            <tr key={customer.phone} className="hover:bg-slate-50 transition-colors">
-                              <td className="p-4 font-bold text-gray-800">{customer.name}</td>
+                            <tr key={customer.phone} className={`hover:bg-slate-50 transition-colors ${customer.isBlacklist ? 'bg-red-50/50' : ''}`}>
+                              <td className="p-4 text-center">
+                                <input 
+                                  type="checkbox" 
+                                  className="w-4 h-4 text-purple-600 rounded border-gray-300 focus:ring-purple-500"
+                                  checked={selectedCustomerPhones.includes(customer.phone)}
+                                  onChange={() => handleToggleCustomer(customer.phone)}
+                                />
+                              </td>
+                              <td className="p-4 font-bold text-gray-800">
+                                {customer.name}
+                                {customer.isBlacklist && <span className="ml-2 text-[10px] bg-red-100 text-red-600 px-1.5 py-0.5 rounded font-bold">요주의</span>}
+                              </td>
                               <td className="p-4 text-sm font-medium text-gray-600 tracking-wide">{customer.phone}</td>
-                              <td className="p-4 text-sm font-bold text-center text-gray-700">{customer.orders.length}건</td>
-                              <td className="p-4 text-sm font-bold text-center text-emerald-600">{customer.completedCount}건</td>
-                              <td className="p-4 text-sm text-gray-600">{customer.latestDate || '-'}</td>
+                              <td className="p-4 text-sm font-bold text-center text-gray-700">
+                                {customer.orders.length}건 <span className="text-gray-300">/</span> <span className="text-emerald-600">{customer.completedCount}건</span>
+                              </td>
                               <td className="p-4 text-sm font-bold text-right text-gray-800">
                                 {customer.totalSpent > 0 ? `₩${customer.totalSpent.toLocaleString()}` : '-'}
                               </td>
@@ -1137,12 +1255,25 @@ export default function Admin() {
                                   {grade}
                                 </span>
                               </td>
+                              <td className="p-4 text-sm text-gray-600 max-w-[200px] truncate" title={customer.note}>
+                                {customer.note ? (
+                                  <span className="text-gray-700 font-medium">{customer.note}</span>
+                                ) : (
+                                  <span className="text-gray-400 italic">메모 없음</span>
+                                )}
+                                <button 
+                                  onClick={() => { setSelectedCustomerForNote(customer); setIsCustomerNoteModalOpen(true); }}
+                                  className="ml-2 text-xs text-blue-600 hover:underline"
+                                >
+                                  수정
+                                </button>
+                              </td>
                               <td className="p-4 text-center">
                                 <button 
                                   onClick={() => setSelectedQuoteDetail(customer.orders[0])}
-                                  className="text-blue-600 hover:text-blue-800 text-sm font-bold hover:underline"
+                                  className="text-gray-500 hover:text-gray-800 text-sm font-bold hover:underline"
                                 >
-                                  보기
+                                  내역
                                 </button>
                               </td>
                             </tr>
@@ -1228,16 +1359,31 @@ export default function Admin() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">업체명</label>
-                      <input type="text" defaultValue="Clean Expert" className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
+                      <input 
+                        type="text" 
+                        value={settingsForm.companyName}
+                        onChange={e => setSettingsForm({...settingsForm, companyName: e.target.value})}
+                        className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+                      />
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">대표 연락처</label>
-                      <input type="text" defaultValue="010-0000-0000" className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
+                      <input 
+                        type="text" 
+                        value={settingsForm.contactNumber}
+                        onChange={e => setSettingsForm({...settingsForm, contactNumber: e.target.value})}
+                        className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+                      />
                     </div>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">영업 시간</label>
-                    <input type="text" defaultValue="평일 09:00 - 18:00 (주말 휴무)" className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
+                    <input 
+                      type="text" 
+                      value={settingsForm.businessHours}
+                      onChange={e => setSettingsForm({...settingsForm, businessHours: e.target.value})}
+                      className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+                    />
                   </div>
                   
                   <hr className="border-gray-100" />
@@ -1247,17 +1393,30 @@ export default function Admin() {
                     <div className="space-y-4">
                       <div className="flex items-center gap-4">
                         <span className="w-40 text-sm text-gray-600 font-medium">일반 청소 (평당)</span>
-                        <input type="number" defaultValue="15000" className="flex-1 border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
+                        <input 
+                          type="number" 
+                          value={settingsForm.priceNormal}
+                          onChange={e => setSettingsForm({...settingsForm, priceNormal: Number(e.target.value)})}
+                          className="flex-1 border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+                        />
                       </div>
                       <div className="flex items-center gap-4">
                         <span className="w-40 text-sm text-gray-600 font-medium">프리미엄 청소 (평당)</span>
-                        <input type="number" defaultValue="20000" className="flex-1 border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
+                        <input 
+                          type="number" 
+                          value={settingsForm.pricePremium}
+                          onChange={e => setSettingsForm({...settingsForm, pricePremium: Number(e.target.value)})}
+                          className="flex-1 border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+                        />
                       </div>
                     </div>
                   </div>
 
                   <div className="pt-4 flex justify-end">
-                    <button className="px-6 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition">
+                    <button 
+                      onClick={handleSaveSettings}
+                      className="px-6 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition"
+                    >
                       설정 저장
                     </button>
                   </div>
@@ -2417,6 +2576,130 @@ export default function Admin() {
           </div>
         </div>
       )}
+
+      {/* CRM: Bulk Message Floating Bar */}
+      {activeTab === 'customers' && selectedCustomerPhones.length > 0 && (
+        <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-slate-900 text-white px-6 py-4 rounded-full shadow-2xl flex items-center gap-6 z-40 animate-in slide-in-from-bottom-5">
+          <div className="flex items-center gap-2">
+            <span className="bg-purple-500 text-white text-xs font-black px-2.5 py-1 rounded-full">{selectedCustomerPhones.length}명</span>
+            <span className="font-bold text-sm">고객 선택됨</span>
+          </div>
+          <div className="flex items-center gap-3 border-l border-slate-700 pl-6">
+            <button 
+              onClick={() => setIsBulkMessageModalOpen(true)}
+              className="bg-purple-600 hover:bg-purple-500 text-white font-bold text-sm px-5 py-2 rounded-full transition-colors flex items-center gap-2"
+            >
+              <MessageSquare size={16} /> 알림톡/문자 발송
+            </button>
+            <button 
+              onClick={() => setSelectedCustomerPhones([])}
+              className="text-slate-400 hover:text-white text-sm font-bold"
+            >
+              취소
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* CRM: Customer Note Modal */}
+      {isCustomerNoteModalOpen && selectedCustomerForNote && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl w-full max-w-md overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
+            <div className="p-5 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+              <h3 className="font-bold text-gray-800 text-lg flex items-center gap-2">
+                <UserCheck size={20} className="text-purple-600" />
+                고객 특이사항 관리
+              </h3>
+              <button onClick={() => setIsCustomerNoteModalOpen(false)} className="text-gray-400 hover:text-gray-600"><X size={24} /></button>
+            </div>
+            
+            <div className="p-5 space-y-5 overflow-y-auto">
+              <div className="bg-purple-50 p-3 rounded-lg flex justify-between items-center">
+                <div>
+                  <p className="font-bold text-purple-900">{selectedCustomerForNote.name} <span className="text-xs font-normal text-purple-700 ml-1">{selectedCustomerForNote.phone}</span></p>
+                  <p className="text-xs text-purple-600 mt-0.5">총 결제: ₩{(selectedCustomerForNote.totalSpent || 0).toLocaleString()} (시공 {selectedCustomerForNote.completedCount}회)</p>
+                </div>
+              </div>
+
+              <div>
+                <label className="flex items-center gap-2 cursor-pointer p-3 border border-gray-200 rounded-lg hover:bg-red-50 hover:border-red-200 transition-colors">
+                  <input 
+                    type="checkbox" 
+                    className="w-5 h-5 text-red-600 rounded border-gray-300 focus:ring-red-500"
+                    checked={selectedCustomerForNote.isBlacklist || false}
+                    onChange={(e) => setSelectedCustomerForNote({...selectedCustomerForNote, isBlacklist: e.target.checked})}
+                  />
+                  <span className="font-bold text-red-600 text-sm">요주의 고객 (블랙리스트) 설정</span>
+                </label>
+              </div>
+
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-2">메모 (현장 특이점, 고객 성향 등)</label>
+                <textarea 
+                  value={selectedCustomerForNote.note || ''}
+                  onChange={(e) => setSelectedCustomerForNote({...selectedCustomerForNote, note: e.target.value})}
+                  className="w-full border border-gray-300 rounded-lg p-3 text-sm focus:border-purple-500 outline-none min-h-[120px] resize-none"
+                  placeholder="예: 주차 불가능, 추가금 요구에 예민함, VIP 우대 필요 등"
+                />
+              </div>
+            </div>
+
+            <div className="p-4 border-t border-gray-100 bg-gray-50 flex justify-end gap-2">
+              <button onClick={() => setIsCustomerNoteModalOpen(false)} className="px-5 py-2.5 font-bold text-gray-600 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 text-sm">닫기</button>
+              <button 
+                onClick={handleSaveCustomerNote}
+                className="px-6 py-2.5 font-bold text-white bg-purple-600 rounded-lg hover:bg-purple-700 shadow-md text-sm"
+              >
+                저장하기
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* CRM: Bulk Message Modal */}
+      {isBulkMessageModalOpen && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
+            <div className="p-5 border-b border-gray-100 flex justify-between items-center bg-purple-50">
+              <h3 className="font-bold text-purple-900 text-lg flex items-center gap-2">
+                <MessageSquare size={20} className="text-purple-600" />
+                알림톡/문자 단체 발송 (Mock)
+              </h3>
+              <button onClick={() => setIsBulkMessageModalOpen(false)} className="text-gray-400 hover:text-gray-600"><X size={24} /></button>
+            </div>
+            
+            <div className="p-5 space-y-4 overflow-y-auto">
+              <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
+                <p className="text-sm font-bold text-gray-700 mb-1">발송 대상</p>
+                <p className="text-xs text-gray-500">선택된 {selectedCustomerPhones.length}명의 고객에게 일괄 발송됩니다.</p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-2">메시지 내용</label>
+                <textarea 
+                  value={bulkMessageText}
+                  onChange={(e) => setBulkMessageText(e.target.value)}
+                  className="w-full border border-gray-300 rounded-lg p-3 text-sm focus:border-purple-500 outline-none min-h-[150px] resize-none"
+                  placeholder="예: [청소타워] 여름맞이 에어컨 청소 사전예약 할인 이벤트! ..."
+                />
+                <p className="text-[10px] text-gray-400 mt-1 text-right">{bulkMessageText.length} 자</p>
+              </div>
+            </div>
+
+            <div className="p-4 border-t border-gray-100 bg-gray-50 flex justify-end gap-2">
+              <button onClick={() => setIsBulkMessageModalOpen(false)} className="px-5 py-2.5 font-bold text-gray-600 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 text-sm">취소</button>
+              <button 
+                onClick={handleBulkMessageSubmit}
+                className="px-6 py-2.5 font-bold text-white bg-purple-600 rounded-lg hover:bg-purple-700 shadow-md text-sm flex items-center gap-2"
+              >
+                발송하기
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }

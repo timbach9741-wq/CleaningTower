@@ -1532,15 +1532,15 @@ export default function Admin() {
                   <table className="hidden lg:table w-full min-w-[900px] text-left">
                     <thead>
                       <tr className="bg-gray-50 border-b border-gray-200 text-sm text-gray-500">
-                        <th className="p-4 font-bold">계정 발급일</th>
-                        <th className="p-4 font-bold">파트너 (업체/담당자)</th>
-                        <th className="p-4 font-bold">연락처</th>
-                        <th className="p-4 font-bold text-blue-600 bg-blue-50/50">접속 ID</th>
-                        <th className="p-4 font-bold text-blue-600 bg-blue-50/50">비밀번호(초기)</th>
-                        <th className="p-4 font-bold">활동 지역</th>
-                        <th className="p-4 font-bold">계약 만료</th>
-                        <th className="p-4 font-bold">상태/권한</th>
-                        <th className="p-4 font-bold text-center">승인 관리</th>
+                        <th className="p-3 font-bold whitespace-nowrap">계정 발급일</th>
+                        <th className="p-3 font-bold whitespace-nowrap">파트너 (업체/담당자)</th>
+                        <th className="p-3 font-bold whitespace-nowrap">연락처</th>
+                        <th className="p-3 font-bold text-blue-600 bg-blue-50/50 whitespace-nowrap">접속 ID</th>
+                        <th className="p-3 font-bold text-blue-600 bg-blue-50/50 whitespace-nowrap">비밀번호(초기)</th>
+                        <th className="p-3 font-bold whitespace-nowrap">활동 지역</th>
+                        <th className="p-3 font-bold whitespace-nowrap">계약 만료</th>
+                        <th className="p-3 font-bold whitespace-nowrap">상태/권한</th>
+                        <th className="p-3 font-bold text-center whitespace-nowrap">승인 관리</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100">
@@ -1556,7 +1556,7 @@ export default function Admin() {
                             <td className="p-4 text-sm text-gray-500 whitespace-nowrap">
                               {partner.createdAt ? new Date(partner.createdAt).toLocaleDateString() : '날짜 없음'}
                             </td>
-                            <td className="p-4 font-bold text-gray-800">
+                            <td className="p-3 font-bold text-gray-800 whitespace-nowrap">
                               {partner.companyName || partner.name} {partner.managerName && <span className="text-sm font-medium text-gray-500">({partner.managerName})</span>}
                             </td>
                             <td className="p-4 text-sm font-medium text-gray-600 tracking-wide">
@@ -1568,15 +1568,15 @@ export default function Admin() {
                             <td className="p-4 text-sm font-mono text-slate-500 bg-blue-50/20">
                               {(partner.loginPassword || partner.password) || <span className="text-gray-400 text-xs">-</span>}
                             </td>
-                            <td className="p-4 text-sm text-gray-600">
+                            <td className="p-3 text-sm text-gray-600 whitespace-nowrap">
                               {partner.region}
                             </td>
-                            <td className="p-4">
+                            <td className="p-3">
                               {(() => {
                                 const cs = getContractStatus(partner);
                                 return (
-                                  <div className="flex flex-col gap-1">
-                                    <span className={`px-2 py-1 rounded-full text-xs font-bold border inline-block w-fit ${
+                                  <div className="flex flex-col gap-1 min-w-[90px]">
+                                    <span className={`px-2 py-1 rounded-full text-[11px] font-bold border inline-block w-max whitespace-nowrap ${
                                       cs.color === 'red' ? 'bg-red-100 text-red-700 border-red-200' :
                                       cs.color === 'amber' ? 'bg-amber-100 text-amber-700 border-amber-200 animate-pulse' :
                                       cs.color === 'emerald' ? 'bg-emerald-100 text-emerald-700 border-emerald-200' :
@@ -1585,15 +1585,15 @@ export default function Admin() {
                                       {cs.label}
                                     </span>
                                     {partner.contractEndDate && (
-                                      <span className="text-[11px] text-gray-400">
+                                      <span className="text-[10px] text-gray-400 whitespace-nowrap">
                                         ~{new Date(partner.contractEndDate).toLocaleDateString()}
                                       </span>
                                     )}
                                     {cs.color === 'red' && (
-                                      <div className="flex gap-1 mt-1">
-                                        <button onClick={() => handleExtendContract(partner.id, 3)} className="text-[10px] bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded border border-blue-200 hover:bg-blue-100 font-bold">+3개월</button>
-                                        <button onClick={() => handleExtendContract(partner.id, 6)} className="text-[10px] bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded border border-blue-200 hover:bg-blue-100 font-bold">+6개월</button>
-                                        <button onClick={() => handleExtendContract(partner.id, 12)} className="text-[10px] bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded border border-blue-200 hover:bg-blue-100 font-bold">+1년</button>
+                                      <div className="flex flex-wrap gap-1 mt-1 max-w-[120px]">
+                                        <button onClick={() => handleExtendContract(partner.id, 3)} className="text-[10px] bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded border border-blue-200 hover:bg-blue-100 font-bold whitespace-nowrap">+3개월</button>
+                                        <button onClick={() => handleExtendContract(partner.id, 6)} className="text-[10px] bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded border border-blue-200 hover:bg-blue-100 font-bold whitespace-nowrap">+6개월</button>
+                                        <button onClick={() => handleExtendContract(partner.id, 12)} className="text-[10px] bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded border border-blue-200 hover:bg-blue-100 font-bold whitespace-nowrap">+1년</button>
                                       </div>
                                     )}
                                   </div>

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MapPin, Calendar, CheckCircle, AlertTriangle, Phone, Home, List, User, Briefcase, Info, Bell } from 'lucide-react';
+import { MapPin, Calendar, CheckCircle, AlertTriangle, Phone, Home, List, User, Briefcase, Info, Bell, CalendarCheck } from 'lucide-react';
 import { db, storage, getMessagingInstance } from '../firebase';
 import { getToken } from 'firebase/messaging';
 import { collection, onSnapshot, doc, updateDoc, getDocs, query, where, deleteDoc } from 'firebase/firestore';
@@ -75,10 +75,11 @@ export interface PartnerUser {
   regions?: string[];
   dailyUploadCount?: number;
   lastUploadDate?: string;
+  availableDates?: string[];
 }
 
 export default function Partner() {
-  const [activeTab, setActiveTab] = useState<'new' | 'my' | 'profile'>('new');
+  const [activeTab, setActiveTab] = useState<'new' | 'my' | 'profile' | 'calendar'>('new');
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [showWarningModal, setShowWarningModal] = useState(false);
   const [showDetailSheet, setShowDetailSheet] = useState(false);
@@ -639,6 +640,88 @@ export default function Partner() {
     setCurrentUser(null);
     setShowLanding(true);
     setShowLogin(true); // 바로 로그인 화면을 띄워줌
+  };
+
+  // 청소 가능일 달력 상태 및 로직
+  const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
+
+  const handleToggleAvailableDate = async (dateStr: string) => {
+    if (!db || !currentUser) return;
+    
+    const currentDates = currentUser.availableDates || [];
+    let updatedDates: string[] = [];
+    
+    if (currentDates.includes(dateStr)) {
+      updatedDates = currentDates.filter(d => d !== dateStr);
+    } else {
+      updatedDates = [...currentDates, dateStr];
+    }
+    
+    try {
+      await updateDoc(doc(db, 'partners', currentUser.id), {
+        availableDates: updatedDates
+      });
+    } catch (e) {
+      console.error("Failed to update available dates", e);
+      alert("일정 변경 중 오류가 발생했습니다.");
+    }
+  };
+
+  const getDaysInMonth = (year: number, month: number) => {
+    return new Date(year, month + 1, 0).getDate();
+  };
+
+  const getFirstDayOfMonth = (year: number, month: number) => {
+    return new Date(year, month, 1).getDay();
+  };
+
+  const handlePrevMonth = () => {
+    setCurrentMonth(prev => new Date(prev.getFullYear(), prev.getMonth() - 1, 1));
+  };
+
+  const handleNextMonth = () => {
+    setCurrentMonth(prev => new Date(prev.getFullYear(), prev.getMonth() + 1, 1));
+  };
+
+  const renderCalendarDays = () => {
+    const year = currentMonth.getFullYear();
+    const month = currentMonth.getMonth();
+    const daysInMonth = getDaysInMonth(year, month);
+    const firstDay = getFirstDayOfMonth(year, month);
+    const dayCells: React.ReactNode[] = [];
+    
+    for (let i = 0; i < firstDay; i++) {
+      dayCells.push(<div key={`empty-${i}`} className="h-12 w-full"></div>);
+    }
+    
+    for (let day = 1; day <= daysInMonth; day++) {
+      const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+      const isAvailable = currentUser?.availableDates?.includes(dateStr) || false;
+      const isToday = new Date().toISOString().split('T')[0] === dateStr;
+      
+      dayCells.push(
+        <button
+          key={`day-${day}`}
+          type="button"
+          onClick={() => handleToggleAvailableDate(dateStr)}
+          className={`h-12 w-full rounded-xl flex flex-col items-center justify-center relative text-sm font-bold transition-all
+            ${isAvailable 
+              ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20 active:bg-blue-700' 
+              : 'bg-white hover:bg-slate-100 text-slate-800 border border-slate-100 active:bg-slate-200'
+            }
+          `}
+        >
+          <span>{day}</span>
+          {isToday && (
+            <span className={`absolute bottom-1 w-1.5 h-1.5 rounded-full ${isAvailable ? 'bg-white' : 'bg-blue-600'}`}></span>
+          )}
+          {isAvailable && (
+            <span className="text-[8px] font-medium opacity-80 block mt-0.5 leading-none">가능</span>
+          )}
+        </button>
+      );
+    }
+    return dayCells;
   };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -1395,6 +1478,68 @@ export default function Partner() {
                   </motion.div>
                 ))
               )}
+            </motion.div>
+          )}
+
+          {activeTab === 'calendar' && (
+            <motion.div
+              key="calendar"
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 10 }}
+              className="space-y-5"
+            >
+              <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm">
+                <div className="flex items-start gap-3">
+                  <span className="text-xl mt-0.5">📅</span>
+                  <div>
+                    <h3 className="font-bold text-slate-800">청소 가능일 설정</h3>
+                    <p className="text-xs text-slate-500 font-medium leading-relaxed mt-1">
+                      청소 가능한 날짜를 터치해서 켜고 꺼주세요.<br/>
+                      설정한 날짜는 홈페이지에 즉시 청소 가능일로 표시됩니다.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* 달력 컨트롤러 */}
+              <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm space-y-4">
+                <div className="flex justify-between items-center px-1">
+                  <button 
+                    type="button"
+                    onClick={handlePrevMonth}
+                    className="px-3 py-1.5 hover:bg-slate-100 rounded-lg text-slate-600 font-bold text-xs transition-colors border border-slate-100"
+                  >
+                    &lt; 이전 달
+                  </button>
+                  <h4 className="font-black text-slate-900 text-sm sm:text-base">
+                    {currentMonth.getFullYear()}년 {currentMonth.getMonth() + 1}월
+                  </h4>
+                  <button 
+                    type="button"
+                    onClick={handleNextMonth}
+                    className="px-3 py-1.5 hover:bg-slate-100 rounded-lg text-slate-600 font-bold text-xs transition-colors border border-slate-100"
+                  >
+                    다음 달 &gt;
+                  </button>
+                </div>
+
+                {/* 요일 헤더 */}
+                <div className="grid grid-cols-7 gap-1 text-center text-xs font-bold text-slate-400 py-1.5 border-y border-slate-50">
+                  <div className="text-rose-500">일</div>
+                  <div>월</div>
+                  <div>화</div>
+                  <div>수</div>
+                  <div>목</div>
+                  <div>금</div>
+                  <div className="text-blue-500">토</div>
+                </div>
+
+                {/* 날짜 그리드 */}
+                <div className="grid grid-cols-7 gap-1.5">
+                  {renderCalendarDays()}
+                </div>
+              </div>
             </motion.div>
           )}
 
@@ -2358,6 +2503,13 @@ export default function Partner() {
               )}
             </div>
             <span className={`text-[10px] mt-1.5 ${activeTab === 'my' ? 'font-bold' : 'font-medium'}`}>내 스케줄</span>
+          </button>
+          <button 
+            onClick={() => setActiveTab('calendar')}
+            className={`flex-1 flex flex-col items-center justify-center p-3 transition-colors ${activeTab === 'calendar' ? 'text-blue-600' : 'text-slate-400 hover:text-slate-600'}`}
+          >
+            <CalendarCheck size={22} className={activeTab === 'calendar' ? 'drop-shadow-md' : ''} />
+            <span className={`text-[10px] mt-1.5 ${activeTab === 'calendar' ? 'font-bold' : 'font-medium'}`}>청소 가능일</span>
           </button>
           <button 
             onClick={() => setActiveTab('profile')}

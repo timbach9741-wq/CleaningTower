@@ -69,6 +69,9 @@ export interface PartnerUser {
   plan?: string;
   teamSize?: string;
   mainServices?: string[];
+  contractPlan?: string;
+  contractStartDate?: string;
+  contractEndDate?: string;
 }
 
 export interface Review {
@@ -96,6 +99,11 @@ export default function Admin() {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [selectedQuoteDetail, setSelectedQuoteDetail] = useState<Order | null>(null);
   const [selectedPartnerDetail, setSelectedPartnerDetail] = useState<PartnerUser | null>(null);
+  const [isEditingContract, setIsEditingContract] = useState(false);
+  const [editPlan, setEditPlan] = useState('');
+  const [editTierPlan, setEditTierPlan] = useState('');
+  const [editStartDate, setEditStartDate] = useState('');
+  const [editEndDate, setEditEndDate] = useState('');
   const [showNotifications, setShowNotifications] = useState(false);
   
   // 파트너 수동 계정 생성 관련 상태
@@ -314,6 +322,65 @@ export default function Admin() {
     if (confirm("정말 이 파트너를 거절/삭제하시겠습니까?\n삭제 후에는 복구할 수 없습니다.")) {
       await deleteDoc(doc(db, 'partners', id));
       alert("파트너가 삭제되었습니다.");
+    }
+  };
+
+  const openPartnerDetail = (partner: PartnerUser) => {
+    setSelectedPartnerDetail(partner);
+    setIsEditingContract(false);
+    setEditPlan(partner.contractPlan || '');
+    setEditTierPlan(partner.plan || 'basic');
+    setEditStartDate(partner.contractStartDate ? partner.contractStartDate.split('T')[0] : new Date().toISOString().split('T')[0]);
+    setEditEndDate(partner.contractEndDate ? partner.contractEndDate.split('T')[0] : '');
+  };
+
+  const handleStartDateChange = (newStart: string) => {
+    setEditStartDate(newStart);
+    if (editPlan && ['3개월', '6개월', '1년'].includes(editPlan)) {
+      const months = editPlan === '3개월' ? 3 : editPlan === '6개월' ? 6 : 12;
+      const start = new Date(newStart);
+      start.setMonth(start.getMonth() + months);
+      setEditEndDate(start.toISOString().split('T')[0]);
+    }
+  };
+
+  const setContractPeriod = (months: number | 'unlimited') => {
+    const startStr = editStartDate || new Date().toISOString().split('T')[0];
+    if (months === 'unlimited') {
+      setEditEndDate('');
+      setEditPlan('무제한');
+    } else {
+      const start = new Date(startStr);
+      start.setMonth(start.getMonth() + months);
+      setEditEndDate(start.toISOString().split('T')[0]);
+      setEditPlan(`${months === 12 ? '1년' : months + '개월'}`);
+    }
+  };
+
+  const handleSaveContract = async (partnerId: string) => {
+    if (!db) return;
+    try {
+      const toISO = (dateStr: string) => {
+        if (!dateStr) return null;
+        const [year, month, day] = dateStr.split('-').map(Number);
+        const date = new Date(year, month - 1, day, 12, 0, 0); // Local noon to avoid timezone shifts
+        return date.toISOString();
+      };
+      
+      const updates = {
+        plan: editTierPlan,
+        tier: editTierPlan === 'premium' ? 'PREMIUM' : editTierPlan === 'exclusive' ? 'EXCLUSIVE' : 'BASIC',
+        contractPlan: editPlan || null,
+        contractStartDate: toISO(editStartDate),
+        contractEndDate: toISO(editEndDate),
+      };
+      
+      await updateDoc(doc(db, 'partners', partnerId), updates);
+      alert("계약 정보가 성공적으로 변경되었습니다.");
+      setIsEditingContract(false);
+    } catch (e) {
+      console.error(e);
+      alert("계약 정보 저장 중 오류가 발생했습니다.");
     }
   };
 
@@ -1582,7 +1649,22 @@ export default function Admin() {
                               {partner.createdAt ? new Date(partner.createdAt).toLocaleDateString() : '날짜 없음'}
                             </td>
                             <td className="p-3 font-bold text-gray-800 whitespace-nowrap">
-                              {partner.companyName || partner.name} {partner.managerName && <span className="text-sm font-medium text-gray-500">({partner.managerName})</span>}
+                              <div className="flex items-center gap-1.5">
+                                <span>{partner.companyName || partner.name}</span>
+                                {partner.managerName && <span className="text-xs font-medium text-gray-500">({partner.managerName})</span>}
+                                {(() => {
+                                  const pPlan = partner.plan || 'basic';
+                                  return (
+                                    <span className={`px-1.5 py-0.5 rounded text-[9px] font-black border uppercase leading-none ${
+                                      pPlan === 'exclusive' ? 'bg-purple-100 text-purple-700 border-purple-200' :
+                                      pPlan === 'premium' ? 'bg-blue-100 text-blue-700 border-blue-200' :
+                                      'bg-gray-100 text-gray-600 border-gray-200'
+                                    }`}>
+                                      {pPlan === 'exclusive' ? '독점' : pPlan === 'premium' ? '프리미엄' : '일반'}
+                                    </span>
+                                  );
+                                })()}
+                              </div>
                             </td>
                             <td className="p-3 text-sm font-medium text-gray-600 tracking-wide whitespace-nowrap">
                               {partner.phone}
@@ -1606,16 +1688,23 @@ export default function Admin() {
                                 const cs = getContractStatus(partner);
                                 return (
                                   <div className="flex flex-col gap-1 min-w-[120px]">
-                                    <span className={`px-2 py-1.5 rounded-full text-xs font-bold border inline-block w-max whitespace-nowrap ${
-                                      cs.color === 'red' ? 'bg-red-100 text-red-700 border-red-200' :
-                                      cs.color === 'amber' ? 'bg-amber-100 text-amber-700 border-amber-200 animate-pulse' :
-                                      cs.color === 'emerald' ? 'bg-emerald-100 text-emerald-700 border-emerald-200' :
-                                      'bg-gray-100 text-gray-500 border-gray-200'
-                                    }`}>
-                                      {cs.label}
-                                    </span>
+                                    <div className="flex items-center gap-1.5 flex-wrap">
+                                      <span className={`px-2 py-1.5 rounded-full text-xs font-bold border inline-block whitespace-nowrap ${
+                                        cs.color === 'red' ? 'bg-red-100 text-red-700 border-red-200' :
+                                        cs.color === 'amber' ? 'bg-amber-100 text-amber-700 border-amber-200 animate-pulse' :
+                                        cs.color === 'emerald' ? 'bg-emerald-100 text-emerald-700 border-emerald-200' :
+                                        'bg-gray-100 text-gray-500 border-gray-200'
+                                      }`}>
+                                        {cs.label}
+                                      </span>
+                                      {partner.contractPlan && (
+                                        <span className="text-[10px] font-bold text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200 inline-block whitespace-nowrap">
+                                          {partner.contractPlan}
+                                        </span>
+                                      )}
+                                    </div>
                                     {partner.contractEndDate && (
-                                      <span className="text-xs text-gray-400 whitespace-nowrap">
+                                      <span className="text-xs text-gray-400 whitespace-nowrap mt-0.5">
                                         ~{new Date(partner.contractEndDate).toLocaleDateString()}
                                       </span>
                                     )}
@@ -1646,7 +1735,7 @@ export default function Admin() {
                                 {partner.status === 'pending' && (
                                   <>
                                     <button 
-                                      onClick={() => setSelectedPartnerDetail(partner)}
+                                      onClick={() => openPartnerDetail(partner)}
                                       className="w-full bg-blue-50 hover:bg-blue-100 text-blue-600 font-bold py-2 rounded-lg text-xs border border-blue-200 transition-all active:scale-[0.98]"
                                     >
                                       상세 확인
@@ -1667,9 +1756,12 @@ export default function Admin() {
                                 )}
                                 {partner.status === 'active' && (
                                   <>
-                                    <span className="text-xs text-gray-400 font-bold bg-gray-50 px-3 py-2 rounded-lg border border-gray-100 block mb-1">
-                                      정상 활동 중
-                                    </span>
+                                    <button 
+                                      onClick={() => openPartnerDetail(partner)}
+                                      className="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-2 rounded-lg text-xs border border-slate-300 transition-all active:scale-[0.98] mb-1"
+                                    >
+                                      상세 확인
+                                    </button>
                                     <button 
                                       onClick={() => handleSendBusinessUrl(partner)}
                                       className="w-full bg-blue-50 hover:bg-blue-100 text-blue-600 font-bold py-2 rounded-lg text-xs border border-blue-200 transition-all active:scale-[0.98] mb-1"
@@ -1686,6 +1778,12 @@ export default function Admin() {
                                 )}
                                 {partner.status === 'suspended' && (
                                   <>
+                                    <button 
+                                      onClick={() => openPartnerDetail(partner)}
+                                      className="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-2 rounded-lg text-xs border border-slate-300 transition-all active:scale-[0.98] mb-1"
+                                    >
+                                      상세 확인
+                                    </button>
                                     <button 
                                       onClick={() => handleApprovePartner(partner.id)}
                                       className="w-full bg-emerald-50 hover:bg-emerald-100 text-emerald-600 font-bold py-2 rounded-lg text-xs border border-emerald-200 transition-all active:scale-[0.98]"
@@ -1717,7 +1815,7 @@ export default function Admin() {
                         <div key={partner.id} className="p-4 flex flex-col gap-3 hover:bg-slate-50 transition-colors">
                           <div className="flex justify-between items-start">
                             <div>
-                              <div className="flex items-center gap-2 mb-1">
+                              <div className="flex items-center flex-wrap gap-1.5 mb-1">
                                 <span className="font-bold text-gray-900 text-lg leading-none">
                                   {partner.businessType === 'business' ? `${partner.companyName} (${partner.managerName})` : partner.name}
                                 </span>
@@ -1726,12 +1824,24 @@ export default function Admin() {
                                 ) : (
                                   <span className="flex items-center gap-1 text-[10px] text-slate-600 bg-slate-50 px-1.5 py-0.5 rounded font-bold border border-slate-200"><UserCheck size={10} /> 비사업자</span>
                                 )}
+                                {(() => {
+                                  const pPlan = partner.plan || 'basic';
+                                  return (
+                                    <span className={`px-1.5 py-0.5 rounded text-[9px] font-black border uppercase leading-none ${
+                                      pPlan === 'exclusive' ? 'bg-purple-100 text-purple-700 border-purple-200' :
+                                      pPlan === 'premium' ? 'bg-blue-100 text-blue-700 border-blue-200' :
+                                      'bg-gray-100 text-gray-600 border-gray-200'
+                                    }`}>
+                                      {pPlan === 'exclusive' ? '독점' : pPlan === 'premium' ? '프리미엄' : '일반'}
+                                    </span>
+                                  );
+                                })()}
                               </div>
                               <p className="text-xs text-slate-400 font-medium">가입일: {partner.createdAt ? new Date(partner.createdAt).toLocaleDateString() : '날짜 없음'}</p>
                               {(() => {
                                 const cs = getContractStatus(partner);
                                 return (
-                                  <div className="flex items-center gap-2 mt-2">
+                                  <div className="flex items-center flex-wrap gap-2 mt-2">
                                     <span className={`px-2 py-1 rounded-full text-xs font-bold border ${
                                       cs.color === 'red' ? 'bg-red-100 text-red-700 border-red-200' :
                                       cs.color === 'amber' ? 'bg-amber-100 text-amber-700 border-amber-200 animate-pulse' :
@@ -1740,6 +1850,11 @@ export default function Admin() {
                                     }`}>
                                       계약 {cs.label}
                                     </span>
+                                    {partner.contractPlan && (
+                                      <span className="text-xs text-slate-500 bg-slate-100 px-2 py-1 rounded-full border border-slate-200 font-bold">
+                                        {partner.contractPlan}
+                                      </span>
+                                    )}
                                     {partner.contractEndDate && (
                                       <span className="text-xs text-gray-400">~{new Date(partner.contractEndDate).toLocaleDateString()}</span>
                                     )}
@@ -1773,7 +1888,7 @@ export default function Admin() {
                             {partner.status === 'pending' && (
                               <div className="flex flex-col gap-2 w-full">
                                 <button 
-                                  onClick={() => setSelectedPartnerDetail(partner)}
+                                  onClick={() => openPartnerDetail(partner)}
                                   className="w-full bg-blue-50 hover:bg-blue-100 text-blue-600 font-bold py-3 rounded-xl border border-blue-200 transition-all active:scale-[0.98] text-sm"
                                 >
                                   상세 확인
@@ -1796,9 +1911,12 @@ export default function Admin() {
                             )}
                             {partner.status === 'active' && (
                               <div className="flex flex-col gap-2 w-full">
-                                <div className="bg-slate-50 text-slate-400 font-bold py-3 rounded-xl text-center border border-slate-200 text-sm">
-                                  승인 완료
-                                </div>
+                                <button 
+                                  onClick={() => openPartnerDetail(partner)}
+                                  className="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-3 rounded-xl border border-slate-300 transition-all active:scale-[0.98] text-sm"
+                                >
+                                  상세 확인
+                                </button>
                                 <div className="flex gap-2 w-full">
                                   <button 
                                     onClick={() => handleSendBusinessUrl(partner)}
@@ -1816,20 +1934,28 @@ export default function Admin() {
                               </div>
                             )}
                             {partner.status === 'suspended' && (
-                              <>
+                              <div className="flex flex-col gap-2 w-full">
                                 <button 
-                                  onClick={() => handleApprovePartner(partner.id)}
-                                  className="flex-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-600 font-bold py-3 rounded-xl border border-emerald-200 transition-all active:scale-[0.98] text-sm"
+                                  onClick={() => openPartnerDetail(partner)}
+                                  className="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-3 rounded-xl border border-slate-300 transition-all active:scale-[0.98] text-sm"
                                 >
-                                  활동 재개
+                                  상세 확인
                                 </button>
-                                <button 
-                                  onClick={() => handleDeletePartner(partner.id)}
-                                  className="flex-1 bg-red-50 hover:bg-red-100 text-red-600 font-bold py-3 rounded-xl border border-red-200 transition-all active:scale-[0.98] text-sm"
-                                >
-                                  영구 삭제
-                                </button>
-                              </>
+                                <div className="flex gap-2 w-full">
+                                  <button 
+                                    onClick={() => handleApprovePartner(partner.id)}
+                                    className="flex-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-600 font-bold py-3 rounded-xl border border-emerald-200 transition-all active:scale-[0.98] text-sm"
+                                  >
+                                    활동 재개
+                                  </button>
+                                  <button 
+                                    onClick={() => handleDeletePartner(partner.id)}
+                                    className="flex-1 bg-red-50 hover:bg-red-100 text-red-600 font-bold py-3 rounded-xl border border-red-200 transition-all active:scale-[0.98] text-sm"
+                                  >
+                                    영구 삭제
+                                  </button>
+                                </div>
+                              </div>
                             )}
                           </div>
                         </div>
@@ -2272,160 +2398,277 @@ export default function Admin() {
       )}
 
       {/* 파트너 상세 정보 모달 */}
-      {selectedPartnerDetail && (
-        <div className="fixed inset-0 bg-black/60 z-[110] flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-            <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-slate-900 text-white">
-              <div>
-                <h3 className="text-lg font-bold">파트너 가입 정보 확인</h3>
-                <p className="text-xs text-slate-300 mt-1">신청한 파트너의 상세 정보를 확인합니다.</p>
-              </div>
-              <button onClick={() => setSelectedPartnerDetail(null)} className="text-slate-300 hover:text-white transition-colors">
-                <X size={24} />
-              </button>
-            </div>
-            
-            <div className="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
-              <div className="grid grid-cols-2 gap-4">
+      {selectedPartnerDetail && (() => {
+        const currentPartner = partners.find(p => p.id === selectedPartnerDetail.id) || selectedPartnerDetail;
+        return (
+          <div className="fixed inset-0 bg-black/60 z-[110] flex items-center justify-center p-4">
+            <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+              <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-slate-900 text-white">
                 <div>
-                  <p className="text-xs font-bold text-gray-400 mb-1">업체명</p>
-                  <p className="text-sm font-bold text-gray-800">{selectedPartnerDetail.companyName || '-'}</p>
+                  <h3 className="text-lg font-bold">파트너 가입 정보 확인</h3>
+                  <p className="text-xs text-slate-300 mt-1">신청한 파트너의 상세 정보를 확인합니다.</p>
                 </div>
-                <div>
-                  <p className="text-xs font-bold text-gray-400 mb-1">담당자/대표자명</p>
-                  <p className="text-sm font-bold text-gray-800">{selectedPartnerDetail.managerName || selectedPartnerDetail.name || '-'}</p>
-                </div>
+                <button onClick={() => setSelectedPartnerDetail(null)} className="text-slate-300 hover:text-white transition-colors">
+                  <X size={24} />
+                </button>
               </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-xs font-bold text-gray-400 mb-1">연락처</p>
-                  <p className="text-sm font-bold text-gray-800">{selectedPartnerDetail.phone || '-'}</p>
-                </div>
-                <div>
-                  <p className="text-xs font-bold text-gray-400 mb-1">신청 플랜</p>
-                  <p className="text-sm font-bold text-blue-600">{selectedPartnerDetail.plan || '일반'}</p>
-                </div>
-              </div>
-
-              <div>
-                <p className="text-xs font-bold text-gray-400 mb-1">활동 지역</p>
-                <p className="text-sm font-bold text-gray-800">{selectedPartnerDetail.region || '-'}</p>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-xs font-bold text-gray-400 mb-1">팀 규모</p>
-                  <p className="text-sm font-bold text-gray-800">{selectedPartnerDetail.teamSize || '-'}</p>
-                </div>
-                <div>
-                  <p className="text-xs font-bold text-gray-400 mb-1">가입일</p>
-                  <p className="text-sm font-bold text-gray-800">
-                    {selectedPartnerDetail.createdAt ? new Date(selectedPartnerDetail.createdAt).toLocaleDateString() : '날짜 없음'}
-                  </p>
-                </div>
-              </div>
-
-              <div>
-                <p className="text-xs font-bold text-gray-400 mb-1">주요 서비스</p>
-                <div className="flex flex-wrap gap-1 mt-1">
-                  {Array.isArray(selectedPartnerDetail.mainServices) ? (
-                    selectedPartnerDetail.mainServices.map((service, index) => (
-                      <span key={index} className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded-md font-medium">
-                        {service}
-                      </span>
-                    ))
-                  ) : (
-                    <p className="text-sm font-bold text-gray-800">{selectedPartnerDetail.mainServices || '-'}</p>
-                  )}
-                </div>
-              </div>
-
-              <div className="bg-blue-50 p-3 rounded-lg border border-blue-100 mt-2">
-                <p className="text-xs font-bold text-blue-700 mb-2">계약 정보</p>
-                <div className="grid grid-cols-2 gap-3">
+              
+              <div className="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
+                <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <p className="text-xs text-blue-500">플랜</p>
-                    <p className="text-sm font-bold text-blue-800">{selectedPartnerDetail.contractPlan || '미설정'}</p>
+                    <p className="text-xs font-bold text-gray-400 mb-1">업체명</p>
+                    <p className="text-sm font-bold text-gray-800">{currentPartner.companyName || '-'}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-blue-500">계약 상태</p>
-                    {(() => {
-                      const cs = getContractStatus(selectedPartnerDetail);
-                      return (
-                        <span className={`px-2 py-1 inline-block mt-1 rounded-full text-xs font-bold border ${
-                          cs.color === 'red' ? 'bg-red-100 text-red-700 border-red-200' :
-                          cs.color === 'amber' ? 'bg-amber-100 text-amber-700 border-amber-200' :
-                          cs.color === 'emerald' ? 'bg-emerald-100 text-emerald-700 border-emerald-200' :
-                          'bg-gray-100 text-gray-500 border-gray-200'
-                        }`}>
-                          {cs.label}
+                    <p className="text-xs font-bold text-gray-400 mb-1">담당자/대표자명</p>
+                    <p className="text-sm font-bold text-gray-800">{currentPartner.managerName || currentPartner.name || '-'}</p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-xs font-bold text-gray-400 mb-1">연락처</p>
+                    <p className="text-sm font-bold text-gray-800">{currentPartner.phone || '-'}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold text-gray-400 mb-1">신청 플랜</p>
+                    <p className="text-sm font-bold text-blue-600">{currentPartner.plan || '일반'}</p>
+                  </div>
+                </div>
+
+                <div>
+                  <p className="text-xs font-bold text-gray-400 mb-1">활동 지역</p>
+                  <p className="text-sm font-bold text-gray-800">{currentPartner.region || '-'}</p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-xs font-bold text-gray-400 mb-1">팀 규모</p>
+                    <p className="text-sm font-bold text-gray-800">{currentPartner.teamSize || '-'}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold text-gray-400 mb-1">가입일</p>
+                    <p className="text-sm font-bold text-gray-800">
+                      {currentPartner.createdAt ? new Date(currentPartner.createdAt).toLocaleDateString() : '날짜 없음'}
+                    </p>
+                  </div>
+                </div>
+
+                <div>
+                  <p className="text-xs font-bold text-gray-400 mb-1">주요 서비스</p>
+                  <div className="flex flex-wrap gap-1 mt-1">
+                    {Array.isArray(currentPartner.mainServices) ? (
+                      currentPartner.mainServices.map((service, index) => (
+                        <span key={index} className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded-md font-medium">
+                          {service}
                         </span>
-                      );
-                    })()}
-                  </div>
-                  <div>
-                    <p className="text-xs text-blue-500">등록일</p>
-                    <p className="text-sm font-bold text-blue-800">{selectedPartnerDetail.contractStartDate ? new Date(selectedPartnerDetail.contractStartDate).toLocaleDateString() : '-'}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-blue-500">만료일</p>
-                    <p className="text-sm font-bold text-blue-800">{selectedPartnerDetail.contractEndDate ? new Date(selectedPartnerDetail.contractEndDate).toLocaleDateString() : '-'}</p>
+                      ))
+                    ) : (
+                      <p className="text-sm font-bold text-gray-800">{currentPartner.mainServices || '-'}</p>
+                    )}
                   </div>
                 </div>
-                {getContractStatus(selectedPartnerDetail).color === 'red' && (
-                  <div className="flex gap-2 mt-3 pt-2 border-t border-blue-200">
-                    <button onClick={() => { handleExtendContract(selectedPartnerDetail.id, 3); setSelectedPartnerDetail(null); }} className="flex-1 text-xs bg-white text-blue-600 py-1.5 rounded-lg border border-blue-200 hover:bg-blue-50 font-bold">+3개월</button>
-                    <button onClick={() => { handleExtendContract(selectedPartnerDetail.id, 6); setSelectedPartnerDetail(null); }} className="flex-1 text-xs bg-white text-blue-600 py-1.5 rounded-lg border border-blue-200 hover:bg-blue-50 font-bold">+6개월</button>
-                    <button onClick={() => { handleExtendContract(selectedPartnerDetail.id, 12); setSelectedPartnerDetail(null); }} className="flex-1 text-xs bg-blue-600 text-white py-1.5 rounded-lg hover:bg-blue-700 font-bold shadow-sm">+1년</button>
+
+                {isEditingContract ? (
+                  <div className="bg-blue-50 p-4 rounded-lg border border-blue-200 mt-2 animate-in fade-in duration-200">
+                    <p className="text-xs font-bold text-blue-700 mb-3">계약 정보 설정/수정</p>
+                    <div className="space-y-3">
+                      <div>
+                        <label className="block text-[11px] font-bold text-blue-600 mb-1">파트너 등급</label>
+                        <div className="flex gap-2">
+                          {[
+                            { key: 'basic', label: '일반' },
+                            { key: 'premium', label: '프리미엄' },
+                            { key: 'exclusive', label: '지역독점' }
+                          ].map(t => (
+                            <button
+                              key={t.key}
+                              type="button"
+                              onClick={() => setEditTierPlan(t.key)}
+                              className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all border ${
+                                editTierPlan === t.key
+                                  ? 'bg-blue-600 border-blue-600 text-white shadow-sm'
+                                  : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
+                              }`}
+                            >
+                              {t.label}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-[11px] font-bold text-blue-600 mb-1">계약 기간 설정</label>
+                        <div className="flex flex-wrap gap-2">
+                          {[
+                            { key: 3, label: '3개월' },
+                            { key: 6, label: '6개월' },
+                            { key: 12, label: '1년' },
+                            { key: 'unlimited', label: '무제한 (미설정)' }
+                          ].map(p => {
+                            const isSelected = p.key === 'unlimited'
+                              ? editPlan === '무제한' || (!editPlan && !editEndDate)
+                              : editPlan === (p.key === 12 ? '1년' : p.key + '개월');
+                            return (
+                              <button
+                                key={p.key}
+                                type="button"
+                                onClick={() => setContractPeriod(p.key as any)}
+                                className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all border min-w-[70px] ${
+                                  isSelected
+                                    ? 'bg-blue-600 border-blue-600 text-white shadow-sm'
+                                    : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
+                                }`}
+                              >
+                                {p.label}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                      
+                      <div className="grid grid-cols-2 gap-3 pt-1">
+                        <div>
+                          <label className="block text-[11px] font-bold text-blue-600 mb-1">계약 시작일 (선택)</label>
+                          <input 
+                            type="date"
+                            value={editStartDate}
+                            onChange={(e) => handleStartDateChange(e.target.value)}
+                            className="text-xs w-full px-2.5 py-1.5 bg-white border border-blue-200 rounded-lg outline-none focus:ring-1 focus:ring-blue-500 font-medium"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[11px] font-bold text-blue-600 mb-1">계약 만료일 (자동계산)</label>
+                          <input 
+                            type="date"
+                            value={editEndDate}
+                            onChange={(e) => setEditEndDate(e.target.value)}
+                            className="text-xs w-full px-2.5 py-1.5 bg-white border border-blue-200 rounded-lg outline-none focus:ring-1 focus:ring-blue-500 font-medium"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="flex gap-2 pt-2">
+                        <button 
+                          onClick={() => setIsEditingContract(false)}
+                          className="flex-1 text-xs bg-white text-gray-600 py-1.5 rounded-lg border border-gray-300 hover:bg-gray-50 font-bold"
+                        >
+                          취소
+                        </button>
+                        <button 
+                          onClick={() => handleSaveContract(currentPartner.id)}
+                          className="flex-1 text-xs bg-blue-600 hover:bg-blue-700 text-white py-1.5 rounded-lg font-bold shadow-sm"
+                        >
+                          저장하기
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="bg-blue-50 p-3 rounded-lg border border-blue-100 mt-2">
+                    <div className="flex justify-between items-center mb-2">
+                      <p className="text-xs font-bold text-blue-700">계약 정보</p>
+                      <button
+                        onClick={() => {
+                          setEditPlan(currentPartner.contractPlan || '');
+                          setEditStartDate(currentPartner.contractStartDate ? currentPartner.contractStartDate.split('T')[0] : '');
+                          setEditEndDate(currentPartner.contractEndDate ? currentPartner.contractEndDate.split('T')[0] : '');
+                          setIsEditingContract(true);
+                        }}
+                        className="text-[10px] bg-blue-600 hover:bg-blue-700 text-white font-bold px-2.5 py-1 rounded transition-colors"
+                      >
+                        계약 설정/수정
+                      </button>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <p className="text-xs text-blue-500">플랜</p>
+                        <p className="text-sm font-bold text-blue-800">{currentPartner.contractPlan || '미설정'}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-blue-500">계약 상태</p>
+                        {(() => {
+                          const cs = getContractStatus(currentPartner);
+                          return (
+                            <span className={`px-2 py-1 inline-block mt-1 rounded-full text-xs font-bold border ${
+                              cs.color === 'red' ? 'bg-red-100 text-red-700 border-red-200' :
+                              cs.color === 'amber' ? 'bg-amber-100 text-amber-700 border-amber-200' :
+                              cs.color === 'emerald' ? 'bg-emerald-100 text-emerald-700 border-emerald-200' :
+                              'bg-gray-100 text-gray-500 border-gray-200'
+                            }`}>
+                              {cs.label}
+                            </span>
+                          );
+                        })()}
+                      </div>
+                      <div>
+                        <p className="text-xs text-blue-500">등록일</p>
+                        <p className="text-sm font-bold text-blue-800">
+                          {currentPartner.contractStartDate ? new Date(currentPartner.contractStartDate).toLocaleDateString() : '-'}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-blue-500">만료일</p>
+                        <p className="text-sm font-bold text-blue-800">
+                          {currentPartner.contractEndDate ? new Date(currentPartner.contractEndDate).toLocaleDateString() : '-'}
+                        </p>
+                      </div>
+                    </div>
+                    {getContractStatus(currentPartner).color === 'red' && (
+                      <div className="flex gap-2 mt-3 pt-2 border-t border-blue-200">
+                        <button onClick={() => { handleExtendContract(currentPartner.id, 3); }} className="flex-1 text-xs bg-white text-blue-600 py-1.5 rounded-lg border border-blue-200 hover:bg-blue-50 font-bold">+3개월</button>
+                        <button onClick={() => { handleExtendContract(currentPartner.id, 6); }} className="flex-1 text-xs bg-white text-blue-600 py-1.5 rounded-lg border border-blue-200 hover:bg-blue-50 font-bold">+6개월</button>
+                        <button onClick={() => { handleExtendContract(currentPartner.id, 12); }} className="flex-1 text-xs bg-blue-600 text-white py-1.5 rounded-lg hover:bg-blue-700 font-bold shadow-sm">+1년</button>
+                      </div>
+                    )}
                   </div>
                 )}
-              </div>
 
-              <div className="bg-gray-50 p-3 rounded-lg border border-gray-100 mt-2">
-                <p className="text-xs font-bold text-gray-500 mb-1">계정 정보</p>
-                <div className="grid grid-cols-2 gap-2">
-                  <div>
-                    <p className="text-[11px] text-gray-400">ID</p>
-                    <p className="text-xs font-mono font-bold text-gray-700">{selectedPartnerDetail.loginId || '-'}</p>
-                  </div>
-                  <div>
-                    <p className="text-[11px] text-gray-400">PW</p>
-                    <p className="text-xs font-mono font-bold text-gray-700">{selectedPartnerDetail.loginPassword || selectedPartnerDetail.password || '-'}</p>
+                <div className="bg-gray-50 p-3 rounded-lg border border-gray-100 mt-2">
+                  <p className="text-xs font-bold text-gray-500 mb-1">계정 정보</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <p className="text-[11px] text-gray-400">ID</p>
+                      <p className="text-xs font-mono font-bold text-gray-700">{currentPartner.loginId || '-'}</p>
+                    </div>
+                    <div>
+                      <p className="text-[11px] text-gray-400">PW</p>
+                      <p className="text-xs font-mono font-bold text-gray-700">{currentPartner.loginPassword || currentPartner.password || '-'}</p>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
 
-            <div className="p-4 border-t border-gray-100 bg-gray-50 flex justify-end gap-2">
-              <button onClick={() => setSelectedPartnerDetail(null)} className="px-4 py-2 font-bold text-gray-600 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 text-sm">닫기</button>
-              
-              {selectedPartnerDetail.status === 'pending' && (
-                <>
-                  <button 
-                    onClick={() => {
-                      handleDeletePartner(selectedPartnerDetail.id);
-                      setSelectedPartnerDetail(null);
-                    }} 
-                    className="px-4 py-2 font-bold text-red-600 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 text-sm"
-                  >
-                    거절 (삭제)
-                  </button>
-                  <button 
-                    onClick={() => {
-                      handleApprovePartner(selectedPartnerDetail.id);
-                      setSelectedPartnerDetail(null);
-                    }} 
-                    className="px-6 py-2 font-bold text-white bg-slate-900 rounded-lg hover:bg-slate-800 shadow-md text-sm"
-                  >
-                    승인 및 활성화
-                  </button>
-                </>
-              )}
+              <div className="p-4 border-t border-gray-100 bg-gray-50 flex justify-end gap-2">
+                <button onClick={() => setSelectedPartnerDetail(null)} className="px-4 py-2 font-bold text-gray-600 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 text-sm">닫기</button>
+                
+                {currentPartner.status === 'pending' && (
+                  <>
+                    <button 
+                      onClick={() => {
+                        handleDeletePartner(currentPartner.id);
+                        setSelectedPartnerDetail(null);
+                      }} 
+                      className="px-4 py-2 font-bold text-red-600 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 text-sm"
+                    >
+                      거절 (삭제)
+                    </button>
+                    <button 
+                      onClick={() => {
+                        handleApprovePartner(currentPartner.id);
+                        setSelectedPartnerDetail(null);
+                      }} 
+                      className="px-6 py-2 font-bold text-white bg-slate-900 rounded-lg hover:bg-slate-800 shadow-md text-sm"
+                    >
+                      승인 및 활성화
+                    </button>
+                  </>
+                )}
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* 파트너 수동 계정 생성 모달 */}
       {isCreatePartnerModalOpen && (

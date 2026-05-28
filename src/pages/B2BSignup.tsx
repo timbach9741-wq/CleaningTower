@@ -4,6 +4,7 @@ import { Check, ChevronRight, UserCircle, Smartphone, Lock, ArrowRight, CheckCir
 import { useNavigate } from 'react-router-dom';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../firebase';
+import { sendTelegramAlert } from '../telegramService';
 
 export default function Signup() {
   const navigate = useNavigate();
@@ -143,6 +144,21 @@ export default function Signup() {
         console.error("Firebase 저장 중 오류:", fbError);
         // Firebase 저장 실패 시에도 일단 로컬 로그인은 진행하도록 할 수 있으나, 
         // 실제 운영 시에는 이 부분을 더 엄격하게 처리해야 할 수 있습니다.
+      }
+
+      // 텔레그램 알림 발송 (비동기)
+      try {
+        const approvalText = isVerified ? "⚡ 즉시 자동 승인" : "⏳ 승인 대기";
+        const message = `🔔 <b>[청소타워 B2B 가입 신청]</b>\n\n` +
+          `👤 <b>대표자명:</b> ${formData.name}\n` +
+          `📱 <b>연락처:</b> ${formData.phone}\n` +
+          `📧 <b>이메일:</b> ${formData.email}\n` +
+          `💼 <b>사업자번호:</b> ${formData.businessNumber}\n` +
+          `⌛ <b>승인 상태:</b> ${approvalText}`;
+        
+        sendTelegramAlert(message).catch(err => console.error("텔레그램 발송 오류:", err));
+      } catch (tgErr) {
+        console.warn("텔레그램 알림 준비 에러:", tgErr);
       }
 
       // 3. 임시 로컬 처리 (로그인 상태로 변경)

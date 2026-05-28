@@ -1,9 +1,9 @@
-import React, { useState, type ChangeEvent } from 'react';
+import React, { useState, useEffect, type ChangeEvent } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import DaumPostcode from 'react-daum-postcode';
 import { db } from '../firebase';
-import { collection, addDoc, query, where, getDocs } from 'firebase/firestore';
+import { collection, addDoc, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
 
 const optionCategories = [
   {
@@ -60,8 +60,36 @@ export default function Quote() {
   const navigate = useNavigate();
   const { type } = useParams();
   const location = useLocation();
-  const selectedPartnerId = location.state?.selectedPartnerId || null;
-  const selectedPartnerName = location.state?.selectedPartnerName || null;
+  
+  // 파트너 정보 상태 (우회 시 변경 가능하도록 state로 관리)
+  const [partnerId, setPartnerId] = useState<string | null>(() => location.state?.selectedPartnerId || null);
+  const [partnerName, setPartnerName] = useState<string | null>(() => location.state?.selectedPartnerName || null);
+  const [partnerAvailableDates, setPartnerAvailableDates] = useState<string[]>([]);
+  const [isInterceptOpen, setIsInterceptOpen] = useState(false);
+
+  // 파트너 가능일 데이터 조회
+  useEffect(() => {
+    if (!partnerId) {
+      setPartnerAvailableDates([]);
+      return;
+    }
+    const fetchPartnerDates = async () => {
+      try {
+        const partnerDocRef = doc(db, 'partners', partnerId);
+        const partnerSnap = await getDoc(partnerDocRef);
+        if (partnerSnap.exists()) {
+          const data = partnerSnap.data();
+          setPartnerAvailableDates(data.availableDates || []);
+          console.log(`[Quote] Loaded partner available dates:`, data.availableDates);
+        } else {
+          console.warn(`[Quote] Partner document not found for ID: ${partnerId}`);
+        }
+      } catch (err) {
+        console.error('[Quote] Failed to fetch partner available dates:', err);
+      }
+    };
+    fetchPartnerDates();
+  }, [partnerId]);
 
   // 스텝 상태 (1: 주거/면적, 2: 일정/주소, 3: 연락처/메모, 4: 결과)
   const [step, setStep] = useState(1);
@@ -190,6 +218,22 @@ export default function Quote() {
         setErrorMsg('견적 산출 및 파트너 배정을 위해 정확한 방문 주소를 입력해주세요.');
         return;
       }
+      if (!cleaningDate) {
+        setErrorMsg('시공 희망 날짜를 선택해주세요.');
+        return;
+      }
+      if (!cleaningTime) {
+        setErrorMsg('시공 희망 시간을 선택해주세요.');
+        return;
+      }
+      // 파트너 지정 예약인 경우 청소 가능일 여부 검증
+      if (partnerId) {
+        const isDateAvailable = partnerAvailableDates.includes(cleaningDate);
+        if (!isDateAvailable) {
+          setIsInterceptOpen(true);
+          return; // 모달 오픈 후 진행 차단
+        }
+      }
     } else if (step === 4) {
       if (!businessName.trim()) {
         setErrorMsg('신청자 이름은 필수 항목입니다!');
@@ -265,8 +309,8 @@ export default function Quote() {
   const handleFinish = async () => {
     try {
       const payload = buildQuotePayload();
-      let assignedToId = selectedPartnerId;
-      let assignedPartnerName = selectedPartnerName;
+      let assignedToId = partnerId;
+      let assignedPartnerName = partnerName;
 
       // 자동 배정(Fast Booking)인 경우: 배정 로직 없이 전체 파트너에게 알림 전송 (Broadcasting)
       if (!assignedToId && address) {
@@ -1075,15 +1119,15 @@ export default function Quote() {
                 </div>
 
                 <div className="space-y-3 mt-auto">
-                  <div className={`grid ${selectedPartnerName ? 'grid-cols-1' : 'grid-cols-2'} gap-3`}>
+                  <div className={`grid ${partnerName ? 'grid-cols-1' : 'grid-cols-2'} gap-3`}>
                     <button 
                       onClick={handleFinish}
                       className="w-full bg-slate-700 hover:bg-slate-600 text-white font-bold py-4 rounded-xl text-sm md:text-base shadow-sm transition-all active:scale-95 flex items-center justify-center gap-1.5"
                     >
                       <span className="material-symbols-outlined pb-0.5 text-lg">bolt</span>
-                      {selectedPartnerName ? `${selectedPartnerName} 파트너에게 지정 예약` : '빠른 예약 (자동 배정)'}
+                      {partnerName ? `${partnerName} 파트너에게 지정 예약` : '빠른 예약 (자동 배정)'}
                     </button>
-                    {!selectedPartnerName && (
+                    {!partnerName && (
                       <button 
                         onClick={handleGoToPartnerList}
                         className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 rounded-xl text-sm md:text-base shadow-[0_0_20px_rgba(37,99,235,0.4)] transition-all active:scale-95 flex items-center justify-center gap-1.5"
@@ -1157,6 +1201,63 @@ export default function Quote() {
               </div>
             </div>
           </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* 우회 안내 모달 */}
+      <AnimatePresence>
+        {isInterceptOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="bg-slate-800 border border-slate-700 text-white rounded-2xl w-full max-w-md overflow-hidden shadow-2xl p-6 relative flex flex-col"
+            >
+              <div className="flex items-center gap-3 text-amber-400 mb-4">
+                <span className="material-symbols-outlined text-3xl">warning</span>
+                <h3 className="text-lg font-bold text-white">파트너 일정 확인 필요</h3>
+              </div>
+              
+              <p className="text-slate-300 text-sm leading-relaxed mb-6 break-keep">
+                선택하신 날짜(<span className="text-blue-400 font-bold">{cleaningDate}</span>)는 <span className="text-white font-bold">{partnerName}</span> 파트너의 청소 가능일이 아닙니다. 아래 옵션 중 하나를 선택해주세요.
+              </p>
+              
+              <div className="space-y-3">
+                <button
+                  onClick={() => setIsInterceptOpen(false)}
+                  className="w-full bg-slate-700 hover:bg-slate-600 text-white font-bold py-3.5 px-4 rounded-xl text-sm transition-all active:scale-[0.98] flex items-center justify-center gap-2 border border-slate-650"
+                >
+                  <span className="material-symbols-outlined text-lg">calendar_month</span>
+                  시공 날짜 변경하기
+                </button>
+                
+                <button
+                  onClick={() => {
+                    setIsInterceptOpen(false);
+                    setPartnerId(null);
+                    setPartnerName(null);
+                    setStep(4);
+                  }}
+                  className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3.5 px-4 rounded-xl text-sm shadow-[0_4px_12px_rgba(37,99,235,0.2)] transition-all active:scale-[0.98] flex items-center justify-center gap-2"
+                >
+                  <span className="material-symbols-outlined text-lg">bolt</span>
+                  추천 파트너 자동 배정으로 전환
+                </button>
+                
+                <button
+                  onClick={() => {
+                    setIsInterceptOpen(false);
+                    handleGoToPartnerList();
+                  }}
+                  className="w-full bg-transparent hover:bg-white/5 text-slate-300 font-bold py-3.5 px-4 rounded-xl text-sm transition-all active:scale-[0.98] flex items-center justify-center gap-2 border border-white/10"
+                >
+                  <span className="material-symbols-outlined text-lg">search</span>
+                  다른 파트너 선택하러 가기
+                </button>
+              </div>
+            </motion.div>
+          </div>
         )}
       </AnimatePresence>
 

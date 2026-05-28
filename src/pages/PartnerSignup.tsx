@@ -4,6 +4,7 @@ import { Building2, User, Upload, ArrowRight, CheckCircle, ShieldCheck } from 'l
 import { getDb } from '../firebase';
 import { collection, addDoc, query, where, getDocs } from 'firebase/firestore';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { sendTelegramAlert } from '../telegramService';
 
 import { REGION_DATA } from '../data/regions';
 import RegionSelector from '../components/common/RegionSelector';
@@ -31,7 +32,7 @@ export default function PartnerSignup() {
     mainServices: [] as string[],
     status: '',
     loginId: '',
-    password: Math.floor(1000 + Math.random() * 9000).toString(),
+    password: '휴대폰 뒤 4자리',
     createdAt: ''
   });
   const [isAgreed, setIsAgreed] = useState(false);
@@ -57,7 +58,7 @@ export default function PartnerSignup() {
         mainServices: formData.mainServices,
         status: formData.plan === 'exclusive' ? 'pending' : 'active', // 지역독점은 승인 대기, 나머지는 자동 승인
         loginId: formData.phone.replace(/[^0-9]/g, ''), // 연락처(숫자만)를 아이디로 사용
-        password: formData.password, // 직접 설정한 비밀번호
+        password: formData.password === '휴대폰 뒤 4자리' ? formData.phone.replace(/[^0-9]/g, '').slice(-4) : formData.password,
         isNotificationEnabled: true,
         notificationRegions: finalRegionArray,
         createdAt: new Date().toISOString()
@@ -76,11 +77,36 @@ export default function PartnerSignup() {
           return;
         }
         await addDoc(collection(dbInstance, 'partners'), firestoreData);
+
+        // 텔레그램 알림 발송 (비동기)
+        try {
+          const planLabel = firestoreData.plan === 'exclusive' ? '👑 지역 독점' : firestoreData.plan === 'premium' ? '⭐ 프리미엄' : '일반';
+          const businessTypeLabel = firestoreData.businessType === 'business' ? '💼 사업자 팀' : '👤 개인 팀';
+          const statusText = firestoreData.status === 'active' ? '⚡ 즉시 자동 승인' : '⏳ 승인 대기';
+          const nameToUse = firestoreData.managerName || firestoreData.name || '미기재';
+
+          const message = `🔔 <b>[청소타워 파트너 가입 신청]</b>\n\n` +
+            `💎 <b>가입 플랜:</b> ${planLabel}\n` +
+            `🏢 <b>사업자 유형:</b> ${businessTypeLabel}\n` +
+            `🏢 <b>상호명:</b> ${firestoreData.companyName || '미기재'}\n` +
+            `👤 <b>담당자/이름:</b> ${nameToUse}\n` +
+            `📱 <b>연락처:</b> ${firestoreData.phone}\n` +
+            `📍 <b>주 활동지역:</b> ${firestoreData.region}\n` +
+            `👥 <b>투입 규모:</b> ${firestoreData.teamSize || '미기재'}\n` +
+            `🛠️ <b>주력 서비스:</b> ${firestoreData.mainServices.join(', ') || '미기재'}\n` +
+            `⌛ <b>승인 상태:</b> ${statusText}`;
+
+          sendTelegramAlert(message).catch(err => console.error("텔레그램 발송 오류:", err));
+        } catch (tgErr) {
+          console.warn("텔레그램 알림 준비 에러:", tgErr);
+        }
       }
       
+      const actualPassword = formData.phone.replace(/[^0-9]/g, '').slice(-4) || '0000';
       setFormData(prev => ({
         ...prev,
-        status: formData.plan === 'exclusive' ? 'pending' : 'active'
+        status: formData.plan === 'exclusive' ? 'pending' : 'active',
+        password: actualPassword
       }));
       setStep(4); // 완료 화면
     } catch (e) {
@@ -223,7 +249,15 @@ export default function PartnerSignup() {
                       className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all focus:bg-white"
                       placeholder="010-0000-0000"
                       value={formData.phone}
-                      onChange={e => setFormData({ ...formData, phone: e.target.value })}
+                      onChange={e => {
+                        const val = e.target.value;
+                        const clean = val.replace(/[^0-9]/g, '');
+                        setFormData(prev => ({
+                          ...prev,
+                          phone: val,
+                          password: clean.length >= 4 ? clean.slice(-4) : '휴대폰 뒤 4자리'
+                        }));
+                      }}
                     />
                   </div>
                   <div>
@@ -289,14 +323,14 @@ export default function PartnerSignup() {
                     </div>
                   </div>
 
-                  {/* 비밀번호 설정란 (자동완성 완벽 차단용 텍스트 필드 트릭 + readOnly 트릭 적용) */}
+                  {/* 비밀번호 설정란 (휴대폰 번호 뒤 4자리 임시 비밀번호 설정) */}
                   <div className="pt-2 border-t border-slate-100 mt-4">
-                    <label className="block text-sm font-bold text-slate-700 mb-2">파트너스 로그인 임시 비밀번호</label>
+                    <label className="block text-sm font-bold text-slate-700 mb-2">파트너스 로그인 비밀번호</label>
                     <div className="w-full px-4 py-3 bg-slate-100 border border-slate-200 rounded-xl text-slate-700 font-bold mb-1 flex items-center justify-between">
                       <span className="tracking-widest text-lg">{formData.password}</span>
-                      <span className="text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded-md font-medium">자동 생성됨</span>
+                      <span className="text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded-md font-medium">휴대폰 번호 뒤 4자리</span>
                     </div>
-                    <p className="text-xs text-slate-500 font-medium ml-1">가입 후 파트너스 페이지에서 비밀번호를 변경하실 수 있습니다.</p>
+                    <p className="text-xs text-slate-500 font-medium ml-1">로그인 시 비밀번호는 휴대폰 번호의 마지막 4자리 숫자입니다.</p>
                   </div>
                 </div>
 

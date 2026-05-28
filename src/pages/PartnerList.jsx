@@ -8,6 +8,80 @@ import { REGION_DATA } from '../data/regions';
 
 import RegionSelector from '../components/common/RegionSelector';
 
+// 고객용 읽기 전용 달력 컴포넌트
+const PartnerCalendar = ({ availableDates }) => {
+  const [currentMonth, setCurrentMonth] = React.useState(new Date());
+
+  const getDaysInMonth = (year, month) => new Date(year, month + 1, 0).getDate();
+  const getFirstDayOfMonth = (year, month) => new Date(year, month, 1).getDay();
+
+  const handlePrevMonth = () => {
+    setCurrentMonth(prev => new Date(prev.getFullYear(), prev.getMonth() - 1, 1));
+  };
+
+  const handleNextMonth = () => {
+    setCurrentMonth(prev => new Date(prev.getFullYear(), prev.getMonth() + 1, 1));
+  };
+
+  const year = currentMonth.getFullYear();
+  const month = currentMonth.getMonth();
+  const daysInMonth = getDaysInMonth(year, month);
+  const firstDay = getFirstDayOfMonth(year, month);
+
+  const dayCells = [];
+  for (let i = 0; i < firstDay; i++) {
+    dayCells.push(<div key={`empty-${i}`} className="h-9 w-full"></div>);
+  }
+
+  for (let day = 1; day <= daysInMonth; day++) {
+    const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    const isAvailable = availableDates?.includes(dateStr) || false;
+    const isToday = new Date().toISOString().split('T')[0] === dateStr;
+
+    dayCells.push(
+      <div
+        key={`day-${day}`}
+        className={`h-9 w-full rounded-lg flex flex-col items-center justify-center relative text-xs font-bold transition-all
+          ${isAvailable 
+            ? 'bg-blue-500 text-white shadow-sm' 
+            : 'bg-slate-50 text-slate-700 border border-slate-100'
+          }
+        `}
+      >
+        <span>{day}</span>
+        {isToday && (
+          <span className={`absolute bottom-0.5 w-1 h-1 rounded-full ${isAvailable ? 'bg-white' : 'bg-blue-500'}`}></span>
+        )}
+        {isAvailable && (
+          <span className="text-[7px] font-black opacity-90 block mt-0.5 leading-none">가능</span>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div className="bg-white p-4 rounded-xl border border-blue-100 shadow-sm">
+      <div className="flex justify-between items-center mb-3">
+        <button type="button" onClick={handlePrevMonth} className="text-xs text-slate-500 hover:text-slate-800 font-bold px-2 py-1 bg-slate-50 hover:bg-slate-100 rounded">&lt; 이전달</button>
+        <span className="font-bold text-xs text-slate-800">{year}년 {month + 1}월</span>
+        <button type="button" onClick={handleNextMonth} className="text-xs text-slate-500 hover:text-slate-800 font-bold px-2 py-1 bg-slate-50 hover:bg-slate-100 rounded">다음달 &gt;</button>
+      </div>
+      <div className="grid grid-cols-7 gap-1 text-center text-[10px] font-bold text-slate-400 mb-1">
+        <div className="text-rose-500">일</div>
+        <div>월</div>
+        <div>화</div>
+        <div>수</div>
+        <div>목</div>
+        <div>금</div>
+        <div className="text-blue-500">토</div>
+      </div>
+      <div className="grid grid-cols-7 gap-1 text-center">
+        {dayCells}
+      </div>
+    </div>
+  );
+};
+
 const PartnerDetailModal = ({ partner, onClose, quoteData }) => {
   const navigate = useNavigate();
   const [showServiceSelection, setShowServiceSelection] = useState(false);
@@ -91,6 +165,15 @@ const PartnerDetailModal = ({ partner, onClose, quoteData }) => {
                             <span key={svc} className="bg-white shadow-sm border border-slate-200 px-1.5 py-0.5 rounded text-slate-700 font-bold text-[9px] sm:text-[10px]">{svc}</span>
                           ))}
                         </div>
+                      </div>
+
+                      {/* 실시간 청소 가능일 달력 */}
+                      <div className="pt-3 mt-2 border-t border-blue-200/60">
+                        <div className="flex items-center gap-1.5 mb-2">
+                          <span className="text-blue-600 text-sm">📅</span>
+                          <span className="text-blue-900 font-bold text-sm">실시간 청소 가능일</span>
+                        </div>
+                        <PartnerCalendar availableDates={partner.availableDates} />
                       </div>
 
                       {/* 이달의 행사 영역 */}

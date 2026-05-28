@@ -258,10 +258,46 @@ export default function Admin() {
 
   const handleApprovePartner = async (id: string) => {
     if (!db) return;
-    if (confirm("해당 파트너의 상태를 '활동 중(승인)'으로 변경하시겠습니까?")) {
-      await updateDoc(doc(db, 'partners', id), { status: 'active' });
-      alert("파트너가 정상적으로 승인(활동 재개)되었습니다.");
+    if (confirm("해당 파트너의 상태를 '활동 중(승인)'으로 변경하시겠습니까?\n※ 6개월 무료 등록이 적용됩니다.")) {
+      const now = new Date();
+      const expireDate = new Date(now);
+      expireDate.setMonth(expireDate.getMonth() + 6);
+      await updateDoc(doc(db, 'partners', id), { 
+        status: 'active',
+        contractPlan: '6개월 (무료)',
+        contractStartDate: now.toISOString(),
+        contractEndDate: expireDate.toISOString(),
+      });
+      alert("파트너가 승인되었습니다. (6개월 무료 등록 적용)");
     }
+  };
+
+  const handleExtendContract = async (id: string, months: number) => {
+    if (!db) return;
+    const label = months === 3 ? '3개월' : months === 6 ? '6개월' : '1년';
+    if (confirm(`계약을 ${label} 연장하시겠습니까?`)) {
+      const now = new Date();
+      const expireDate = new Date(now);
+      expireDate.setMonth(expireDate.getMonth() + months);
+      await updateDoc(doc(db, 'partners', id), {
+        contractPlan: label,
+        contractStartDate: now.toISOString(),
+        contractEndDate: expireDate.toISOString(),
+        status: 'active',
+      });
+      alert(`계약이 ${label} 연장되었습니다.`);
+    }
+  };
+
+  const getContractStatus = (partner: any) => {
+    if (!partner.contractEndDate) return { label: '미설정', color: 'gray', dday: null };
+    const now = new Date();
+    const end = new Date(partner.contractEndDate);
+    const diffMs = end.getTime() - now.getTime();
+    const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+    if (diffDays < 0) return { label: '만료', color: 'red', dday: diffDays };
+    if (diffDays <= 30) return { label: `D-${diffDays}`, color: 'amber', dday: diffDays };
+    return { label: `D-${diffDays}`, color: 'emerald', dday: diffDays };
   };
 
   const handleSuspendPartner = async (id: string) => {
@@ -324,13 +360,19 @@ export default function Admin() {
     
     if (confirm(`아이디: ${newPartnerForm.loginId}\n비밀번호: ${newPartnerForm.loginPassword}\n위 정보로 파트너 계정을 발급하시겠습니까?`)) {
       try {
+        const now = new Date();
+        const expireDate = new Date(now);
+        expireDate.setMonth(expireDate.getMonth() + 6);
         await addDoc(collection(db, 'partners'), {
           ...newPartnerForm,
           name: newPartnerForm.managerName || newPartnerForm.companyName, // 호환성
           status: 'active', // 관리자가 직접 생성하므로 바로 활동 가능 상태
           isNotificationEnabled: true,
           notificationRegions: [newPartnerForm.region],
-          createdAt: new Date().toISOString()
+          createdAt: now.toISOString(),
+          contractPlan: '6개월 (무료)',
+          contractStartDate: now.toISOString(),
+          contractEndDate: expireDate.toISOString(),
         });
         
         alert("계정 발급이 완료되었습니다. 해당 파트너에게 접속 정보를 전달해 주세요.");
@@ -1496,6 +1538,7 @@ export default function Admin() {
                         <th className="p-4 font-bold text-blue-600 bg-blue-50/50">접속 ID</th>
                         <th className="p-4 font-bold text-blue-600 bg-blue-50/50">비밀번호(초기)</th>
                         <th className="p-4 font-bold">활동 지역</th>
+                        <th className="p-4 font-bold">계약 만료</th>
                         <th className="p-4 font-bold">상태/권한</th>
                         <th className="p-4 font-bold text-center">승인 관리</th>
                       </tr>
@@ -1503,7 +1546,7 @@ export default function Admin() {
                     <tbody className="divide-y divide-gray-100">
                       {filteredPartnersList.length === 0 ? (
                         <tr>
-                          <td colSpan={8} className="p-12 text-center text-gray-400">
+                          <td colSpan={9} className="p-12 text-center text-gray-400">
                             등록되거나 대기 중인 파트너가 없습니다.
                           </td>
                         </tr>
@@ -1527,6 +1570,35 @@ export default function Admin() {
                             </td>
                             <td className="p-4 text-sm text-gray-600">
                               {partner.region}
+                            </td>
+                            <td className="p-4">
+                              {(() => {
+                                const cs = getContractStatus(partner);
+                                return (
+                                  <div className="flex flex-col gap-1">
+                                    <span className={`px-2 py-1 rounded-full text-xs font-bold border inline-block w-fit ${
+                                      cs.color === 'red' ? 'bg-red-100 text-red-700 border-red-200' :
+                                      cs.color === 'amber' ? 'bg-amber-100 text-amber-700 border-amber-200 animate-pulse' :
+                                      cs.color === 'emerald' ? 'bg-emerald-100 text-emerald-700 border-emerald-200' :
+                                      'bg-gray-100 text-gray-500 border-gray-200'
+                                    }`}>
+                                      {cs.label}
+                                    </span>
+                                    {partner.contractEndDate && (
+                                      <span className="text-[11px] text-gray-400">
+                                        ~{new Date(partner.contractEndDate).toLocaleDateString()}
+                                      </span>
+                                    )}
+                                    {cs.color === 'red' && (
+                                      <div className="flex gap-1 mt-1">
+                                        <button onClick={() => handleExtendContract(partner.id, 3)} className="text-[10px] bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded border border-blue-200 hover:bg-blue-100 font-bold">+3개월</button>
+                                        <button onClick={() => handleExtendContract(partner.id, 6)} className="text-[10px] bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded border border-blue-200 hover:bg-blue-100 font-bold">+6개월</button>
+                                        <button onClick={() => handleExtendContract(partner.id, 12)} className="text-[10px] bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded border border-blue-200 hover:bg-blue-100 font-bold">+1년</button>
+                                      </div>
+                                    )}
+                                  </div>
+                                );
+                              })()}
                             </td>
                             <td className="p-4">
                               <span className={`px-2 py-1 rounded-full text-xs font-bold border ${
@@ -1626,6 +1698,24 @@ export default function Admin() {
                                 )}
                               </div>
                               <p className="text-xs text-slate-400 font-medium">가입일: {partner.createdAt ? new Date(partner.createdAt).toLocaleDateString() : '날짜 없음'}</p>
+                              {(() => {
+                                const cs = getContractStatus(partner);
+                                return (
+                                  <div className="flex items-center gap-2 mt-1">
+                                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${
+                                      cs.color === 'red' ? 'bg-red-100 text-red-700 border-red-200' :
+                                      cs.color === 'amber' ? 'bg-amber-100 text-amber-700 border-amber-200 animate-pulse' :
+                                      cs.color === 'emerald' ? 'bg-emerald-100 text-emerald-700 border-emerald-200' :
+                                      'bg-gray-100 text-gray-500 border-gray-200'
+                                    }`}>
+                                      계약 {cs.label}
+                                    </span>
+                                    {partner.contractEndDate && (
+                                      <span className="text-[10px] text-gray-400">~{new Date(partner.contractEndDate).toLocaleDateString()}</span>
+                                    )}
+                                  </div>
+                                );
+                              })()}
                             </div>
                             <span className={`px-2 py-1 rounded-full text-xs font-bold border ${
                               partner.status === 'active' 
@@ -2219,6 +2309,47 @@ export default function Admin() {
                     <p className="text-sm font-bold text-gray-800">{selectedPartnerDetail.mainServices || '-'}</p>
                   )}
                 </div>
+              </div>
+
+              <div className="bg-blue-50 p-3 rounded-lg border border-blue-100 mt-2">
+                <p className="text-xs font-bold text-blue-700 mb-2">계약 정보</p>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <p className="text-[11px] text-blue-500">플랜</p>
+                    <p className="text-xs font-bold text-blue-800">{selectedPartnerDetail.contractPlan || '미설정'}</p>
+                  </div>
+                  <div>
+                    <p className="text-[11px] text-blue-500">계약 상태</p>
+                    {(() => {
+                      const cs = getContractStatus(selectedPartnerDetail);
+                      return (
+                        <span className={`px-2 py-0.5 rounded-full text-xs font-bold border ${
+                          cs.color === 'red' ? 'bg-red-100 text-red-700 border-red-200' :
+                          cs.color === 'amber' ? 'bg-amber-100 text-amber-700 border-amber-200' :
+                          cs.color === 'emerald' ? 'bg-emerald-100 text-emerald-700 border-emerald-200' :
+                          'bg-gray-100 text-gray-500 border-gray-200'
+                        }`}>
+                          {cs.label}
+                        </span>
+                      );
+                    })()}
+                  </div>
+                  <div>
+                    <p className="text-[11px] text-blue-500">등록일</p>
+                    <p className="text-xs font-bold text-blue-800">{selectedPartnerDetail.contractStartDate ? new Date(selectedPartnerDetail.contractStartDate).toLocaleDateString() : '-'}</p>
+                  </div>
+                  <div>
+                    <p className="text-[11px] text-blue-500">만료일</p>
+                    <p className="text-xs font-bold text-blue-800">{selectedPartnerDetail.contractEndDate ? new Date(selectedPartnerDetail.contractEndDate).toLocaleDateString() : '-'}</p>
+                  </div>
+                </div>
+                {getContractStatus(selectedPartnerDetail).color === 'red' && (
+                  <div className="flex gap-2 mt-3 pt-2 border-t border-blue-200">
+                    <button onClick={() => { handleExtendContract(selectedPartnerDetail.id, 3); setSelectedPartnerDetail(null); }} className="flex-1 text-xs bg-white text-blue-600 py-1.5 rounded-lg border border-blue-200 hover:bg-blue-50 font-bold">+3개월</button>
+                    <button onClick={() => { handleExtendContract(selectedPartnerDetail.id, 6); setSelectedPartnerDetail(null); }} className="flex-1 text-xs bg-white text-blue-600 py-1.5 rounded-lg border border-blue-200 hover:bg-blue-50 font-bold">+6개월</button>
+                    <button onClick={() => { handleExtendContract(selectedPartnerDetail.id, 12); setSelectedPartnerDetail(null); }} className="flex-1 text-xs bg-blue-600 text-white py-1.5 rounded-lg hover:bg-blue-700 font-bold shadow-sm">+1년</button>
+                  </div>
+                )}
               </div>
 
               <div className="bg-gray-50 p-3 rounded-lg border border-gray-100 mt-2">

@@ -5,7 +5,7 @@ import { db, storage, getMessagingInstance } from '../firebase';
 import { getToken } from 'firebase/messaging';
 import { collection, onSnapshot, doc, updateDoc, getDocs, query, where, deleteDoc } from 'firebase/firestore';
 import type { Unsubscribe } from 'firebase/firestore';
-import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
+import { ref, uploadBytesResumable, getDownloadURL, deleteObject } from 'firebase/storage';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { REGION_DATA } from '../data/regions';
 
@@ -65,7 +65,7 @@ export interface PartnerUser {
   fcmTokens?: string[];
   notificationRegions?: string[];
   monthlyEvent?: string;
-  portfolio?: string[];
+  portfolio?: any[];
   recentReviews?: { id: number, author: string, text: string, rating: number, date: string }[];
   description?: string;
   teamSize?: string;
@@ -73,6 +73,8 @@ export interface PartnerUser {
   tags?: string[];
   image?: string;
   regions?: string[];
+  dailyUploadCount?: number;
+  lastUploadDate?: string;
 }
 
 export default function Partner() {
@@ -107,7 +109,7 @@ export default function Partner() {
     region: '',
     regions: [] as string[],
     monthlyEvent: '',
-    portfolio: [] as string[],
+    portfolio: [] as any[],
     description: '',
     teamSize: '',
     mainServices: [] as string[],
@@ -732,7 +734,14 @@ export default function Partner() {
     setCustomService('');
   };
 
-  const handlePortfolioUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // 신규 작업 현장 등록용 상태
+  const [showAddCaseModal, setShowAddCaseModal] = useState(false);
+  const [newCaseTitle, setNewCaseTitle] = useState('');
+  const [newCaseDate, setNewCaseDate] = useState(new Date().toISOString().split('T')[0]);
+  const [newCaseImages, setNewCaseImages] = useState<string[]>([]);
+  const [caseUploadProgress, setCaseUploadProgress] = useState<number | null>(null);
+
+  const handleCaseImagesUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     if (files.length === 0) return;
     if (!storage) {
@@ -740,25 +749,157 @@ export default function Partner() {
       return;
     }
 
+    // 1. 하루 업로드 제한 체크
+    const todayStr = new Date().toISOString().split('T')[0];
+    const lastDate = currentUser?.lastUploadDate || '';
+    let dailyCount = lastDate === todayStr ? (currentUser?.dailyUploadCount || 0) : 0;
+
+    if (dailyCount + files.length > 20) {
+      alert(`하루 최대 20장까지 업로드 가능합니다.\n(오늘 남은 가능 장수: ${Math.max(0, 20 - dailyCount)}장)`);
+      return;
+    }
+
+    setCaseUploadProgress(0);
+    let uploadedUrls: string[] = [];
+    let completedCount = 0;
+
     files.forEach(file => {
-      const storageRef = ref(storage, `partner_portfolio/${currentUser?.id || Date.now()}_${file.name}`);
+      const storageRef = ref(storage, `partner_portfolio/${currentUser?.id || Date.now()}_${Date.now()}_${file.name}`);
       const uploadTask = uploadBytesResumable(storageRef, file);
-      
+
       uploadTask.on('state_changed',
         null,
         (error) => {
-          console.error("Portfolio upload error:", error);
+          console.error(error);
+          alert(`${file.name} 업로드 중 오류가 발생했습니다.`);
         },
-        () => {
-          getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
-            setEditProfileForm(prev => ({
-              ...prev,
-              portfolio: [...prev.portfolio, downloadURL]
-            }));
-          });
+        async () => {
+          const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+          uploadedUrls.push(downloadURL);
+          completedCount++;
+          setCaseUploadProgress(Math.round((completedCount / files.length) * 100));
+
+          if (completedCount === files.length) {
+            setNewCaseImages(prev => [...prev, ...uploadedUrls]);
+            setCaseUploadProgress(null);
+          }
         }
       );
     });
+  };
+
+  const handleSaveNewCase = async () => {
+    if (!newCaseTitle.trim()) {
+      alert("현장명을 입력해주세요.");
+      return;
+    }
+    if (newCaseImages.length === 0) {
+      alert("작업 사진을 최소 1장 이상 등록해주세요.");
+      return;
+    }
+
+    const todayStr = new Date().toISOString().split('T')[0];
+    const lastDate = currentUser?.lastUploadDate || '';
+    let dailyCount = lastDate === todayStr ? (currentUser?.dailyUploadCount || 0) : 0;
+    const updatedDailyCount = dailyCount + newCaseImages.length;
+
+    let currentPortfolio = [...(editProfileForm.portfolio || [])];
+
+    // 만약 기존 포트폴리오가 10개 이상 등록되어 있다면 (11번째 이상이 되므로), 가장 오래된 현장 자동 삭제
+    if (currentPortfolio.length >= 10) {
+      let cases = currentPortfolio.map((item, idx) => {
+        if (typeof item === 'string') {
+          return { id: `legacy_${idx}`, title: '이전 등록 사진', date: todayStr, uploadedAt: 0, images: [item] };
+        }
+        return item;
+      });
+
+      cases.sort((a, b) => (a.uploadedAt || 0) - (b.uploadedAt || 0));
+      const oldestCase = cases[0];
+
+      if (oldestCase.images && oldestCase.images.length > 0) {
+        for (const imgUrl of oldestCase.images) {
+          try {
+            if (imgUrl.includes('firebasestorage')) {
+              const fileRef = ref(storage!, imgUrl);
+              await deleteObject(fileRef);
+            }
+          } catch (err) {
+            console.error("Failed to delete storage object", err);
+          }
+        }
+      }
+
+      currentPortfolio = currentPortfolio.filter((item, idx) => {
+        if (typeof item === 'string') {
+          return `legacy_${idx}` !== oldestCase.id;
+        }
+        return item.id !== oldestCase.id;
+      });
+    }
+
+    const newCase = {
+      id: `case_${Date.now()}`,
+      title: newCaseTitle.trim(),
+      date: newCaseDate,
+      uploadedAt: Date.now(),
+      images: newCaseImages
+    };
+
+    setEditProfileForm(prev => ({
+      ...prev,
+      portfolio: [...currentPortfolio, newCase]
+    }));
+
+    if (db && currentUser) {
+      try {
+        await updateDoc(doc(db, 'partners', currentUser.id), {
+          dailyUploadCount: updatedDailyCount,
+          lastUploadDate: todayStr
+        });
+      } catch (err) {
+        console.error("Failed to update daily upload stats", err);
+      }
+    }
+
+    setNewCaseTitle('');
+    setNewCaseDate(todayStr);
+    setNewCaseImages([]);
+    setShowAddCaseModal(false);
+    alert("작업 현장이 추가되었습니다.\n(하단 '홍보 정보 저장하기' 버튼을 눌러야 최종 저장 완료됩니다.)");
+  };
+
+  const handleDeleteCase = async (index: number) => {
+    if (confirm("해당 작업 현장 데이터를 삭제하시겠습니까?\n스토리지의 사진 파일도 모두 영구 삭제됩니다.")) {
+      const targetCase = editProfileForm.portfolio[index];
+
+      if (typeof targetCase === 'object' && targetCase !== null && targetCase.images) {
+        for (const imgUrl of targetCase.images) {
+          try {
+            if (imgUrl.includes('firebasestorage')) {
+              const fileRef = ref(storage!, imgUrl);
+              await deleteObject(fileRef);
+            }
+          } catch (err) {
+            console.error("Failed to delete storage object", err);
+          }
+        }
+      } else if (typeof targetCase === 'string') {
+        try {
+          if (targetCase.includes('firebasestorage')) {
+            const fileRef = ref(storage!, targetCase);
+            await deleteObject(fileRef);
+          }
+        } catch (err) {
+          console.error("Failed to delete legacy storage object", err);
+        }
+      }
+
+      setEditProfileForm(prev => ({
+        ...prev,
+        portfolio: prev.portfolio.filter((_, idx) => idx !== index)
+      }));
+    }
   };
 
   if (showLanding) {
@@ -2008,39 +2149,177 @@ export default function Partner() {
                 <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
                   <div className="flex justify-between items-center mb-2">
                     <h3 className="font-bold text-slate-900 flex items-center gap-1.5">
-                      📸 포트폴리오 사진 ({editProfileForm.portfolio.length}장)
+                      📸 작업 갤러리 ({editProfileForm.portfolio.length}건)
                     </h3>
-                    <label className="text-xs font-bold text-blue-600 bg-blue-50 px-2.5 py-1.5 rounded-lg cursor-pointer hover:bg-blue-100 transition-colors">
-                      + 사진 추가
-                      <input 
-                        type="file" 
-                        multiple 
-                        accept="image/*" 
-                        className="hidden" 
-                        onChange={handlePortfolioUpload} 
-                      />
-                    </label>
+                    <button 
+                      type="button"
+                      onClick={() => setShowAddCaseModal(true)}
+                      className="text-xs font-bold text-blue-600 bg-blue-50 px-2.5 py-1.5 rounded-lg hover:bg-blue-100 transition-colors"
+                    >
+                      + 현장 추가
+                    </button>
                   </div>
-                  <div className="flex gap-3 overflow-x-auto pb-2 mt-3">
+                  <div className="flex flex-col gap-3 mt-3">
                     {editProfileForm.portfolio.length === 0 ? (
-                      <p className="text-sm text-slate-400 w-full text-center py-4 bg-slate-50 rounded-xl border border-dashed border-slate-200">
-                        등록된 사진이 없습니다.
+                      <p className="text-sm text-slate-400 w-full text-center py-6 bg-slate-50 rounded-xl border border-dashed border-slate-200">
+                        등록된 작업 현장이 없습니다. (최대 10개 보존)
                       </p>
                     ) : (
-                      editProfileForm.portfolio.map((img, i) => (
-                        <div key={i} className="relative w-24 h-24 rounded-xl overflow-hidden shrink-0 border border-slate-200">
-                          <img src={img} alt={`포트폴리오 ${i+1}`} className="w-full h-full object-cover" />
-                          <button 
-                            onClick={() => setEditProfileForm(prev => ({...prev, portfolio: prev.portfolio.filter((_, idx) => idx !== i)}))}
-                            className="absolute top-1 right-1 w-6 h-6 bg-black/50 text-white rounded-full flex items-center justify-center text-xs backdrop-blur-sm"
-                          >
-                            ✕
-                          </button>
-                        </div>
-                      ))
+                      editProfileForm.portfolio.map((item, i) => {
+                        const isLegacy = typeof item === 'string';
+                        const thumb = isLegacy ? item : (item.images?.[0] || '');
+                        const title = isLegacy ? '이전 등록 사진' : item.title;
+                        const date = isLegacy ? '' : item.date;
+                        const imgCount = isLegacy ? 1 : (item.images?.length || 0);
+
+                        return (
+                          <div key={i} className="flex items-center gap-3 p-3 bg-slate-50 border border-slate-200 rounded-xl relative">
+                            <div className="w-16 h-16 rounded-lg overflow-hidden shrink-0 border border-slate-200 bg-white">
+                              <img src={thumb} alt="썸네일" className="w-full h-full object-cover" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <h4 className="text-sm font-bold text-slate-800 truncate">{title}</h4>
+                              <div className="flex items-center gap-2 mt-1">
+                                {date && <span className="text-[11px] font-medium text-slate-500 bg-slate-200/50 px-1.5 py-0.5 rounded">{date}</span>}
+                                <span className="text-[11px] font-bold text-blue-600">사진 {imgCount}장</span>
+                              </div>
+                            </div>
+                            <button 
+                              type="button"
+                              onClick={() => handleDeleteCase(i)}
+                              className="w-8 h-8 bg-white border border-slate-200 text-slate-500 rounded-full flex items-center justify-center hover:bg-red-50 hover:text-red-500 transition-colors shrink-0"
+                            >
+                              ✕
+                            </button>
+                          </div>
+                        );
+                      })
                     )}
                   </div>
                 </div>
+
+                {/* 신규 작업 현장 등록 모달 */}
+                {showAddCaseModal && (
+                  <div className="fixed inset-0 z-[80] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+                    <div className="bg-white rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl flex flex-col p-5 space-y-4">
+                      <div className="flex justify-between items-center border-b border-slate-100 pb-2">
+                        <h3 className="font-black text-slate-900 text-lg">새 작업 현장 추가</h3>
+                        <button 
+                          type="button"
+                          onClick={() => {
+                            setNewCaseTitle('');
+                            setNewCaseImages([]);
+                            setCaseUploadProgress(null);
+                            setShowAddCaseModal(false);
+                          }}
+                          className="text-slate-400 hover:text-slate-600 text-lg"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                      
+                      <div className="space-y-3">
+                        <div>
+                          <label className="block text-xs font-bold text-slate-600 mb-1">현장명 / 작업 설명</label>
+                          <input 
+                            type="text"
+                            value={newCaseTitle}
+                            onChange={e => setNewCaseTitle(e.target.value)}
+                            placeholder="예: 마포구 아파트 이사청소"
+                            className="w-full border border-slate-200 rounded-lg p-2.5 text-sm outline-none focus:border-blue-500"
+                          />
+                        </div>
+                        
+                        <div>
+                          <label className="block text-xs font-bold text-slate-600 mb-1">작업 완료 날짜</label>
+                          <input 
+                            type="date"
+                            value={newCaseDate}
+                            onChange={e => setNewCaseDate(e.target.value)}
+                            className="w-full border border-slate-200 rounded-lg p-2.5 text-sm outline-none focus:border-blue-500"
+                          />
+                        </div>
+
+                        <div>
+                          <div className="flex justify-between items-center mb-1">
+                            <label className="block text-xs font-bold text-slate-600">작업 사진 ({newCaseImages.length}장)</label>
+                            <label className="text-[11px] font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded cursor-pointer hover:bg-blue-100">
+                              + 사진 선택
+                              <input 
+                                type="file"
+                                multiple
+                                accept="image/*"
+                                className="hidden"
+                                onChange={handleCaseImagesUpload}
+                                disabled={caseUploadProgress !== null}
+                              />
+                            </label>
+                          </div>
+                          
+                          {caseUploadProgress !== null && (
+                            <div className="w-full bg-slate-100 rounded-full h-1.5 mb-2 overflow-hidden">
+                              <div className="bg-blue-600 h-1.5 transition-all" style={{ width: `${caseUploadProgress}%` }}></div>
+                            </div>
+                          )}
+
+                          <div className="flex gap-2 overflow-x-auto pb-1 mt-2">
+                            {newCaseImages.length === 0 ? (
+                              <p className="text-xs text-slate-400 w-full text-center py-4 bg-slate-50 rounded-lg border border-dashed border-slate-200">
+                                등록된 사진이 없습니다. (오늘 업로드 한도: 최대 20장)
+                              </p>
+                            ) : (
+                              newCaseImages.map((img, idx) => (
+                                <div key={idx} className="relative w-16 h-16 rounded-lg overflow-hidden shrink-0 border border-slate-200">
+                                  <img src={img} alt="선택 사진" className="w-full h-full object-cover" />
+                                  <button
+                                    type="button"
+                                    onClick={async () => {
+                                      try {
+                                        if (img.includes('firebasestorage')) {
+                                          const fileRef = ref(storage!, img);
+                                          await deleteObject(fileRef);
+                                        }
+                                      } catch (err) {
+                                        console.error(err);
+                                      }
+                                      setNewCaseImages(prev => prev.filter((_, i) => i !== idx));
+                                    }}
+                                    className="absolute top-0.5 right-0.5 w-4.5 h-4.5 bg-black/50 text-white rounded-full flex items-center justify-center text-[10px]"
+                                  >
+                                    ✕
+                                  </button>
+                                </div>
+                              ))
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="pt-3 border-t border-slate-100 flex gap-2">
+                        <button
+                          type="button"
+                          onClick={handleSaveNewCase}
+                          disabled={caseUploadProgress !== null}
+                          className="flex-1 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-md disabled:bg-slate-300 text-sm"
+                        >
+                          현장 저장하기
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setNewCaseTitle('');
+                            setNewCaseImages([]);
+                            setCaseUploadProgress(null);
+                            setShowAddCaseModal(false);
+                          }}
+                          className="px-4 py-3 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold rounded-xl text-sm"
+                        >
+                          취소
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
 
               </div>
               <div className="p-6 bg-white border-t border-slate-100 flex-shrink-0">

@@ -116,25 +116,63 @@ const PartnerDetailModal = ({ partner, onClose, quoteData }) => {
                         </div>
                         {partner.portfolio && partner.portfolio.length > 0 ? (
                           <div className="grid grid-cols-2 gap-2">
-                            {partner.portfolio.slice(0, 4).map((item, idx) => (
-                              <div key={idx} className="bg-white border border-slate-200 rounded-lg overflow-hidden shadow-sm">
-                                {/* Before/After 이미지 영역 - 비율 고정 */}
-                                <div className="flex h-24">
-                                   <div className="w-1/2 h-full relative border-r border-slate-200">
-                                      <img src={item.before} className="w-full h-full object-cover brightness-90" alt="Before" loading="lazy" />
-                                      <span className="absolute top-1 left-1 bg-slate-800/80 text-white text-[8px] font-bold px-1 py-0.5 rounded">Before</span>
-                                   </div>
-                                   <div className="w-1/2 h-full relative">
-                                      <img src={item.after} className="w-full h-full object-cover" alt="After" loading="lazy" />
-                                      <span className="absolute top-1 right-1 bg-blue-600/90 text-white text-[8px] font-bold px-1 py-0.5 rounded">After</span>
-                                   </div>
-                                </div>
-                                {/* 제목 영역 */}
-                                <div className="px-1.5 py-1 text-center bg-slate-50 border-t border-slate-100">
-                                   <p className="text-slate-700 font-bold text-[10px] truncate">{item.title || '작업 사례'}</p>
-                                </div>
-                              </div>
-                            ))}
+                            {partner.portfolio.slice(0, 4).map((item, idx) => {
+                              const isLegacy = typeof item === 'string';
+                              const isMock = typeof item === 'object' && item !== null && (item.before || item.after);
+                              
+                              if (isMock) {
+                                return (
+                                  <div key={idx} className="bg-white border border-slate-200 rounded-lg overflow-hidden shadow-sm">
+                                    {/* Before/After 이미지 영역 */}
+                                    <div className="flex h-24">
+                                       <div className="w-1/2 h-full relative border-r border-slate-200">
+                                          <img src={item.before} className="w-full h-full object-cover brightness-90" alt="Before" loading="lazy" />
+                                          <span className="absolute top-1 left-1 bg-slate-800/80 text-white text-[8px] font-bold px-1 py-0.5 rounded">Before</span>
+                                       </div>
+                                       <div className="w-1/2 h-full relative">
+                                          <img src={item.after} className="w-full h-full object-cover" alt="After" loading="lazy" />
+                                          <span className="absolute top-1 right-1 bg-blue-600/90 text-white text-[8px] font-bold px-1 py-0.5 rounded">After</span>
+                                       </div>
+                                    </div>
+                                    {/* 제목 영역 */}
+                                    <div className="px-1.5 py-1 text-center bg-slate-50 border-t border-slate-100">
+                                       <p className="text-slate-700 font-bold text-[10px] truncate">{item.title || '작업 사례'}</p>
+                                    </div>
+                                  </div>
+                                );
+                              } else if (isLegacy) {
+                                return (
+                                  <div key={idx} className="bg-white border border-slate-200 rounded-lg overflow-hidden shadow-sm">
+                                    <div className="h-24 w-full relative">
+                                      <img src={item} className="w-full h-full object-cover" alt="작업 사진" loading="lazy" />
+                                    </div>
+                                    <div className="px-1.5 py-1 text-center bg-slate-50 border-t border-slate-100">
+                                      <p className="text-slate-700 font-bold text-[10px] truncate">작업 사진</p>
+                                    </div>
+                                  </div>
+                                );
+                              } else {
+                                // 신규 작업 현장 구조 (title, date, images)
+                                return (
+                                  <div key={idx} className="bg-white border border-slate-200 rounded-lg overflow-hidden shadow-sm flex flex-col justify-between">
+                                    <div className="h-24 w-full relative bg-slate-50 flex items-center overflow-x-auto snap-x flex-row scrollbar-none">
+                                      {item.images && item.images.map((img, i) => (
+                                        <img key={i} src={img} className="w-full h-full object-cover snap-start shrink-0" alt={`작업 ${i+1}`} loading="lazy" />
+                                      ))}
+                                      {item.images && item.images.length > 1 && (
+                                        <span className="absolute bottom-1 right-1 bg-slate-900/70 text-white text-[8px] font-black px-1.5 py-0.5 rounded-full pointer-events-none">
+                                          {item.images.length}장 ◀▶
+                                        </span>
+                                      )}
+                                    </div>
+                                    <div className="px-1.5 py-1 bg-slate-50 border-t border-slate-100 flex flex-col gap-0.5">
+                                       <p className="text-slate-800 font-bold text-[9px] sm:text-[10px] truncate leading-tight">{item.title}</p>
+                                       {item.date && <p className="text-slate-400 text-[8px] font-semibold leading-none">{item.date} 작업</p>}
+                                    </div>
+                                  </div>
+                                );
+                              }
+                            })}
                           </div>
                         ) : (
                           <div className="bg-slate-50 p-4 rounded-lg border border-slate-100 text-center">

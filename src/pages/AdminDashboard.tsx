@@ -1575,8 +1575,8 @@ export default function Admin() {
                               {(() => {
                                 const cs = getContractStatus(partner);
                                 return (
-                                  <div className="flex flex-col gap-1 min-w-[90px]">
-                                    <span className={`px-2 py-1 rounded-full text-[11px] font-bold border inline-block w-max whitespace-nowrap ${
+                                  <div className="flex flex-col gap-1 min-w-[120px]">
+                                    <span className={`px-2 py-1.5 rounded-full text-xs font-bold border inline-block w-max whitespace-nowrap ${
                                       cs.color === 'red' ? 'bg-red-100 text-red-700 border-red-200' :
                                       cs.color === 'amber' ? 'bg-amber-100 text-amber-700 border-amber-200 animate-pulse' :
                                       cs.color === 'emerald' ? 'bg-emerald-100 text-emerald-700 border-emerald-200' :
@@ -1585,15 +1585,15 @@ export default function Admin() {
                                       {cs.label}
                                     </span>
                                     {partner.contractEndDate && (
-                                      <span className="text-[10px] text-gray-400 whitespace-nowrap">
+                                      <span className="text-xs text-gray-400 whitespace-nowrap">
                                         ~{new Date(partner.contractEndDate).toLocaleDateString()}
                                       </span>
                                     )}
                                     {cs.color === 'red' && (
-                                      <div className="flex flex-wrap gap-1 mt-1 max-w-[120px]">
-                                        <button onClick={() => handleExtendContract(partner.id, 3)} className="text-[10px] bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded border border-blue-200 hover:bg-blue-100 font-bold whitespace-nowrap">+3개월</button>
-                                        <button onClick={() => handleExtendContract(partner.id, 6)} className="text-[10px] bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded border border-blue-200 hover:bg-blue-100 font-bold whitespace-nowrap">+6개월</button>
-                                        <button onClick={() => handleExtendContract(partner.id, 12)} className="text-[10px] bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded border border-blue-200 hover:bg-blue-100 font-bold whitespace-nowrap">+1년</button>
+                                      <div className="flex flex-wrap gap-1 mt-1 max-w-[140px]">
+                                        <button onClick={() => handleExtendContract(partner.id, 3)} className="text-xs bg-blue-50 text-blue-600 px-2 py-1 rounded border border-blue-200 hover:bg-blue-100 font-bold whitespace-nowrap">+3개월</button>
+                                        <button onClick={() => handleExtendContract(partner.id, 6)} className="text-xs bg-blue-50 text-blue-600 px-2 py-1 rounded border border-blue-200 hover:bg-blue-100 font-bold whitespace-nowrap">+6개월</button>
+                                        <button onClick={() => handleExtendContract(partner.id, 12)} className="text-xs bg-blue-50 text-blue-600 px-2 py-1 rounded border border-blue-200 hover:bg-blue-100 font-bold whitespace-nowrap">+1년</button>
                                       </div>
                                     )}
                                   </div>
@@ -1701,8 +1701,8 @@ export default function Admin() {
                               {(() => {
                                 const cs = getContractStatus(partner);
                                 return (
-                                  <div className="flex items-center gap-2 mt-1">
-                                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${
+                                  <div className="flex items-center gap-2 mt-2">
+                                    <span className={`px-2 py-1 rounded-full text-xs font-bold border ${
                                       cs.color === 'red' ? 'bg-red-100 text-red-700 border-red-200' :
                                       cs.color === 'amber' ? 'bg-amber-100 text-amber-700 border-amber-200 animate-pulse' :
                                       cs.color === 'emerald' ? 'bg-emerald-100 text-emerald-700 border-emerald-200' :
@@ -1711,7 +1711,7 @@ export default function Admin() {
                                       계약 {cs.label}
                                     </span>
                                     {partner.contractEndDate && (
-                                      <span className="text-[10px] text-gray-400">~{new Date(partner.contractEndDate).toLocaleDateString()}</span>
+                                      <span className="text-xs text-gray-400">~{new Date(partner.contractEndDate).toLocaleDateString()}</span>
                                     )}
                                   </div>
                                 );
@@ -2313,17 +2313,17 @@ export default function Admin() {
 
               <div className="bg-blue-50 p-3 rounded-lg border border-blue-100 mt-2">
                 <p className="text-xs font-bold text-blue-700 mb-2">계약 정보</p>
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <p className="text-[11px] text-blue-500">플랜</p>
-                    <p className="text-xs font-bold text-blue-800">{selectedPartnerDetail.contractPlan || '미설정'}</p>
+                    <p className="text-xs text-blue-500">플랜</p>
+                    <p className="text-sm font-bold text-blue-800">{selectedPartnerDetail.contractPlan || '미설정'}</p>
                   </div>
                   <div>
-                    <p className="text-[11px] text-blue-500">계약 상태</p>
+                    <p className="text-xs text-blue-500">계약 상태</p>
                     {(() => {
                       const cs = getContractStatus(selectedPartnerDetail);
                       return (
-                        <span className={`px-2 py-0.5 rounded-full text-xs font-bold border ${
+                        <span className={`px-2 py-1 inline-block mt-1 rounded-full text-xs font-bold border ${
                           cs.color === 'red' ? 'bg-red-100 text-red-700 border-red-200' :
                           cs.color === 'amber' ? 'bg-amber-100 text-amber-700 border-amber-200' :
                           cs.color === 'emerald' ? 'bg-emerald-100 text-emerald-700 border-emerald-200' :
@@ -2335,12 +2335,12 @@ export default function Admin() {
                     })()}
                   </div>
                   <div>
-                    <p className="text-[11px] text-blue-500">등록일</p>
-                    <p className="text-xs font-bold text-blue-800">{selectedPartnerDetail.contractStartDate ? new Date(selectedPartnerDetail.contractStartDate).toLocaleDateString() : '-'}</p>
+                    <p className="text-xs text-blue-500">등록일</p>
+                    <p className="text-sm font-bold text-blue-800">{selectedPartnerDetail.contractStartDate ? new Date(selectedPartnerDetail.contractStartDate).toLocaleDateString() : '-'}</p>
                   </div>
                   <div>
-                    <p className="text-[11px] text-blue-500">만료일</p>
-                    <p className="text-xs font-bold text-blue-800">{selectedPartnerDetail.contractEndDate ? new Date(selectedPartnerDetail.contractEndDate).toLocaleDateString() : '-'}</p>
+                    <p className="text-xs text-blue-500">만료일</p>
+                    <p className="text-sm font-bold text-blue-800">{selectedPartnerDetail.contractEndDate ? new Date(selectedPartnerDetail.contractEndDate).toLocaleDateString() : '-'}</p>
                   </div>
                 </div>
                 {getContractStatus(selectedPartnerDetail).color === 'red' && (

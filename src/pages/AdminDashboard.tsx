@@ -554,9 +554,9 @@ export default function Admin() {
   const planCounts = useMemo(() => {
     return {
       total: partners.length,
-      plan3m: partners.filter(p => p.contractPlan?.includes('3개월')).length,
-      plan6m: partners.filter(p => p.contractPlan?.includes('6개월')).length,
-      plan1y: partners.filter(p => p.contractPlan?.includes('1년')).length,
+      plan3m: partners.filter(p => String(p.contractPlan || '').includes('3개월')).length,
+      plan6m: partners.filter(p => String(p.contractPlan || '').includes('6개월')).length,
+      plan1y: partners.filter(p => String(p.contractPlan || '').includes('1년')).length,
       expiring: partners.filter(p => {
         const cs = getContractStatus(p);
         return cs.color === 'red' || cs.color === 'amber';

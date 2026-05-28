@@ -1562,7 +1562,7 @@ export default function Admin() {
                         <th className="p-3 font-bold whitespace-nowrap">연락처</th>
                         <th className="p-3 font-bold text-blue-600 bg-blue-50/50 whitespace-nowrap">접속 ID</th>
                         <th className="p-3 font-bold text-blue-600 bg-blue-50/50 whitespace-nowrap">비밀번호(초기)</th>
-                        <th className="p-3 font-bold whitespace-nowrap">활동 지역</th>
+                        <th className="p-3 font-bold break-keep min-w-[150px]">활동 지역</th>
                         <th className="p-3 font-bold whitespace-nowrap">계약 만료</th>
                         <th className="p-3 font-bold whitespace-nowrap">상태/권한</th>
                         <th className="p-3 font-bold text-center whitespace-nowrap">승인 관리</th>
@@ -1593,7 +1593,7 @@ export default function Admin() {
                             <td className="p-3 text-sm font-mono text-slate-500 bg-blue-50/20 whitespace-nowrap">
                               {(partner.loginPassword || partner.password) || <span className="text-gray-400 text-xs">-</span>}
                             </td>
-                            <td className="p-3 text-sm text-gray-600 whitespace-nowrap">
+                            <td className="p-3 text-sm text-gray-600 max-w-xs break-keep">
                               {partner.region}
                             </td>
                             <td className="p-3">

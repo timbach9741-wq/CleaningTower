@@ -1559,13 +1559,13 @@ export default function Admin() {
                             <td className="p-3 font-bold text-gray-800 whitespace-nowrap">
                               {partner.companyName || partner.name} {partner.managerName && <span className="text-sm font-medium text-gray-500">({partner.managerName})</span>}
                             </td>
-                            <td className="p-4 text-sm font-medium text-gray-600 tracking-wide">
+                            <td className="p-3 text-sm font-medium text-gray-600 tracking-wide whitespace-nowrap">
                               {partner.phone}
                             </td>
-                            <td className="p-4 text-sm font-bold text-blue-600 bg-blue-50/20">
+                            <td className="p-3 text-sm font-bold text-blue-600 bg-blue-50/20 whitespace-nowrap">
                               {partner.loginId || <span className="text-gray-400 text-xs">-</span>}
                             </td>
-                            <td className="p-4 text-sm font-mono text-slate-500 bg-blue-50/20">
+                            <td className="p-3 text-sm font-mono text-slate-500 bg-blue-50/20 whitespace-nowrap">
                               {(partner.loginPassword || partner.password) || <span className="text-gray-400 text-xs">-</span>}
                             </td>
                             <td className="p-3 text-sm text-gray-600 whitespace-nowrap">
@@ -1600,8 +1600,8 @@ export default function Admin() {
                                 );
                               })()}
                             </td>
-                            <td className="p-4">
-                              <span className={`px-2 py-1 rounded-full text-xs font-bold border ${
+                            <td className="p-3 whitespace-nowrap">
+                              <span className={`px-2 py-1 rounded-full text-xs font-bold border whitespace-nowrap ${
                                 partner.status === 'active' 
                                   ? 'bg-emerald-100 text-emerald-700 border-emerald-200' 
                                   : partner.status === 'suspended'
@@ -1611,7 +1611,7 @@ export default function Admin() {
                                 {partner.status === 'active' ? '활동 중' : partner.status === 'suspended' ? '활동 정지' : '승인 대기'}
                               </span>
                             </td>
-                            <td className="p-4 text-center">
+                            <td className="p-3 text-center whitespace-nowrap">
                               <div className="flex flex-col gap-2">
                                 {partner.status === 'pending' && (
                                   <>

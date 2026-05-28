@@ -1593,8 +1593,13 @@ export default function Admin() {
                             <td className="p-3 text-sm font-mono text-slate-500 bg-blue-50/20 whitespace-nowrap">
                               {(partner.loginPassword || partner.password) || <span className="text-gray-400 text-xs">-</span>}
                             </td>
-                            <td className="p-3 text-sm text-gray-600 max-w-xs break-keep">
-                              {partner.region}
+                            <td className="p-3 text-sm text-gray-600 max-w-xs break-keep" title={`전체 지역: ${partner.region || '-'}`}>
+                              {(() => {
+                                const regions = partner.region ? partner.region.split(',').map((r: any) => r.trim()).filter(Boolean) : [];
+                                return regions.length > 2 
+                                  ? `${regions.slice(0, 2).join(', ')} 외 ${regions.length - 2}곳` 
+                                  : partner.region || '-';
+                              })()}
                             </td>
                             <td className="p-3">
                               {(() => {

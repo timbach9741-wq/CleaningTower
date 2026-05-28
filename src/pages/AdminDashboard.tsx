@@ -114,6 +114,7 @@ export default function Admin() {
   const [partnerSearchTerm, setPartnerSearchTerm] = useState('');
   const [partnerFilterStatus, setPartnerFilterStatus] = useState('전체');
   const [partnerFilterRegion, setPartnerFilterRegion] = useState('전체');
+  const [partnerFilterPlan, setPartnerFilterPlan] = useState('전체');
 
   // 재무 탭 데이터 필터 상탯값
   const [financeStartDate, setFinanceStartDate] = useState('');
@@ -549,6 +550,20 @@ export default function Admin() {
     document.body.removeChild(link);
   };
   
+  // 파트너 플랜별 통계
+  const planCounts = useMemo(() => {
+    return {
+      total: partners.length,
+      plan3m: partners.filter(p => p.contractPlan?.includes('3개월')).length,
+      plan6m: partners.filter(p => p.contractPlan?.includes('6개월')).length,
+      plan1y: partners.filter(p => p.contractPlan?.includes('1년')).length,
+      expiring: partners.filter(p => {
+        const cs = getContractStatus(p);
+        return cs.color === 'red' || cs.color === 'amber';
+      }).length,
+    };
+  }, [partners]);
+
   // 파트너 탭 데이터 필터링 로직
   const filteredPartnersList = partners.filter(p => {
     // 1. 상태 필터
@@ -561,8 +576,18 @@ export default function Admin() {
     if (partnerFilterRegion !== '전체') {
       if (p.region !== partnerFilterRegion) return false;
     }
+
+    // 3. 계약 플랜 필터
+    if (partnerFilterPlan !== '전체') {
+      const plan = p.contractPlan || '';
+      const cs = getContractStatus(p);
+      if (partnerFilterPlan === '3개월' && !plan.includes('3개월')) return false;
+      if (partnerFilterPlan === '6개월' && !plan.includes('6개월')) return false;
+      if (partnerFilterPlan === '1년' && !plan.includes('1년')) return false;
+      if (partnerFilterPlan === '만료 임박' && cs.color !== 'red' && cs.color !== 'amber') return false;
+    }
     
-    // 3. 검색어 필터
+    // 4. 검색어 필터
     if (partnerSearchTerm) {
       const term = partnerSearchTerm.toLowerCase();
       const matchName = String(p.name || '').toLowerCase().includes(term);

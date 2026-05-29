@@ -44,16 +44,18 @@ const PartnerCalendar = ({ availableDates }) => {
         className={`h-9 w-full rounded-lg flex flex-col items-center justify-center relative text-xs font-bold transition-all
           ${isAvailable 
             ? 'bg-blue-500 text-white shadow-sm' 
-            : 'bg-slate-50 text-slate-700 border border-slate-100'
+            : 'bg-rose-50 text-rose-600 border border-rose-100'
           }
         `}
       >
         <span>{day}</span>
         {isToday && (
-          <span className={`absolute bottom-0.5 w-1 h-1 rounded-full ${isAvailable ? 'bg-white' : 'bg-blue-500'}`}></span>
+          <span className={`absolute bottom-0.5 w-1.5 h-1.5 rounded-full ${isAvailable ? 'bg-white' : 'bg-rose-500'}`}></span>
         )}
-        {isAvailable && (
+        {isAvailable ? (
           <span className="text-[7px] font-black opacity-90 block mt-0.5 leading-none">가능</span>
+        ) : (
+          <span className="text-[7px] font-extrabold opacity-80 block mt-0.5 leading-none text-rose-500">마감</span>
         )}
       </div>
     );

@@ -764,16 +764,18 @@ export default function Partner() {
           className={`h-12 w-full rounded-xl flex flex-col items-center justify-center relative text-sm font-bold transition-all
             ${isAvailable 
               ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20 active:bg-blue-700' 
-              : 'bg-white hover:bg-slate-100 text-slate-800 border border-slate-100 active:bg-slate-200'
+              : 'bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-100 active:bg-rose-200'
             }
           `}
         >
           <span>{day}</span>
           {isToday && (
-            <span className={`absolute bottom-1 w-1.5 h-1.5 rounded-full ${isAvailable ? 'bg-white' : 'bg-blue-600'}`}></span>
+            <span className={`absolute bottom-1 w-1.5 h-1.5 rounded-full ${isAvailable ? 'bg-white' : 'bg-rose-500'}`}></span>
           )}
-          {isAvailable && (
-            <span className="text-[8px] font-medium opacity-80 block mt-0.5 leading-none">가능</span>
+          {isAvailable ? (
+            <span className="text-[8px] font-semibold opacity-90 block mt-0.5 leading-none">가능</span>
+          ) : (
+            <span className="text-[8px] font-semibold opacity-80 block mt-0.5 leading-none text-rose-500">마감</span>
           )}
         </button>
       );

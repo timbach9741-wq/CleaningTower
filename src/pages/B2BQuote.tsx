@@ -1007,10 +1007,6 @@ export default function Quote() {
                     본 견적은 예상 금액이며, 오염도나 현장 상황에 따라<br/>
                     약간의 차이가 발생할 수 있습니다.
                   </p>
-                  <p className="text-[13px] text-slate-300 leading-relaxed text-center font-medium break-keep">
-                    <strong className="text-blue-300">정찰제 보장!</strong> 부당한 현장 추가금을<br/>
-                    절대 당일 요구하지 않습니다.
-                  </p>
                 </div>
 
                 <div className="space-y-3 mt-auto">

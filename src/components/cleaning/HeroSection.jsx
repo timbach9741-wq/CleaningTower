@@ -54,7 +54,13 @@ export default function HeroSection({ onOpenQuote }) {
               당신의 새로운 시작과 일상을 완벽하게 관리합니다.
             </p>
 
-
+            {/* Checkpoints */}
+            <ul className="space-y-3 mb-10 flex flex-col items-center lg:items-start w-full">
+              <li className="flex items-center gap-3 text-slate-700 font-medium bg-white/80 px-4 py-2.5 rounded-lg border border-slate-100 shadow-sm w-full max-w-md break-keep">
+                <CheckCircle className="w-5 h-5 text-blue-500 shrink-0" />
+                <span className="min-w-0 flex-1">독일 카처 고온 스팀기 & 친환경 세제 사용</span>
+              </li>
+            </ul>
 
             {/* CTA & Social Proof */}
             <div className="flex flex-col gap-3 w-full max-w-md mx-auto lg:mx-0">

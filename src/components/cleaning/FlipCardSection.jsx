@@ -130,7 +130,7 @@ export default function FlipCardSection() {
                      <h3 className="text-lg font-bold text-white">미세먼지 완벽 제거</h3>
                      <span className="bg-red-500/20 text-red-400 text-xs font-bold px-2 py-1 rounded-full border border-red-500/30">벌레/미세먼지</span>
                   </div>
-                  <p className="text-sm text-slate-300 break-keep">전용 브러쉬와 정밀 청소 장비를 이용해 닦기 힘든 좁은 창틀 먼지까지 깨끗하게 제거합니다.</p>
+                  <p className="text-sm text-slate-300 break-keep">스팀 세척기와 전용 브러쉬를 이용해 닦기 힘든 좁은 창틀 먼지까지 제거합니다.</p>
                 </div>
               </div>
 

@@ -26,6 +26,19 @@
     ],
     "headers": [
       {
+        "source": "/**/*.xml",
+        "headers": [
+          {
+            "key": "Content-Type",
+            "value": "text/xml; charset=utf-8"
+          },
+          {
+            "key": "Cache-Control",
+            "value": "no-cache, no-store, must-revalidate"
+          }
+        ]
+      },
+      {
         "source": "/card/**",
         "headers": [
           { "key": "Cache-Control", "value": "public, max-age=3600" }

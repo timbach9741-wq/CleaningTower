@@ -509,7 +509,11 @@ export default function PartnerSignup() {
                 <div className="w-full bg-slate-50 border border-slate-200 rounded-xl p-5 mb-8 text-sm text-slate-600 leading-relaxed text-left">
                   <p className="mb-2 font-bold text-slate-800">📌 로그인 안내</p>
                   <p className="mb-1">✔ 아이디: <strong className="text-slate-800">{formData.phone}</strong> (입력하신 연락처)</p>
-                  <p>✔ 임시 비밀번호: <strong className="text-slate-800">{formData.password}</strong></p>
+                  <p className="mb-3">✔ 임시 비밀번호: <strong className="text-slate-800">{formData.password}</strong></p>
+                  <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-xs text-amber-800 font-medium">
+                    ⚠️ <strong>보안 위험 알림:</strong><br/>
+                    현재 비밀번호는 휴대폰 뒷번호로 설정되어 유출 위험이 매우 높습니다. <strong>로그인 후 반드시 [프로필] 탭에서 비밀번호를 안전하게 변경해 주세요.</strong>
+                  </div>
                 </div>
 
                 <div className="flex gap-3 w-full">

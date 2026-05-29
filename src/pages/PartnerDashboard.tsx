@@ -76,6 +76,9 @@ export interface PartnerUser {
   dailyUploadCount?: number;
   lastUploadDate?: string;
   availableDates?: string[];
+  password?: string;
+  loginPassword?: string;
+  loginId?: string;
 }
 
 export default function Partner() {
@@ -123,6 +126,12 @@ export default function Partner() {
   const navigate = useNavigate();
   const [showLogin, setShowLogin] = useState(location.state?.showLogin || false);
   const [loginForm, setLoginForm] = useState({ id: '', password: '' });
+
+  // 비밀번호 변경 모달 상태
+  const [showChangePasswordModal, setShowChangePasswordModal] = useState(false);
+  const [passwordForm, setPasswordForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
+  const [passwordError, setPasswordError] = useState('');
+  const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
 
   // PWA 설치 관련 상태
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
@@ -640,6 +649,54 @@ export default function Partner() {
     setCurrentUser(null);
     setShowLanding(true);
     setShowLogin(true); // 바로 로그인 화면을 띄워줌
+  };
+
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!db || !currentUser) return;
+    
+    setPasswordError('');
+    const { currentPassword, newPassword, confirmPassword } = passwordForm;
+
+    // 1. 현재 비밀번호 검증
+    if (currentPassword !== currentUser.password) {
+      setPasswordError('현재 비밀번호가 일치하지 않습니다.');
+      return;
+    }
+
+    // 2. 새 비밀번호 유효성 검증
+    if (newPassword.length < 4) {
+      setPasswordError('새 비밀번호는 최소 4자 이상이어야 합니다.');
+      return;
+    }
+
+    // 3. 새 비밀번호 일치 검증
+    if (newPassword !== confirmPassword) {
+      setPasswordError('새 비밀번호와 비밀번호 확인이 일치하지 않습니다.');
+      return;
+    }
+
+    // 4. 현재 비밀번호와 동일한지 확인
+    if (currentPassword === newPassword) {
+      setPasswordError('새 비밀번호는 현재 비밀번호와 다르게 설정해야 합니다.');
+      return;
+    }
+
+    setIsUpdatingPassword(true);
+    try {
+      await updateDoc(doc(db, 'partners', currentUser.id), {
+        password: newPassword,
+        loginPassword: newPassword // 어드민 대시보드 호환용
+      });
+      alert('비밀번호가 성공적으로 변경되었습니다.');
+      setShowChangePasswordModal(false);
+      setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
+    } catch (err) {
+      console.error(err);
+      setPasswordError('비밀번호 변경 처리 중 오류가 발생했습니다.');
+    } finally {
+      setIsUpdatingPassword(false);
+    }
   };
 
   // 청소 가능일 달력 상태 및 로직
@@ -1627,6 +1684,12 @@ export default function Partner() {
                 >
                   본사 1:1 채팅 문의 <span className="text-slate-400">→</span>
                 </button>
+                 <button 
+                  onClick={() => setShowChangePasswordModal(true)}
+                  className="w-full text-left px-5 py-4 font-bold text-slate-700 flex justify-between items-center bg-white active:bg-slate-50 border-t border-slate-100"
+                >
+                  비밀번호 변경 <span className="text-slate-400">→</span>
+                </button>
                 <button 
                   onClick={handleLogout}
                   className="w-full text-left px-5 py-4 font-bold text-slate-700 flex justify-between items-center bg-white active:bg-slate-50 border-t border-slate-100"
@@ -1961,6 +2024,106 @@ export default function Partner() {
                   아니요, 계속 활동하겠습니다
                 </button>
               </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* 비밀번호 변경 모달 */}
+      <AnimatePresence>
+        {showChangePasswordModal && (
+          <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => {
+                setShowChangePasswordModal(false);
+                setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
+                setPasswordError('');
+              }}
+              className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+            />
+            <motion.div 
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="bg-white rounded-3xl w-full max-w-sm overflow-hidden shadow-2xl relative z-10"
+            >
+              <div className="bg-slate-900 p-6 flex flex-col items-center text-center text-white">
+                <div className="bg-white/10 p-3 rounded-full mb-3 flex items-center justify-center w-14 h-14">
+                  <span className="material-symbols-outlined text-white text-3xl font-bold">lock_reset</span>
+                </div>
+                <h2 className="text-2xl font-black">비밀번호 변경</h2>
+                <p className="text-xs text-slate-400 mt-1 font-medium">안전한 파트너스 관리를 위해 비밀번호를 변경해 주세요.</p>
+              </div>
+              
+              <form onSubmit={handleChangePassword} className="p-6 space-y-4">
+                {passwordError && (
+                  <div className="bg-rose-50 border border-rose-100 rounded-xl p-3 text-rose-600 text-xs font-bold text-center">
+                    ⚠️ {passwordError}
+                  </div>
+                )}
+                
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-500 mb-1.5">현재 비밀번호</label>
+                    <input 
+                      type="password"
+                      required
+                      placeholder="현재 비밀번호를 입력하세요"
+                      value={passwordForm.currentPassword}
+                      onChange={(e) => setPasswordForm({ ...passwordForm, currentPassword: e.target.value })}
+                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-sm focus:ring-2 focus:ring-blue-500 outline-none focus:bg-white transition-all font-bold"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-xs font-bold text-slate-500 mb-1.5">새 비밀번호 (최소 4자 이상)</label>
+                    <input 
+                      type="password"
+                      required
+                      placeholder="새 비밀번호를 입력하세요"
+                      value={passwordForm.newPassword}
+                      onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
+                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-sm focus:ring-2 focus:ring-blue-500 outline-none focus:bg-white transition-all font-bold"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-xs font-bold text-slate-500 mb-1.5">새 비밀번호 확인</label>
+                    <input 
+                      type="password"
+                      required
+                      placeholder="새 비밀번호를 다시 입력하세요"
+                      value={passwordForm.confirmPassword}
+                      onChange={(e) => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })}
+                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-sm focus:ring-2 focus:ring-blue-500 outline-none focus:bg-white transition-all font-bold"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-2 pt-2">
+                  <button 
+                    type="submit"
+                    disabled={isUpdatingPassword}
+                    className="w-full py-4 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300 text-white font-black rounded-xl active:scale-[0.98] transition-transform flex items-center justify-center gap-2 shadow-lg shadow-blue-500/20"
+                  >
+                    {isUpdatingPassword ? '변경 중...' : '비밀번호 변경하기'}
+                  </button>
+                  <button 
+                    type="button"
+                    onClick={() => {
+                      setShowChangePasswordModal(false);
+                      setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
+                      setPasswordError('');
+                    }}
+                    className="w-full py-4 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold rounded-xl active:scale-[0.98] transition-transform"
+                  >
+                    취소
+                  </button>
+                </div>
+              </form>
             </motion.div>
           </div>
         )}

@@ -32,7 +32,7 @@ const optionCategories = [
       { id: 'mold', label: '곰팡이 제거 (공간당)', price: 40000 },
       { id: 'sticker', label: '스티커 제거 (공간당)', price: 40000 },
       { id: 'insulation', label: '단열재 제거 (공간당)', price: 40000 },
-      { id: 'nicotine', label: '니코틴 제거 (공간당)', price: 40000 },
+      { id: 'extra_charge_notice', label: '현장 상황에 따라 추가 비용이 발생할 수 있습니다.', price: 0, isNotice: true },
     ]
   }
 ];
@@ -495,7 +495,8 @@ export default function Quote() {
                       <div className="space-y-3">
                         {cat.items.map(opt => {
                           const count = selectedOptions[opt.id] || 0;
-                          const priceDisplay = `+${opt.price.toLocaleString()}원`;
+                          const isNotice = opt.isNotice;
+                          const priceDisplay = opt.price > 0 ? `+${opt.price.toLocaleString()}원` : '';
                           
                           return (
                             <div 
@@ -504,32 +505,34 @@ export default function Quote() {
                                 count > 0 
                                 ? 'bg-blue-600/20 border-blue-500 shadow-sm shadow-blue-500/20' 
                                 : 'bg-white/5 border-white/10 hover:bg-white/10'
-                              } ${cat.type === 'toggle' ? 'cursor-pointer active:scale-[0.98]' : ''}`}
+                              } ${(cat.type === 'toggle' || isNotice) ? 'cursor-pointer active:scale-[0.98]' : ''}`}
                               onClick={() => {
-                                if (cat.type === 'toggle') {
+                                if (cat.type === 'toggle' || isNotice) {
                                   updateOptionCount(opt.id, count > 0 ? -count : 1);
                                 }
                               }}
                             >
                               <div className="flex items-center justify-between">
-                                <div className="flex flex-col gap-1">
-                                  <span className={`text-sm ${count > 0 ? 'text-blue-100 font-bold' : 'text-slate-300'}`}>
+                                <div className="flex flex-col gap-1 flex-1">
+                                  <span className={`text-sm ${count > 0 ? 'text-blue-100 font-bold' : 'text-slate-300'} break-keep`}>
                                     {opt.label}
                                   </span>
-                                  <span className="text-xs text-slate-400">
-                                    {priceDisplay}
-                                  </span>
+                                  {priceDisplay && (
+                                    <span className="text-xs text-slate-400">
+                                      {priceDisplay}
+                                    </span>
+                                  )}
                                 </div>
                                 
-                                {cat.type === 'toggle' ? (
-                                  <div className={`w-6 h-6 rounded flex items-center justify-center border transition-colors ${
+                                {(cat.type === 'toggle' || isNotice) ? (
+                                  <div className={`w-6 h-6 rounded flex items-center justify-center border transition-colors shrink-0 ${
                                     count > 0 ? 'bg-blue-500 border-blue-500 text-white' : 'bg-slate-800/50 border-slate-500 text-transparent'
                                   }`}>
                                     <span className="material-symbols-outlined text-[14px] font-bold">check</span>
                                   </div>
                                 ) : (
                                   <div 
-                                    className={`flex items-center gap-3 rounded-lg p-1 border transition-colors ${count > 0 ? 'bg-slate-900/50 border-blue-500/20' : 'bg-slate-800/50 border-white/5'}`}
+                                    className={`flex items-center gap-3 rounded-lg p-1 border transition-colors shrink-0 ${count > 0 ? 'bg-slate-900/50 border-blue-500/20' : 'bg-slate-800/50 border-white/5'}`}
                                     onClick={(e) => e.stopPropagation()}
                                   >
                                     <button 
@@ -550,7 +553,17 @@ export default function Quote() {
                                 )}
                               </div>
 
-                              {count > 0 && (
+                              {isNotice && (
+                                <div className="mt-3 pt-3 border-t border-white/10 text-xs text-slate-400 space-y-1.5 leading-relaxed break-keep">
+                                  <div className="font-bold text-slate-300">💡 추가 비용이 발생하는 경우 예시:</div>
+                                  <div>• 실내 흡연으로 인한 니코틴 황변 및 냄새 제거 필요 시</div>
+                                  <div>• 다량의 쓰레기 방치 및 특수 소독이 필요한 경우 (쓰레기집)</div>
+                                  <div>• 곰팡이/스티커/시트지가 일반 범위를 초과하여 전체 면적에 가득한 경우</div>
+                                  <div>• 빌트인 가전(냉장고, 에어컨 등) 내부 정밀 분해 청소 추가 요청 시</div>
+                                </div>
+                              )}
+
+                              {count > 0 && !isNotice && (
                                 <div className="mt-3 pt-3 border-t border-blue-500/30 flex items-center justify-between">
                                   <span className="text-xs text-blue-200">항목 추가 금액</span>
                                   <span className="text-sm text-blue-300 font-bold">
@@ -960,7 +973,7 @@ export default function Quote() {
                                return option ? (
                                  <div key={optId} className="flex justify-between text-[13px] text-slate-400">
                                    <span>· {option.label} {count > 1 ? `x ${count}` : ''}</span>
-                                   <span className="text-slate-300">+{price.toLocaleString()}원</span>
+                                   <span className="text-slate-300">{option.price > 0 ? `+${price.toLocaleString()}원` : '확인'}</span>
                                  </div>
                                ) : null;
                              })}

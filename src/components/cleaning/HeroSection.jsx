@@ -60,6 +60,18 @@ export default function HeroSection({ onOpenQuote }) {
                 <CheckCircle className="w-5 h-5 text-blue-500 shrink-0" />
                 <span className="min-w-0 flex-1">독일 카처 고온 스팀기 & 친환경 세제 사용</span>
               </li>
+              <li className="flex items-center gap-3 text-slate-700 font-medium bg-white/80 px-4 py-2.5 rounded-lg border border-slate-100 shadow-sm w-full max-w-md break-keep">
+                <CheckCircle className="w-5 h-5 text-blue-500 shrink-0" />
+                <span className="min-w-0 flex-1">전문 정규직 팀장 배정 (하청/알바 없음)</span>
+              </li>
+              <li className="flex items-center gap-3 text-slate-700 font-medium bg-white/80 px-4 py-2.5 rounded-lg border border-slate-100 shadow-sm w-full max-w-md break-keep">
+                <CheckCircle className="w-5 h-5 text-blue-500 shrink-0" />
+                <span className="min-w-0 flex-1">100% 완전 탈거 세척 (서랍, 환풍기, 배수구)</span>
+              </li>
+              <li className="flex items-center gap-3 text-slate-700 font-medium bg-white/80 px-4 py-2.5 rounded-lg border border-slate-100 shadow-sm w-full max-w-md break-keep">
+                <CheckCircle className="w-5 h-5 text-blue-500 shrink-0" />
+                <span className="min-w-0 flex-1">7일간 무상 A/S 확실한 사후 보장</span>
+              </li>
             </ul>
 
             {/* CTA & Social Proof */}

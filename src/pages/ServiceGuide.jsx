@@ -32,7 +32,7 @@ export default function ServiceGuide() {
       title: '이사 청소',
       subtitle: '구옥/거주 이력 있는 집',
       description: '이전 거주자가 남긴 찌든 때, 기름때, 생활 오염, 곰팡이 등을 흔적 없이 지워냅니다.',
-      features: ['주방/욕실 고온 스팀 딥클리닝', '각종 세균 살균 소독'],
+      features: ['주방/욕실 정밀 딥클리닝', '각종 세균 살균 소독'],
     },
     {
       icon: <Bed className="w-8 h-8 text-teal-500" />,
@@ -56,7 +56,7 @@ export default function ServiceGuide() {
       items: [
         '후드 필터 탈거 및 찌든 기름때 세척',
         '가스레인지/인덕션 찌든 때 제거',
-        '싱크대 배수구 고온 스팀 살균 및 악취 제거',
+        '싱크대 배수구 정밀 살균 및 악취 제거',
         '상/하부장 내부 및 걸레받이 탈거 후 숨은 먼지 제거',
       ],
     },
@@ -64,7 +64,7 @@ export default function ServiceGuide() {
       title: '욕실',
       items: [
         '환풍기 커버 및 배수구 탈거 세척 (머리카락 및 오염물 제거)',
-        '변기, 세면대, 욕조 찌든 때 제거 및 고온 스팀 살균',
+        '변기, 세면대, 욕조 찌든 때 제거 및 살균 소독',
         '거울, 샤워부스 물때 제거 및 코팅 처리',
         '타일 사이 줄눈 곰팡이 억제 및 세척',
       ],
@@ -211,16 +211,7 @@ export default function ServiceGuide() {
             <p className="text-slate-500 font-medium text-lg">장비와 세제부터 다른 1%의 차이</p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-6 lg:gap-8">
-            <div className="bg-white p-8 rounded-3xl shadow-sm border border-slate-100 flex flex-col items-center text-center">
-              <div className="w-16 h-16 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mb-6">
-                <Thermometer className="w-8 h-8" />
-              </div>
-              <h3 className="text-xl font-black text-slate-900 mb-3">독일 카처 고온 스팀기</h3>
-              <p className="text-slate-600 font-medium break-keep">
-                화학 약품 없이 100도 이상의 고온 스팀으로 찌든 때 용해 및 99.9% 완벽 살균합니다.
-              </p>
-            </div>
+          <div className="grid md:grid-cols-2 max-w-4xl mx-auto gap-6 lg:gap-8">
             
             <div className="bg-white p-8 rounded-3xl shadow-sm border border-slate-100 flex flex-col items-center text-center">
               <div className="w-16 h-16 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center mb-6">

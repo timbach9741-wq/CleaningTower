@@ -51,9 +51,9 @@ export default function CleaningMoveIn() {
             </div>
             <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-100 hover:shadow-lg transition-shadow">
               <span className="material-symbols-outlined text-4xl text-blue-500 mb-4 block">bug_report</span>
-              <h3 className="text-xl font-bold text-slate-900 mb-3">고온 스팀 살균</h3>
+              <h3 className="text-xl font-bold text-slate-900 mb-3">살균 소독 케어</h3>
               <p className="text-slate-600 leading-relaxed text-sm">
-                화장실과 주방의 곰팡이, 찌든 때는 120도 이상의 고온 스팀 장비를 투입하여 세균을 99.9% 박멸합니다.
+                화장실과 주방 등 오염되기 쉬운 공간은 친환경 살균제를 투입하여 유해 세균을 99.9% 완벽히 박멸합니다.
               </p>
             </div>
           </div>
@@ -66,7 +66,7 @@ export default function CleaningMoveIn() {
                 { step: '01', title: '현장 오염도 체크 및 브리핑', desc: '담당 마스터가 현장에 도착하여 구조 및 오염 상태를 진단하고 특이사항을 고객님께 사전 공유합니다.' },
                 { step: '02', title: '전체 파츠 완전 탈거', desc: '전등, 하수구 트랩, 수납장 기구 등 클리닝의 기본이 되는 탈거 작업을 가장 먼저 진행합니다.' },
                 { step: '03', title: '구역별 맞춤 딥클리닝', desc: '주방의 기름때, 화장실의 물때, 베란다의 곰팡이 등 각 구역의 성질에 맞는 알칼리/산성 전용 세제를 사용해 작업합니다.' },
-                { step: '04', title: '고온 스팀 살균 마무리', desc: '균이 증식하기 쉬운 하수구와 변기, 싱크대에 고온 스팀 장비로 철저히 살균합니다.' },
+                { step: '04', title: '살균 소독 마무리', desc: '균이 증식하기 쉬운 하수구와 변기, 싱크대에 인체에 무해한 안심 소독제로 철저히 살균합니다.' },
                 { step: '05', title: '고객 검수 및 A/S 보장', desc: '청소 완료 후 카카오톡으로 결과 사진을 전송드리며, 직접 현장에 오셔서 검수합니다. (7일 내 무상 A/S 정책 적용)' },
               ].map((item, idx) => (
                 <div key={idx} className="flex bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden hover:border-blue-300 transition-colors">

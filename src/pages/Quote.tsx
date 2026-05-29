@@ -32,7 +32,7 @@ const optionCategories = [
       { id: 'mold', label: '곰팡이 제거 (공간당)', price: 40000 },
       { id: 'sticker', label: '스티커 제거 (공간당)', price: 40000 },
       { id: 'insulation', label: '단열재 제거 (공간당)', price: 40000 },
-      { id: 'extra_charge_notice', label: '현장 상황에 따라 추가 비용이 발생할 수 있습니다.', price: 0, isNotice: true },
+      { id: 'extra_charge_notice', label: '[필수] 현장 상황에 따라 추가 비용이 발생할 수 있습니다.', price: 0, isNotice: true },
     ]
   }
 ];
@@ -213,6 +213,10 @@ export default function Quote() {
       }
     } else if (step === 2) {
       // Step 2: 세부사항 선택 (필수/옵션 추가 시 여기서 밸리데이션 처리)
+      if (!selectedOptions['extra_charge_notice']) {
+        setErrorMsg('현장 상황에 따른 추가 비용 발생 안내사항을 확인하고 동의해주세요.');
+        return;
+      }
     } else if (step === 3) {
       if (!address.trim()) {
         setErrorMsg('견적 산출 및 파트너 배정을 위해 정확한 방문 주소를 입력해주세요.');

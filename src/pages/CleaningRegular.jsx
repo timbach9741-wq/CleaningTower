@@ -97,7 +97,7 @@ export default function CleaningRegular() {
                 <div className="text-xs text-rose-200 mt-3">* 평수와 정기 방문 주기, 원하시는 청소 범위에 따라 합리적인 맞춤형 요금이 산정됩니다.</div>
               </div>
               <div>
-                <Link to="/quote/premium" className="inline-block bg-white text-rose-700 font-bold text-lg px-10 py-4 rounded-full shadow-lg hover:bg-rose-50 hover:-translate-y-1 transition-all duration-300">
+                <Link to="/quote/regular" className="inline-block bg-white text-rose-700 font-bold text-lg px-10 py-4 rounded-full shadow-lg hover:bg-rose-50 hover:-translate-y-1 transition-all duration-300">
                   첫 구독 시작하기
                 </Link>
               </div>

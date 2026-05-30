@@ -3,5 +3,5 @@ User-agent: *
 Allow: /
 
 # 사이트맵 위치
-Sitemap: https://cheongsotower.kr/sitemap_v2.xml
+Sitemap: https://cheongsotower.kr/sitemap.xml
 

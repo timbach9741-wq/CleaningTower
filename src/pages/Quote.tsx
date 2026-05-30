@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import DaumPostcode from 'react-daum-postcode';
 import { db } from '../firebase';
 import { collection, addDoc, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
+import { sendTelegramAlert } from '../telegramService';
 
 const optionCategories = [
   {
@@ -97,9 +98,10 @@ export default function Quote() {
   // 입력 상태
   const [houseType, setHouseType] = useState('아파트');
   const [houseSubType, setHouseSubType] = useState('');
-  const [cleaningType, setCleaningType] = useState<'프리미엄' | '이사' | '거주'>(() => {
+  const [cleaningType, setCleaningType] = useState<'프리미엄' | '이사' | '거주' | '정기'>(() => {
     if (type === 'general' || type === '이사' || type === 'move-in') return '이사';
     if (type === 'residence' || type === '거주') return '거주';
+    if (type === 'regular' || type === '정기') return '정기';
     return '프리미엄';
   });
   const [size, setSize] = useState<number | ''>(24);
@@ -122,6 +124,8 @@ export default function Quote() {
   
   const [selectedOptions, setSelectedOptions] = useState<Record<string, number>>({});
   const [isBetweenCleaning, setIsBetweenCleaning] = useState(false);
+  const [isAgreedPersonalInfo, setIsAgreedPersonalInfo] = useState(false);
+  const [showPrivacyModal, setShowPrivacyModal] = useState(false);
   
   const handleBetweenCleaningToggle = () => {
     const nextState = !isBetweenCleaning;
@@ -151,6 +155,7 @@ export default function Quote() {
   const [errorMsg, setErrorMsg] = useState('');
 
   const estimatedPrice = React.useMemo(() => {
+    if (cleaningType === '정기') return 0;
     let basePricePerPyeong = 15000;
     if (cleaningType === '프리미엄') {
       basePricePerPyeong = 20000;
@@ -311,13 +316,20 @@ export default function Quote() {
   };
 
   const handleFinish = async () => {
+    if (!isAgreedPersonalInfo) {
+      alert('개인정보 제3자 제공 및 약관 동의가 필요합니다. 동의란에 체크해주세요.');
+      return;
+    }
     try {
       const payload = buildQuotePayload();
       let assignedToId = partnerId;
       let assignedPartnerName = partnerName;
 
-      // 자동 배정(Fast Booking)인 경우: 배정 로직 없이 전체 파트너에게 알림 전송 (Broadcasting)
-      if (!assignedToId && address) {
+      if (cleaningType === '정기') {
+        assignedToId = null;
+        assignedPartnerName = '본사 수동 배정';
+      } else if (!assignedToId && address) {
+        // 자동 배정(Fast Booking)인 경우: 배정 로직 없이 전체 파트너에게 알림 전송 (Broadcasting)
         assignedPartnerName = '추천 파트너 (전체 알림 발송됨)';
         console.log(`[빠른 배정] 특정 업체 지정 없이 지역 내 전체 파트너에게 알림을 발송합니다.`);
       }
@@ -328,10 +340,26 @@ export default function Quote() {
         assignedTo: assignedToId || null,
         designatedPartnerName: assignedPartnerName || null
       });
+
+      // 정기 구독 청소 전용 텔레그램 알림 전송
+      if (cleaningType === '정기') {
+        const tgMessage = `<b>🚨 [정기 구독 청소 신청 접수]</b>\n\n` +
+                          `• <b>신청자:</b> ${businessName || '이름 미상'}\n` +
+                          `• <b>연락처:</b> ${contactInfo}\n` +
+                          `• <b>시공 희망일:</b> ${cleaningDate} (${cleaningTime || '시간 협의'})\n` +
+                          `• <b>주소:</b> ${address} ${detailAddress}\n` +
+                          `• <b>현장 정보:</b> ${houseType} (${houseSubType || '구조 미선택'}) / ${size}평\n` +
+                          `• <b>바닥재/주차:</b> ${floorType} / 주차 ${parking}\n` +
+                          `• <b>추가 메모:</b> ${memos || '없음'}\n\n` +
+                          `<i>* 정기 청소 건은 파트너스앱에 노출되지 않으며, 관리자 확인 후 수동 배정이 필요합니다.</i>`;
+        await sendTelegramAlert(tgMessage);
+      }
       
-      const successMsg = assignedPartnerName 
-        ? `예약이 성공적으로 접수되었습니다.\n${assignedPartnerName} 업체에 견적이 전달되었습니다.\n담당자가 확인 후 곧 연락드리겠습니다.`
-        : '예약이 성공적으로 접수되었습니다.\n최적의 전문 파트너를 배정 중입니다.\n담당자가 확인 후 곧 연락드리겠습니다.';
+      const successMsg = cleaningType === '정기'
+        ? `정기 구독 청소 예약이 성공적으로 접수되었습니다.\n상세 상담 및 안내를 위해 본사 담당자가 빠른 시간 내에 연락드리겠습니다.`
+        : assignedPartnerName 
+          ? `예약이 성공적으로 접수되었습니다.\n${assignedPartnerName} 업체에 견적이 전달되었습니다.\n담당자가 확인 후 곧 연락드리겠습니다.`
+          : '예약이 성공적으로 접수되었습니다.\n최적의 전문 파트너를 배정 중입니다.\n담당자가 확인 후 곧 연락드리겠습니다.';
       
       alert(successMsg);
       navigate('/');
@@ -342,6 +370,10 @@ export default function Quote() {
   };
 
   const handleGoToPartnerList = () => {
+    if (!isAgreedPersonalInfo) {
+      alert('개인정보 제3자 제공 및 약관 동의가 필요합니다. 동의란에 체크해주세요.');
+      return;
+    }
     const payload = buildQuotePayload();
     navigate('/partners', { state: { quoteData: payload } });
   };
@@ -428,10 +460,11 @@ export default function Quote() {
                         { id: '프리미엄', label: '프리미엄 입주청소', sub: '인테리어 공사완료후 분진이 많은 현장', price: '평당 2.0만' },
                         { id: '거주', label: '거주청소', sub: '거주중 상태청소', price: '평당 1.8만' },
                         { id: '이사', label: '이사청소', sub: '이사나가고 빈집 청소', price: '평당 1.5만' },
+                        { id: '정기', label: '정기 구독 청소', sub: '평수/주기별 맞춤 홈케어', price: '상담 후 결정' },
                       ].map(item => (
                         <button
                           key={item.id}
-                          onClick={() => setCleaningType(item.id as '프리미엄' | '이사' | '거주')}
+                          onClick={() => setCleaningType(item.id as '프리미엄' | '이사' | '거주' | '정기')}
                           className={`p-4 rounded-xl text-left transition-all active:scale-[0.98] border flex items-center justify-between ${
                             cleaningType === item.id 
                             ? 'bg-blue-600/20 border-blue-500 shadow-lg shadow-blue-500/10' 
@@ -544,7 +577,8 @@ export default function Quote() {
                       <div className="flex flex-col items-end">
                         <span className="text-slate-400 text-[10px] mb-0.5">단가</span>
                         <span className="text-blue-300 text-xs font-bold bg-blue-500/20 px-2 py-1 rounded whitespace-nowrap flex-shrink-0">
-                          {cleaningType === '이사' ? '평당 1.5만원' : 
+                          {cleaningType === '정기' ? '상담 후 결정' :
+                           cleaningType === '이사' ? '평당 1.5만원' : 
                            cleaningType === '거주' ? '평당 1.8만원' : 
                            '평당 2.0만원'}
                         </span>
@@ -555,23 +589,31 @@ export default function Quote() {
 
                 {/* 중간 견적 안내 박스 */}
                 <div className="mt-8 bg-gradient-to-r from-slate-800 to-slate-800/60 p-4 rounded-xl flex flex-col border border-white/5 shadow-lg gap-3">
-                   <div className="flex justify-between items-center text-sm">
-                     <span className="text-slate-400 font-medium">원래 금액 (공급가액)</span>
-                     <span className="text-slate-200 font-medium">{estimatedPrice.toLocaleString()}원</span>
-                   </div>
-                   <div className="flex justify-between items-center text-sm pb-3 border-b border-white/10">
-                     <span className="text-rose-400 font-medium">부가세 10%</span>
-                     <span className="text-rose-400 font-medium">+{vatPrice.toLocaleString()}원</span>
-                   </div>
-                   <div className="flex justify-between items-end pt-1">
-                     <span className="text-blue-300 font-bold text-[15px] mb-1">총 결제 예정 금액</span>
-                     <div className="text-right">
-                       <span className="text-white font-black text-2xl drop-shadow-md">
-                         {totalPriceIncVat.toLocaleString()}
-                       </span>
-                       <span className="text-blue-200 text-sm ml-1 font-bold">원</span>
-                     </div>
-                   </div>
+                  {cleaningType === '정기' ? (
+                    <div className="text-center py-2 text-blue-300 font-bold text-sm">
+                      정기 구독 청소는 평수 및 주기에 따라 상담 후 요금이 결정됩니다.
+                    </div>
+                  ) : (
+                    <>
+                      <div className="flex justify-between items-center text-sm">
+                        <span className="text-slate-400 font-medium">원래 금액 (공급가액)</span>
+                        <span className="text-slate-200 font-medium">{estimatedPrice.toLocaleString()}원</span>
+                      </div>
+                      <div className="flex justify-between items-center text-sm pb-3 border-b border-white/10">
+                        <span className="text-rose-400 font-medium">부가세 10%</span>
+                        <span className="text-rose-400 font-medium">+{vatPrice.toLocaleString()}원</span>
+                      </div>
+                      <div className="flex justify-between items-end pt-1">
+                        <span className="text-blue-300 font-bold text-[15px] mb-1">총 결제 예정 금액</span>
+                        <div className="text-right">
+                          <span className="text-white font-black text-2xl drop-shadow-md">
+                            {totalPriceIncVat.toLocaleString()}
+                          </span>
+                          <span className="text-blue-200 text-sm ml-1 font-bold">원</span>
+                        </div>
+                      </div>
+                    </>
+                  )}
                 </div>
               </motion.div>
             )}
@@ -1050,25 +1092,32 @@ export default function Quote() {
                      </div>
                      
                      <div className="space-y-3 pb-4 border-b border-dashed border-white/10 mb-4">
-                       <div className="flex justify-between items-center">
-                          <span className="text-slate-400 text-sm">{cleaningType === '거주' ? '거주 청소비 (기본비용 포함)' : '기본 청소비'}</span>
-                          <span className="text-slate-200 font-medium">
-                            {((typeof size === 'number' ? size : 0) * (cleaningType === '프리미엄' ? 20000 : cleaningType === '거주' ? 18000 : 15000)).toLocaleString()}원
-                          </span>
-                       </div>
-                       {isBetweenCleaning && (
+                       {cleaningType !== '정기' && (
+                         <div className="flex justify-between items-center">
+                            <span className="text-slate-400 text-sm">{cleaningType === '거주' ? '거주 청소비 (기본비용 포함)' : '기본 청소비'}</span>
+                            <span className="text-slate-200 font-medium">
+                              {((typeof size === 'number' ? size : 0) * (cleaningType === '프리미엄' ? 20000 : cleaningType === '거주' ? 18000 : 15000)).toLocaleString()}원
+                            </span>
+                         </div>
+                       )}
+                       {cleaningType === '정기' && (
+                         <div className="text-center py-2 text-blue-300 font-bold text-sm">
+                           정기 구독 청소는 평수 및 주기에 따라 상담 후 요금이 결정됩니다.
+                         </div>
+                       )}
+                       {isBetweenCleaning && cleaningType !== '정기' && (
                          <div className="flex justify-between items-center">
                             <span className="text-slate-400 text-sm">당일 이사 (사이청소)</span>
                             <span className="text-slate-200 font-medium">+100,000원</span>
                          </div>
                        )}
-                       {elevator === '없음' && isHighFloorWithoutElevator && (
+                       {elevator === '없음' && isHighFloorWithoutElevator && cleaningType !== '정기' && (
                          <div className="flex justify-between items-center">
                             <span className="text-slate-400 text-sm">엘리베이터 없음 (3층 이상)</span>
                             <span className="text-slate-200 font-medium">+30,000원</span>
                          </div>
                        )}
-                       {Object.keys(selectedOptions).length > 0 && (
+                       {Object.keys(selectedOptions).length > 0 && cleaningType !== '정기' && (
                          <div className="flex flex-col gap-1">
                            <div className="flex justify-between items-center mt-1">
                               <span className="text-slate-400 text-sm text-balance">추가 선택 옵션</span>
@@ -1124,23 +1173,45 @@ export default function Quote() {
                 </div>
 
                 {/* 신뢰도 문구 */}
-                <div className="bg-slate-800/80 rounded-xl p-4 mb-6 flex flex-col gap-1.5">
+                <div className="bg-slate-800/80 rounded-xl p-4 mb-4 flex flex-col gap-1.5">
                   <p className="text-[13px] text-slate-300 leading-relaxed text-center font-medium break-keep">
                     본 견적은 예상 금액이며, 오염도나 현장 상황에 따라<br/>
                     약간의 차이가 발생할 수 있습니다.
                   </p>
                 </div>
 
+                {/* 필수 개인정보 제3자 제공 동의 */}
+                <div className="bg-slate-800/80 rounded-xl p-4 mb-6 border border-white/5">
+                  <label className="flex items-start gap-3 cursor-pointer select-none">
+                    <input 
+                      type="checkbox" 
+                      checked={isAgreedPersonalInfo}
+                      onChange={(e) => setIsAgreedPersonalInfo(e.target.checked)}
+                      className="mt-1 w-5 h-5 rounded border-white/20 bg-slate-950 text-blue-500 focus:ring-blue-500 accent-blue-600 shrink-0"
+                    />
+                    <div className="flex-1 text-xs text-slate-300 leading-relaxed break-keep text-left">
+                      <span className="font-bold text-blue-400">[필수]</span> 개인정보 제3자 제공 동의 및 책임 한계 안내에 동의합니다.
+                      <button 
+                        type="button" 
+                        onClick={() => setShowPrivacyModal(true)} 
+                        className="text-blue-400 hover:text-blue-300 underline ml-1.5 font-bold"
+                      >
+                        [상세 약관 보기]
+                      </button>
+                    </div>
+                  </label>
+                </div>
+
                 <div className="space-y-3 mt-auto">
-                  <div className={`grid ${partnerName ? 'grid-cols-1' : 'grid-cols-2'} gap-3`}>
+                  <div className={`grid ${(partnerName || cleaningType === '정기') ? 'grid-cols-1' : 'grid-cols-2'} gap-3`}>
                     <button 
                       onClick={handleFinish}
                       className="w-full bg-slate-700 hover:bg-slate-600 text-white font-bold py-4 rounded-xl text-sm md:text-base shadow-sm transition-all active:scale-95 flex items-center justify-center gap-1.5"
                     >
                       <span className="material-symbols-outlined pb-0.5 text-lg">bolt</span>
-                      {partnerName ? `${partnerName} 파트너에게 지정 예약` : '빠른 예약 (자동 배정)'}
+                      {cleaningType === '정기' ? '정기 구독 청소 예약하기' : (partnerName ? `${partnerName} 파트너에게 지정 예약` : '빠른 예약 (자동 배정)')}
                     </button>
-                    {!partnerName && (
+                    {!partnerName && cleaningType !== '정기' && (
                       <button 
                         onClick={handleGoToPartnerList}
                         className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 rounded-xl text-sm md:text-base shadow-[0_0_20px_rgba(37,99,235,0.4)] transition-all active:scale-95 flex items-center justify-center gap-1.5"
@@ -1274,6 +1345,64 @@ export default function Quote() {
         )}
       </AnimatePresence>
 
+      {/* 개인정보 제3자 제공 동의 모달 */}
+      {showPrivacyModal && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="bg-slate-800 border border-slate-700 text-white rounded-2xl w-full max-w-lg max-h-[80vh] overflow-y-auto shadow-2xl p-6 relative flex flex-col justify-between">
+            <div>
+              <div className="flex justify-between items-center border-b border-white/10 pb-3 mb-4">
+                <h3 className="text-lg font-bold text-white">개인정보 제3자 제공 동의 및 중개 안내</h3>
+                <button onClick={() => setShowPrivacyModal(false)} className="text-slate-400 hover:text-slate-200 text-xl leading-none">✕</button>
+              </div>
+              
+              <div className="space-y-4 text-xs text-slate-300 leading-relaxed overflow-y-auto pr-1 max-h-[50vh] break-keep text-left">
+                <div>
+                  <h4 className="font-bold text-white text-sm mb-1.5">1. 개인정보를 제공받는 자</h4>
+                  <p>청소타워에 등록된 서비스 수행 파트너사 (소비자가 직접 선택한 업체 혹은 견적 요청 지역 내 활동하는 추천 배정 파트너사)</p>
+                </div>
+
+                <div>
+                  <h4 className="font-bold text-white text-sm mb-1.5">2. 제공받는 자의 개인정보 이용 목적</h4>
+                  <p>청소 견적 상세 안내, 시공 가능 일정 협의, 청소 시공 서비스의 수행 및 사후 관리(A/S) 등 목적</p>
+                </div>
+
+                <div>
+                  <h4 className="font-bold text-white text-sm mb-1.5">3. 제공하는 개인정보의 항목</h4>
+                  <p>신청자명, 연락처, 시공 주소(도로명/지번 및 상세주소), 주거 형태, 면적(평수), 선택 옵션, 비밀번호(공동/현관) 및 고객 추가 요청사항</p>
+                </div>
+
+                <div>
+                  <h4 className="font-bold text-white text-sm mb-1.5">4. 개인정보의 보유 및 이용 기간</h4>
+                  <p className="font-semibold text-amber-400">청소 서비스 제공 완료 및 요금 정산 완료 시까지 (단, 관계 법령에 의거하여 보존할 필요가 있는 경우 관련 법령이 정한 기간 동안 보관)</p>
+                </div>
+
+                <div className="border-t border-white/10 pt-3 mt-3">
+                  <h4 className="font-bold text-rose-400 text-sm mb-1.5">5. 통신판매중개 책임 한계 고지 (필수 확인)</h4>
+                  <p className="text-slate-300 font-medium">청소타워는 청소 서비스의 통신판매중개자이며 거래 당사자가 아닙니다. 파트너 대표님이 독자적으로 제공하는 청소 서비스의 품질, 시공 미이행, 현장 파손, 하자보수 및 배상 책임은 실제 청소를 수행한 파트너사에게 있으며 본사는 중개 역할만 수행합니다. 동의를 거부하실 수 있으나 동의하지 않으실 경우 견적 요청 및 매칭이 제한됩니다.</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-6 pt-4 border-t border-white/10 flex gap-2">
+              <button 
+                onClick={() => {
+                  setIsAgreedPersonalInfo(true);
+                  setShowPrivacyModal(false);
+                }}
+                className="flex-grow py-3 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-xl shadow-md transition-colors"
+              >
+                약관 동의 및 닫기
+              </button>
+              <button 
+                onClick={() => setShowPrivacyModal(false)}
+                className="px-5 py-3 bg-slate-700 hover:bg-slate-650 text-slate-300 text-sm font-bold rounded-xl transition-colors"
+              >
+                닫기
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

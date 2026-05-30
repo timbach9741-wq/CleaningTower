@@ -36,6 +36,7 @@ export default function PartnerSignup() {
     createdAt: ''
   });
   const [isAgreed, setIsAgreed] = useState(false);
+  const [showTermsModal, setShowTermsModal] = useState(false);
 
   const handleNext = () => setStep(step + 1);
   const handleBack = () => setStep(step - 1);
@@ -459,16 +460,23 @@ export default function PartnerSignup() {
                 )}
 
                 <div className="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 mb-6 text-left">
-                  <label className="flex items-start gap-3 cursor-pointer">
+                  <label className="flex items-start gap-3 cursor-pointer select-none">
                     <input 
                       type="checkbox" 
                       className="mt-1 w-5 h-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500 accent-blue-600"
                       checked={isAgreed}
                       onChange={(e) => setIsAgreed(e.target.checked)}
                     />
-                    <span className="text-sm text-slate-700 font-medium leading-relaxed">
-                      [필수] 데일리하우징 파트너 이용 약관 및 서비스 운영 정책에 동의합니다.
-                    </span>
+                    <div className="text-sm text-slate-700 font-medium leading-relaxed">
+                      <span className="font-bold text-blue-600">[필수]</span> 청소타워 파트너스 이용약관 및 서비스 운영정책에 동의합니다.
+                      <button 
+                        type="button"
+                        onClick={() => setShowTermsModal(true)}
+                        className="text-blue-600 hover:text-blue-800 underline ml-1.5 font-bold"
+                      >
+                        [약관 보기]
+                      </button>
+                    </div>
                   </label>
                 </div>
 
@@ -536,6 +544,67 @@ export default function PartnerSignup() {
 
         </div>
       </div>
+
+      {/* 파트너 약관 보기 모달 */}
+      {showTermsModal && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl w-full max-w-lg max-h-[80vh] overflow-y-auto shadow-2xl p-6 relative text-slate-800 flex flex-col justify-between">
+            <div>
+              <div className="flex justify-between items-center border-b border-slate-200 pb-3 mb-4">
+                <h3 className="text-lg font-bold text-slate-900">청소타워 파트너스 이용약관 및 정책</h3>
+                <button onClick={() => setShowTermsModal(false)} className="text-slate-400 hover:text-slate-650 text-xl leading-none">✕</button>
+              </div>
+              
+              <div className="space-y-4 text-xs text-slate-600 leading-relaxed overflow-y-auto pr-1 max-h-[50vh] break-keep">
+                <div>
+                  <h4 className="font-bold text-slate-800 text-sm mb-1.5">제1조 (목적)</h4>
+                  <p>본 약관은 청소타워(이하 "회사")가 제공하는 플랫폼 중개 서비스의 이용과 관련하여 회사와 파트너 회원 간의 권리, 의무, 책임사항을 규정함을 목적으로 합니다.</p>
+                </div>
+
+                <div>
+                  <h4 className="font-bold text-slate-800 text-sm mb-1.5">제2조 (통신판매중개자로서 책임의 한계)</h4>
+                  <p className="font-semibold text-rose-600">청소타워는 청소 서비스의 거래 당사자가 아니며 통신판매중개자입니다. 파트너 대표님이 제공하는 모든 청소 서비스의 수행 품질, 예약 불이행, 현장 기물 파손, 하자 수리 및 고객 배상 책임은 청소 시공을 수행한 파트너사에게 단독으로 귀속됩니다.</p>
+                </div>
+
+                <div>
+                  <h4 className="font-bold text-slate-800 text-sm mb-1.5">제3조 (개인정보보호 및 보안 준수)</h4>
+                  <p>1. 파트너는 서비스 배정 및 상담을 위해 제공받은 고객의 개인정보(이름, 연락처, 주소, 비밀번호 등)를 청소 서비스 제공 이외의 목적으로 제3자에게 유출하거나 보관, 누설, 광고 전송 등 목적 외 용도로 활용할 수 없습니다.</p>
+                  <p>2. 위 사항을 위반하여 발생하는 모든 법적 책임(개인정보보호법 위반 등)은 파트너사에게 있으며, 회사는 이에 대해 어떠한 책임도 지지 않습니다.</p>
+                </div>
+
+                <div>
+                  <h4 className="font-bold text-slate-800 text-sm mb-1.5">제4조 (노무 및 고용관계 부인)</h4>
+                  <p>파트너는 플랫폼을 자율적으로 이용하는 독립적인 개인사업자(또는 법인사업자)로서 본사와 근로기준법상 고용 및 근로계약 관계에 있지 않습니다. 파트너는 자율적인 판단에 따라 업무 수탁 여부와 작업 일정을 정합니다.</p>
+                </div>
+
+                <div>
+                  <h4 className="font-bold text-slate-800 text-sm mb-1.5">제5조 (하자 담보 및 배상책임)</h4>
+                  <p>1. 청소 완료 후 3일 이내에 발생한 품질 하자는 파트너사의 책임 하에 무상 A/S 처리를 원칙으로 합니다.</p>
+                  <p>2. 작업 중 발생하는 기물 파손 등에 대처하기 위해 파트너사는 영업배상책임보험 또는 일상생활배상책임보험 가입 및 유지에 적극 노력해야 하며, 사고 발생 시 고객과 합의하여 신속하게 배상해야 합니다.</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-6 pt-4 border-t border-slate-100 flex gap-2">
+              <button 
+                onClick={() => {
+                  setIsAgreed(true);
+                  setShowTermsModal(false);
+                }}
+                className="flex-grow py-3 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-xl shadow-md transition-colors"
+              >
+                약관 동의 및 닫기
+              </button>
+              <button 
+                onClick={() => setShowTermsModal(false)}
+                className="px-5 py-3 bg-slate-100 hover:bg-slate-200 text-slate-600 text-sm font-bold rounded-xl transition-colors"
+              >
+                닫기
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

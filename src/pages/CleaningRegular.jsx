@@ -6,7 +6,7 @@ export default function CleaningRegular() {
     <div className="min-h-screen bg-slate-50 flex flex-col font-sans">
       <header className="bg-white/80 backdrop-blur-md border-b border-slate-200 p-4 sticky top-0 z-50 transition-all">
         <div className="max-w-5xl mx-auto flex items-center justify-between">
-          <Link to="/cleaning" className="text-slate-600 hover:text-blue-600 flex items-center gap-1 font-bold transition-colors">
+          <Link to="/" className="text-slate-600 hover:text-blue-600 flex items-center gap-1 font-bold transition-colors">
             <span className="material-symbols-outlined">arrow_back</span>
             메인으로
           </Link>
@@ -92,12 +92,12 @@ export default function CleaningRegular() {
                 입주청소 결제 시 첫 1개월 분이 함께 결제되며, 청소가 완료된 시점부터 매니저 스케줄이 확정 배정됩니다. 첫 달 경험해보시고 해지하셔도 위약금이 전혀 없습니다.
               </p>
               <div className="inline-block bg-white/10 rounded-xl border border-white/20 p-6 backdrop-blur-md mb-8">
-                <div className="text-sm text-rose-200 mb-2">월 2회 (격주 방문 기준) 첫 결제 할인분</div>
-                <div className="text-4xl font-black text-white mb-1">+ 200,000<span className="text-xl font-normal text-rose-200 ml-1">원</span></div>
-                <div className="text-xs text-rose-200 mt-3">* 위 견적은 예상금액이며, 평수와 방문 주기에 따라 달라질 수 있습니다.</div>
+                <div className="text-sm text-rose-200 mb-2">정기 서비스 맞춤 요금</div>
+                <div className="text-4xl font-black text-white mb-1">상담 후 최종 확정</div>
+                <div className="text-xs text-rose-200 mt-3">* 평수와 정기 방문 주기, 원하시는 청소 범위에 따라 합리적인 맞춤형 요금이 산정됩니다.</div>
               </div>
               <div>
-                <Link to="/cleaning" className="inline-block bg-white text-rose-700 font-bold text-lg px-10 py-4 rounded-full shadow-lg hover:bg-rose-50 hover:-translate-y-1 transition-all duration-300">
+                <Link to="/quote/premium" className="inline-block bg-white text-rose-700 font-bold text-lg px-10 py-4 rounded-full shadow-lg hover:bg-rose-50 hover:-translate-y-1 transition-all duration-300">
                   첫 구독 시작하기
                 </Link>
               </div>

@@ -7,7 +7,7 @@ export default function CleaningMoveIn() {
       {/* 1. Header / Navigation */}
       <header className="bg-white/80 backdrop-blur-md border-b border-slate-200 p-4 sticky top-0 z-50 transition-all">
         <div className="max-w-5xl mx-auto flex items-center justify-between">
-          <Link to="/cleaning" className="text-slate-600 hover:text-blue-600 flex items-center gap-1 font-bold transition-colors">
+          <Link to="/" className="text-slate-600 hover:text-blue-600 flex items-center gap-1 font-bold transition-colors">
             <span className="material-symbols-outlined">arrow_back</span>
             메인으로
           </Link>
@@ -98,7 +98,7 @@ export default function CleaningMoveIn() {
                 <div className="text-xs text-slate-400 mt-3">* 빌라/다세대 등 구조에 따라 단가가 다를 수 있습니다.</div>
               </div>
               <div>
-                <Link to="/cleaning" className="inline-block bg-blue-600 text-white font-bold text-lg px-10 py-4 rounded-full shadow-lg hover:bg-blue-500 hover:shadow-blue-500/30 hover:-translate-y-1 transition-all duration-300">
+                <Link to="/quote/premium" className="inline-block bg-blue-600 text-white font-bold text-lg px-10 py-4 rounded-full shadow-lg hover:bg-blue-500 hover:shadow-blue-500/30 hover:-translate-y-1 transition-all duration-300">
                   메인에서 예상 견적 계산하기
                 </Link>
               </div>

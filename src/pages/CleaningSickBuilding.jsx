@@ -6,7 +6,7 @@ export default function CleaningSickBuilding() {
     <div className="min-h-screen bg-slate-50 flex flex-col font-sans">
       <header className="bg-white/80 backdrop-blur-md border-b border-slate-200 p-4 sticky top-0 z-50 transition-all">
         <div className="max-w-5xl mx-auto flex items-center justify-between">
-          <Link to="/cleaning" className="text-slate-600 hover:text-blue-600 flex items-center gap-1 font-bold transition-colors">
+          <Link to="/" className="text-slate-600 hover:text-blue-600 flex items-center gap-1 font-bold transition-colors">
             <span className="material-symbols-outlined">arrow_back</span>
             메인으로
           </Link>
@@ -93,7 +93,7 @@ export default function CleaningSickBuilding() {
                 <div className="text-xs text-emerald-200 mt-3">* 평수와 관계없이 정액제로 투입됩니다. (단독 의뢰 시 별도 요금)</div>
               </div>
               <div>
-                <Link to="/cleaning" className="inline-block bg-white text-emerald-700 font-bold text-lg px-10 py-4 rounded-full shadow-lg hover:bg-emerald-50 hover:shadow-white/30 hover:-translate-y-1 transition-all duration-300">
+                <Link to="/quote/premium" className="inline-block bg-white text-emerald-700 font-bold text-lg px-10 py-4 rounded-full shadow-lg hover:bg-emerald-50 hover:shadow-white/30 hover:-translate-y-1 transition-all duration-300">
                   결합 견적 산출해보기
                 </Link>
               </div>

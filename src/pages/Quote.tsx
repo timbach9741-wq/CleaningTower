@@ -374,7 +374,7 @@ export default function Quote() {
     }
   };
 
-  const [isSimpleForm, setIsSimpleForm] = useState(false);
+  const [isSimpleForm, setIsSimpleForm] = useState(() => cleaningType === '정기' || cleaningType === '가전');
 
   useEffect(() => {
     setIsSimpleForm(cleaningType === '정기' || cleaningType === '가전');

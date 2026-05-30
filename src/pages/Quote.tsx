@@ -374,6 +374,44 @@ export default function Quote() {
     }
   };
 
+  const [isSimpleForm, setIsSimpleForm] = useState(false);
+
+  useEffect(() => {
+    setIsSimpleForm(cleaningType === '정기' || cleaningType === '가전');
+  }, [cleaningType]);
+
+  const handleSimpleFinish = async () => {
+    if (!businessName.trim()) {
+      alert('신청자 이름을 입력해주세요.');
+      return;
+    }
+    if (!contactInfo.trim()) {
+      alert('연락처를 입력해주세요.');
+      return;
+    }
+    if (!address.trim()) {
+      alert('방문 주소를 선택해주세요.');
+      return;
+    }
+    if (!cleaningDate) {
+      alert('희망 날짜를 선택해주세요.');
+      return;
+    }
+    if (!cleaningTime) {
+      alert('희망 시간을 선택해주세요.');
+      return;
+    }
+    if (cleaningType === '가전' && !memos.trim()) {
+      alert('원활한 견적 상담을 위해 세척하실 가전 종류를 상세히 기재해주세요.');
+      return;
+    }
+    if (!isAgreedPersonalInfo) {
+      alert('개인정보 제3자 제공 및 약관 동의가 필요합니다. 동의란에 체크해주세요.');
+      return;
+    }
+    await handleFinish();
+  };
+
   const handleGoToPartnerList = () => {
     if (!isAgreedPersonalInfo) {
       alert('개인정보 제3자 제공 및 약관 동의가 필요합니다. 동의란에 체크해주세요.');
@@ -408,7 +446,7 @@ export default function Quote() {
             </span>
           </button>
           <span className="font-bold text-base text-white tracking-tight text-center flex-1 pr-8">
-            견적 마법사 ({cleaningType})
+            {isSimpleForm ? `${cleaningType === '정기' ? '정기 구독 청소' : '가전 청소'} 신청서` : `견적 마법사 (${cleaningType})`}
           </span>
         </div>
       </header>
@@ -416,30 +454,255 @@ export default function Quote() {
       <main className="flex-1 w-full max-w-lg mx-auto p-5 pb-28 flex flex-col relative overflow-hidden">
         
         {/* Progress Bar (상단 고정) */}
-        <div className="mb-6">
-          <div className="flex justify-between text-[11px] font-bold text-slate-500 mb-2.5 px-1">
-            <span className={step >= 1 ? 'text-blue-400' : ''}>면적/단가</span>
-            <span className={step >= 2 ? 'text-blue-400' : ''}>세부사항</span>
-            <span className={step >= 3 ? 'text-blue-400' : ''}>일정/주소</span>
-            <span className={step >= 4 ? 'text-blue-400' : ''}>정보입력</span>
-            <span className={step >= 5 ? 'text-blue-400' : ''}>견적완료</span>
+        {!isSimpleForm && (
+          <div className="mb-6">
+            <div className="flex justify-between text-[11px] font-bold text-slate-500 mb-2.5 px-1">
+              <span className={step >= 1 ? 'text-blue-400' : ''}>면적/단가</span>
+              <span className={step >= 2 ? 'text-blue-400' : ''}>세부사항</span>
+              <span className={step >= 3 ? 'text-blue-400' : ''}>일정/주소</span>
+              <span className={step >= 4 ? 'text-blue-400' : ''}>정보입력</span>
+              <span className={step >= 5 ? 'text-blue-400' : ''}>견적완료</span>
+            </div>
+            <div className="w-full bg-white/10 h-1.5 rounded-full overflow-hidden relative">
+              <motion.div 
+                className="absolute top-0 left-0 h-full bg-gradient-to-r from-blue-600 to-blue-400 rounded-full"
+                initial={{ width: '20%' }}
+                animate={{ width: `${(step / 5) * 100}%` }}
+                transition={{ duration: 0.4, ease: 'easeInOut' }}
+              />
+            </div>
           </div>
-          <div className="w-full bg-white/10 h-1.5 rounded-full overflow-hidden relative">
-            <motion.div 
-              className="absolute top-0 left-0 h-full bg-gradient-to-r from-blue-600 to-blue-400 rounded-full"
-              initial={{ width: '20%' }}
-              animate={{ width: `${(step / 5) * 100}%` }}
-              transition={{ duration: 0.4, ease: 'easeInOut' }}
-            />
-          </div>
-        </div>
+        )}
 
         {/* Content Area within AnimatePresence for slide effect */}
         <div className="flex-1 relative w-full h-full">
           <AnimatePresence mode="wait">
-            
+
+            {/* ================= 간편 폼 (정기/가전 전용) ================= */}
+            {isSimpleForm && (
+              <motion.div
+                key="simpleForm"
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -15 }}
+                transition={{ duration: 0.3 }}
+                className="flex flex-col h-full space-y-6"
+              >
+                <div className="mb-4">
+                  <h2 className="text-2xl font-bold text-white leading-tight">
+                    {cleaningType === '정기' ? '정기 구독 청소' : '에어컨/세탁기 청소'}<br/>
+                    간편 상담 신청서
+                  </h2>
+                  <p className="text-slate-400 text-xs mt-2 leading-relaxed">
+                    복잡한 절차 없이 기본 정보만 입력하시면 본사에서 확인 후 친절한 견적 상담 전화를 드립니다.
+                  </p>
+                </div>
+
+                <div className="space-y-5 pb-6">
+                  {/* 이름 */}
+                  <div>
+                    <label className="block text-slate-300 text-sm font-semibold mb-2">
+                      👤 신청자 이름 <span className="text-rose-400">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="예) 홍길동"
+                      value={businessName}
+                      onChange={(e) => setBusinessName(e.target.value)}
+                      className="w-full bg-white/5 border border-white/15 focus:border-blue-600 focus:bg-blue-500/5 rounded-xl px-4 py-3.5 text-base text-white placeholder-slate-500 focus:outline-none transition-all"
+                    />
+                  </div>
+
+                  {/* 연락처 */}
+                  <div>
+                    <label className="block text-slate-300 text-sm font-semibold mb-2">
+                      📞 연락처 <span className="text-rose-400">*</span>
+                    </label>
+                    <input
+                      type="tel"
+                      placeholder="예) 010-0000-0000"
+                      value={contactInfo}
+                      onChange={(e) => setContactInfo(e.target.value)}
+                      className="w-full bg-white/5 border border-white/15 focus:border-blue-600 focus:bg-blue-500/5 rounded-xl px-4 py-3.5 text-base text-white placeholder-slate-500 focus:outline-none transition-all"
+                    />
+                  </div>
+
+                  {/* 주소 */}
+                  <div>
+                    <label className="block text-slate-300 text-sm font-semibold mb-2">
+                      📍 방문할 주소 <span className="text-rose-400">*</span>
+                    </label>
+                    {isOpenPostcode ? (
+                      <div className="bg-white rounded-xl overflow-hidden pb-1 relative transition-all shadow-[0_0_30px_rgba(0,0,0,0.5)] border border-slate-700">
+                        <div className="flex justify-between items-center p-3 bg-slate-100 border-b border-slate-200">
+                          <span className="text-slate-700 font-bold text-sm ml-1">주소 검색</span>
+                          <button type="button" onClick={() => setIsOpenPostcode(false)} className="text-slate-500 p-1 hover:bg-slate-200 rounded-md transition-colors flex items-center justify-center">
+                            <span className="material-symbols-outlined text-[20px]">close</span>
+                          </button>
+                        </div>
+                        <DaumPostcode 
+                          onComplete={(data) => {
+                            setAddress(data.address);
+                            setIsOpenPostcode(false);
+                          }}
+                          autoClose
+                          style={{ height: '350px' }}
+                        />
+                      </div>
+                    ) : (
+                      <div className="space-y-2.5">
+                        <div 
+                          onClick={() => setIsOpenPostcode(true)}
+                          className="w-full bg-white/5 border border-white/15 hover:border-blue-500/50 rounded-xl px-4 py-3.5 text-base transition-all flex items-center justify-between cursor-pointer active:scale-[0.99] active:bg-white/10"
+                        >
+                          <span className={address ? "text-white" : "text-slate-500"}>
+                            {address || "터치하여 도로명/지번 주소 검색"}
+                          </span>
+                          <span className={`${address ? 'text-blue-400' : 'text-slate-400'} material-symbols-outlined text-xl`}>search</span>
+                        </div>
+                        {address && (
+                          <input
+                            type="text"
+                            placeholder="나머지 상세 주소 (동/호수)"
+                            value={detailAddress}
+                            onChange={(e) => setDetailAddress(e.target.value)}
+                            className="w-full bg-white/5 border border-white/15 focus:border-blue-500 rounded-xl px-4 py-3.5 text-base text-white placeholder-slate-500 focus:outline-none transition-all focus:bg-blue-500/5 mt-1"
+                          />
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* 일정 */}
+                  {!isOpenPostcode && (
+                    <>
+                      <div>
+                        <label className="block text-slate-300 text-sm font-semibold mb-2">
+                          📅 희망 방문 날짜 <span className="text-rose-400">*</span>
+                          <span className="block text-blue-400 font-normal text-[11px] mt-1">
+                            ※ 원활한 인력 배정을 위해 최소 3일 이후부터 예약 가능합니다.
+                          </span>
+                        </label>
+                        <div 
+                          className="relative group cursor-pointer"
+                          onClick={(e) => {
+                            const input = e.currentTarget.querySelector('input');
+                            if (input && 'showPicker' in input) {
+                              try {
+                                input.showPicker();
+                              } catch {
+                                //
+                              }
+                            }
+                          }}
+                        >
+                          <input
+                            type="date"
+                            value={cleaningDate}
+                            min={(() => {
+                              const d = new Date();
+                              d.setDate(d.getDate() + 3);
+                              const year = d.getFullYear();
+                              const month = String(d.getMonth() + 1).padStart(2, '0');
+                              const day = String(d.getDate()).padStart(2, '0');
+                              return `${year}-${month}-${day}`;
+                            })()}
+                            onChange={(e) => setCleaningDate(e.target.value)}
+                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                          />
+                          <div className={`w-full bg-white/5 border ${cleaningDate ? 'border-blue-500 bg-blue-500/10' : 'border-white/15 group-hover:border-blue-500/50'} rounded-xl px-4 py-3.5 text-base transition-all flex items-center justify-between pointer-events-none`}>
+                            <span className={cleaningDate ? 'text-blue-100 font-bold tracking-wide' : 'text-slate-500'}>
+                              {cleaningDate ? cleaningDate.replace(/-/g, '. ') : '터치하여 날짜 선택'}
+                            </span>
+                            <span className={`material-symbols-outlined ${cleaningDate ? 'text-blue-400' : 'text-slate-400'} transition-colors`}>
+                              calendar_month
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* 희망 방문 시간 */}
+                      <div>
+                        <label className="block text-slate-300 text-sm font-semibold mb-2">
+                          ⏰ 희망 방문 시간 <span className="text-rose-400">*</span>
+                        </label>
+                        <div className="grid grid-cols-2 gap-2.5">
+                          {['오전 7시~9시 시작', '오후 13시~15시 시작'].map(timeOption => (
+                            <button
+                              key={timeOption}
+                              type="button"
+                              onClick={() => setCleaningTime(timeOption)}
+                              className={`py-3 rounded-xl text-sm font-bold transition-all active:scale-95 ${
+                                cleaningTime === timeOption
+                                ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30 ring-2 ring-blue-500/50' 
+                                : 'bg-white/5 text-slate-300 border border-white/10 active:bg-white/10'
+                              }`}
+                            >
+                              {timeOption}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </>
+                  )}
+
+                  {/* 추가 메모 */}
+                  <div>
+                    <label className="block text-slate-300 text-sm font-semibold mb-2">
+                      ✏️ 상세 신청 내용 {cleaningType === '가전' ? <span className="text-rose-400">*</span> : <span className="text-slate-500">(선택)</span>}
+                    </label>
+                    <textarea
+                      placeholder={
+                        cleaningType === '가전' 
+                        ? "원활한 상담을 위해 세척하실 가전 종류(예: 스탠드 에어컨 1대, 통돌이 세탁기 1대 등)를 필히 작성해주세요." 
+                        : "대략적인 평수나 원하는 주기(예: 주 1회, 격주 등), 요청사항이 있으시면 적어주세요."
+                      }
+                      value={memos}
+                      onChange={(e) => setMemos(e.target.value)}
+                      rows={4}
+                      className="w-full bg-white/5 border border-white/15 focus:border-blue-600 focus:bg-blue-500/5 rounded-xl px-4 py-4 text-base text-white placeholder-slate-500 focus:outline-none transition-all resize-none"
+                    />
+                  </div>
+
+                  {/* 동의 */}
+                  <div className="bg-slate-800/80 rounded-xl p-4 border border-white/5">
+                    <label className="flex items-start gap-3 cursor-pointer select-none">
+                      <input 
+                        type="checkbox" 
+                        checked={isAgreedPersonalInfo}
+                        onChange={(e) => setIsAgreedPersonalInfo(e.target.checked)}
+                        className="mt-1 w-5 h-5 rounded border-white/20 bg-slate-950 text-blue-500 focus:ring-blue-500 accent-blue-600 shrink-0"
+                      />
+                      <div className="flex-1 text-xs text-slate-300 leading-relaxed break-keep text-left">
+                        <span className="font-bold text-blue-400">[필수]</span> 개인정보 제3자 제공 동의 및 책임 한계 안내에 동의합니다.
+                        <button 
+                          type="button" 
+                          onClick={() => setShowPrivacyModal(true)} 
+                          className="text-blue-400 hover:text-blue-300 underline ml-1.5 font-bold"
+                        >
+                          [상세 약관 보기]
+                        </button>
+                      </div>
+                    </label>
+                  </div>
+
+                  {/* 제출 버튼 */}
+                  <div className="pt-2">
+                    <button
+                      type="button"
+                      onClick={handleSimpleFinish}
+                      className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 rounded-xl text-base shadow-[0_8px_16px_rgba(37,99,235,0.25)] transition-all active:scale-[0.98] flex items-center justify-center gap-1.5"
+                    >
+                      <span className="material-symbols-outlined text-lg">bolt</span>
+                      상담 신청서 제출하기
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+
             {/* ================= STEP 1: 주거 형태 및 평수 ================= */}
-            {step === 1 && (
+            {!isSimpleForm && step === 1 && (
               <motion.div
                 key="step1"
                 initial={{ opacity: 0, x: 30 }}
@@ -627,7 +890,7 @@ export default function Quote() {
             )}
 
             {/* ================= STEP 2: 세부사항 선택 ================= */}
-            {step === 2 && (
+            {!isSimpleForm && step === 2 && (
               <motion.div
                 key="step2_details"
                 initial={{ opacity: 0, x: 30 }}
@@ -743,7 +1006,7 @@ export default function Quote() {
             )}
 
             {/* ================= STEP 3: 일정 및 주소 ================= */}
-            {step === 3 && (
+            {!isSimpleForm && step === 3 && (
               <motion.div
                 key="step3"
                 initial={{ opacity: 0, x: 30 }}
@@ -882,7 +1145,7 @@ export default function Quote() {
             )}
 
             {/* ================= STEP 4: 연락처 및 메모 ================= */}
-            {step === 4 && (
+            {!isSimpleForm && step === 4 && (
               <motion.div
                 key="step4"
                 initial={{ opacity: 0, x: 30 }}
@@ -1054,7 +1317,7 @@ export default function Quote() {
             )}
 
             {/* ================= STEP 5: 견적 결과 (최종 완료 화면) ================= */}
-            {step === 5 && (
+            {!isSimpleForm && step === 5 && (
               <motion.div
                 key="step5"
                 initial={{ opacity: 0, scale: 0.95 }}
@@ -1251,7 +1514,7 @@ export default function Quote() {
 
       {/* 하단 플로팅 네비게이션 버튼 (Step 1~4 전용) */}
       <AnimatePresence>
-        {step < 5 && (
+        {step < 5 && !isSimpleForm && (
           <motion.div 
             initial={{ y: 100 }} 
             animate={{ y: 0 }} 

@@ -49,6 +49,9 @@ export interface Order {
   cancelPenalty?: string;
   designatedPartnerName?: string;
   createdAt?: string;
+  adminMemo?: string;
+  cleaningTime?: string;
+  memo?: string;
 }
 
 export interface PartnerUser {
@@ -105,6 +108,7 @@ export default function Admin() {
   const [editStartDate, setEditStartDate] = useState('');
   const [editEndDate, setEditEndDate] = useState('');
   const [showNotifications, setShowNotifications] = useState(false);
+  const [adminMemoInput, setAdminMemoInput] = useState('');
   
   // 파트너 수동 계정 생성 관련 상태
   const [isCreatePartnerModalOpen, setIsCreatePartnerModalOpen] = useState(false);
@@ -247,6 +251,14 @@ export default function Admin() {
     };
   }, []);
 
+  useEffect(() => {
+    if (selectedQuoteDetail) {
+      setAdminMemoInput(selectedQuoteDetail.adminMemo || '');
+    } else {
+      setAdminMemoInput('');
+    }
+  }, [selectedQuoteDetail]);
+
   const handleDeleteReview = async (id: string) => {
     if (!db) return;
     if (confirm("이 리뷰를 영구 삭제하시겠습니까? 삭제 후에는 복구할 수 없습니다.")) {
@@ -263,6 +275,20 @@ export default function Admin() {
   const handleStatusChange = async (id: string, newStatus: string) => {
     if (!db) return;
     await updateDoc(doc(db, 'quotes', id), { status: newStatus });
+  };
+
+  const handleSaveAdminMemo = async () => {
+    if (!db || !selectedQuoteDetail) return;
+    try {
+      await updateDoc(doc(db, 'quotes', selectedQuoteDetail.id), {
+        adminMemo: adminMemoInput
+      });
+      setSelectedQuoteDetail(prev => prev ? { ...prev, adminMemo: adminMemoInput } : null);
+      alert('상담 메모가 저장되었습니다.');
+    } catch (e) {
+      console.error(e);
+      alert('상담 메모 저장 중 오류가 발생했습니다.');
+    }
   };
 
   const handleApprovePartner = async (id: string) => {
@@ -557,6 +583,16 @@ export default function Admin() {
 
   // 견적 관리 탭 데이터 필터링 적용 로직
   const filteredQuotesList = quotes.filter(q => {
+    if (q.cleaningType === '정기' || q.cleaningType === '가전' || q.type === '정기 청소' || q.type === '가전 청소') return false;
+    if (quoteFilters.status !== '전체' && q.status !== quoteFilters.status) return false;
+    if (quoteFilters.startDate && q.date && q.date < quoteFilters.startDate) return false;
+    if (quoteFilters.endDate && q.date && q.date > quoteFilters.endDate) return false;
+    return true;
+  });
+
+  // 간편 신청 접수 탭 데이터 필터링 적용 로직
+  const filteredSimpleQuotesList = quotes.filter(q => {
+    if (q.cleaningType !== '정기' && q.cleaningType !== '가전' && q.type !== '정기 청소' && q.type !== '가전 청소') return false;
     if (quoteFilters.status !== '전체' && q.status !== quoteFilters.status) return false;
     if (quoteFilters.startDate && q.date && q.date < quoteFilters.startDate) return false;
     if (quoteFilters.endDate && q.date && q.date > quoteFilters.endDate) return false;
@@ -831,6 +867,13 @@ export default function Admin() {
           >
             <ClipboardList size={20} />
             <span className="font-medium">견적/예약 관리</span>
+          </button>
+          <button 
+            onClick={() => { setActiveTab('simpleQuotes'); setIsMobileMenuOpen(false); }}
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'simpleQuotes' ? 'bg-blue-600 text-white' : 'text-slate-300 hover:bg-slate-800'}`}
+          >
+            <FileText size={20} />
+            <span className="font-medium">간편 신청 접수</span>
           </button>
           <button 
             onClick={() => { setActiveTab('partners'); setIsMobileMenuOpen(false); }}
@@ -1201,6 +1244,142 @@ export default function Admin() {
                         </button>
                       </div>
                     )))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* SimpleQuotes Tab */}
+          {activeTab === 'simpleQuotes' && (
+            <div className="space-y-6">
+              <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div>
+                  <h2 className="text-xl lg:text-2xl font-bold text-gray-800">간편 신청 접수</h2>
+                  <p className="text-xs text-gray-500 mt-1">
+                    정기 청소 및 가전 청소 신청 내역을 관리합니다. 현재 예약 수: <strong className="text-blue-600">{filteredSimpleQuotesList.length}</strong>건
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <button onClick={() => setIsFilterModalOpen(true)} className="px-4 py-2 bg-white border border-gray-200 text-sm font-bold rounded-lg text-gray-700 hover:bg-gray-50 shadow-sm transition-colors flex items-center gap-1"><Search size={14} /> 필터조회</button>
+                </div>
+              </div>
+              <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+                <div className="overflow-x-auto w-full">
+                  {/* 데스크탑 뷰: 테이블 */}
+                  <table className="hidden lg:table w-full text-left border-collapse whitespace-nowrap min-w-[900px]">
+                    <thead>
+                      <tr className="bg-gray-50 border-b border-gray-100">
+                        <th className="px-4 lg:px-6 py-3 lg:py-4 text-xs font-semibold text-gray-500 uppercase">접수번호</th>
+                        <th className="px-4 lg:px-6 py-3 lg:py-4 text-xs font-semibold text-gray-500 uppercase">희망일자</th>
+                        <th className="px-4 lg:px-6 py-3 lg:py-4 text-xs font-semibold text-gray-500 uppercase">신청자명</th>
+                        <th className="px-4 lg:px-6 py-3 lg:py-4 text-xs font-semibold text-gray-500 uppercase">연락처</th>
+                        <th className="px-4 lg:px-6 py-3 lg:py-4 text-xs font-semibold text-gray-500 uppercase">종류</th>
+                        <th className="px-4 lg:px-6 py-3 lg:py-4 text-xs font-semibold text-gray-500 uppercase">진행 상태</th>
+                        <th className="px-4 lg:px-6 py-3 lg:py-4 text-xs font-semibold text-gray-500 uppercase">방문 주소</th>
+                        <th className="px-4 lg:px-6 py-3 lg:py-4 text-xs font-semibold text-gray-500 uppercase">작업</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {filteredSimpleQuotesList.length === 0 ? (
+                        <tr>
+                          <td colSpan={8} className="p-8 text-center text-gray-400 font-medium">조건에 맞는 데이터가 없습니다.</td>
+                        </tr>
+                      ) : (
+                        filteredSimpleQuotesList.map((quote) => (
+                          <tr key={quote.id} className="hover:bg-gray-50/50 transition-colors">
+                            <td className="px-4 lg:px-6 py-3 lg:py-4 text-xs lg:text-sm text-gray-500">#{quote.id.slice(0,6)}</td>
+                            <td className="px-4 lg:px-6 py-3 lg:py-4 text-xs lg:text-sm text-gray-600">{quote.date || quote.cleaningDate || '미지정'}</td>
+                            <td className="px-4 lg:px-6 py-3 lg:py-4 text-xs lg:text-sm font-medium text-gray-800">{quote.name || quote.customerName || '이름 없음'}</td>
+                            <td className="px-4 lg:px-6 py-3 lg:py-4 text-xs lg:text-sm text-gray-600">{quote.realPhone || quote.contactInfo || '-'}</td>
+                            <td className="px-4 lg:px-6 py-3 lg:py-4 text-xs lg:text-sm text-gray-600 font-bold text-blue-600">{quote.cleaningType || (quote.type?.includes('정기') ? '정기' : '가전')}</td>
+                            <td className="px-4 lg:px-6 py-3 lg:py-4">
+                              <select 
+                                className={`text-xs lg:text-sm font-medium border-0 bg-transparent cursor-pointer focus:ring-0 outline-none
+                                  ${quote.status === '대기중' ? 'text-amber-600 font-bold' : ''}
+                                  ${quote.status === '상담중' ? 'text-blue-600 font-bold' : ''}
+                                  ${quote.status === '상담완료' ? 'text-emerald-600 font-bold' : ''}
+                                  ${quote.status === '배정완료' ? 'text-indigo-600 font-bold' : ''}
+                                  ${quote.status === '취소' ? 'text-red-500 font-bold' : ''}
+                                `}
+                                value={quote.status}
+                                onChange={(e) => handleStatusChange(quote.id, e.target.value)}
+                              >
+                                <option value="대기중" className="text-gray-800">대기중</option>
+                                <option value="상담중" className="text-gray-800">상담중</option>
+                                <option value="상담완료" className="text-gray-800">상담완료</option>
+                                <option value="배정완료" className="text-gray-800">배정완료</option>
+                                <option value="취소" className="text-gray-800">취소</option>
+                              </select>
+                            </td>
+                            <td className="px-4 lg:px-6 py-3 lg:py-4 text-xs lg:text-sm text-gray-600 truncate max-w-[200px]" title={quote.location}>{quote.location}</td>
+                            <td className="px-4 lg:px-6 py-3 lg:py-4">
+                              <button onClick={() => setSelectedQuoteDetail(quote)} className="text-blue-600 hover:text-blue-800 text-xs lg:text-sm font-medium">상세보기</button>
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+
+                  {/* 모바일 뷰: 카드 레이아웃 */}
+                  <div className="lg:hidden divide-y divide-gray-100">
+                    {filteredSimpleQuotesList.length === 0 ? (
+                      <div className="p-8 text-center text-gray-400 text-sm font-medium">조건에 맞는 데이터가 없습니다.</div>
+                    ) : (
+                      filteredSimpleQuotesList.map((quote) => (
+                        <div key={quote.id} className="p-4 flex flex-col gap-3 hover:bg-slate-50 transition-colors">
+                          <div className="flex justify-between items-start">
+                            <div>
+                              <span className="text-xs font-bold text-gray-400 bg-gray-100 px-2 py-0.5 rounded-md">#{quote.id.slice(0,6)}</span>
+                              <div className="flex items-center gap-2 mt-1">
+                                <h4 className="font-bold text-gray-900 text-lg">{quote.name || quote.customerName || '이름 없음'}</h4>
+                                <span className="text-xs font-bold bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full border border-blue-100">
+                                  {quote.cleaningType || (quote.type?.includes('정기') ? '정기' : '가전')}
+                                </span>
+                              </div>
+                              <div className="text-xs text-gray-500 mt-0.5 font-medium">{quote.date || quote.cleaningDate || '미지정'} ({quote.time || '시간협의'})</div>
+                            </div>
+                            {/* 진행 상태 select */}
+                            <select 
+                              className={`text-sm font-bold border-0 bg-transparent cursor-pointer focus:ring-0 outline-none text-right
+                                ${quote.status === '대기중' ? 'text-amber-600 font-bold' : ''}
+                                ${quote.status === '상담중' ? 'text-blue-600 font-bold' : ''}
+                                ${quote.status === '상담완료' ? 'text-emerald-600 font-bold' : ''}
+                                ${quote.status === '배정완료' ? 'text-indigo-600 font-bold' : ''}
+                                ${quote.status === '취소' ? 'text-red-500 font-bold' : ''}
+                              `}
+                              value={quote.status}
+                              onChange={(e) => handleStatusChange(quote.id, e.target.value)}
+                            >
+                              <option value="대기중" className="text-gray-800">대기중</option>
+                              <option value="상담중" className="text-gray-800">상담중</option>
+                              <option value="상담완료" className="text-gray-800">상담완료</option>
+                              <option value="배정완료" className="text-gray-800">배정완료</option>
+                              <option value="취소" className="text-gray-800">취소</option>
+                            </select>
+                          </div>
+
+                          <div className="bg-white border border-gray-100 rounded-lg p-3 grid grid-cols-1 gap-2 mt-1 shadow-sm text-xs text-gray-600">
+                            <div>
+                              <p className="text-[10px] text-gray-400 font-bold">연락처</p>
+                              <p className="font-bold text-gray-800">{quote.realPhone || quote.contactInfo || '-'}</p>
+                            </div>
+                            <div>
+                              <p className="text-[10px] text-gray-400 font-bold">방문 주소</p>
+                              <p className="font-bold text-gray-800 truncate" title={quote.location}>{quote.location}</p>
+                            </div>
+                          </div>
+
+                          <button 
+                            onClick={() => setSelectedQuoteDetail(quote)} 
+                            className="w-full mt-1 bg-white border border-gray-200 text-gray-700 py-2.5 rounded-lg text-sm font-bold hover:bg-gray-50 active:bg-gray-100 transition-colors"
+                          >
+                            상세 보기
+                          </button>
+                        </div>
+                      ))
+                    )}
                   </div>
                 </div>
               </div>
@@ -2233,160 +2412,249 @@ export default function Admin() {
             
             {/* 모달 내용 */}
             <div className="p-6 overflow-y-auto flex-1 space-y-6 bg-white">
-              <div className="grid grid-cols-2 gap-y-6 gap-x-6">
-                <div className="bg-blue-50/50 p-4 rounded-xl border border-blue-100/50 col-span-2 grid grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-xs text-blue-600/80 font-bold mb-1">상태 (진행 상황)</p>
-                    <p className="font-black text-blue-700 text-lg">{selectedQuoteDetail.status}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-blue-600/80 font-bold mb-1">담당 배차 파트너</p>
-                    <p className="font-bold text-gray-800 text-lg">
-                      {selectedQuoteDetail.designatedPartnerName 
-                        ? `${selectedQuoteDetail.designatedPartnerName} (지정요청)` 
-                        : (selectedQuoteDetail.assignedTo || '대기중 (배정전)')}
-                    </p>
-                  </div>
-                </div>
-                
-                <div>
-                  <p className="text-xs text-gray-400 font-bold mb-1">고객명</p>
-                  <p className="text-gray-800 font-bold">{selectedQuoteDetail.name}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-gray-400 font-bold mb-1">실제 연락처</p>
-                  <p className="text-gray-800 font-bold tracking-wide">{selectedQuoteDetail.realPhone || '등록 번호 없음'}</p>
-                </div>
-                
-                <div>
-                  <p className="text-xs text-gray-400 font-bold mb-1">서비스 종류</p>
-                  <p className="text-gray-800 font-bold">{selectedQuoteDetail.type}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-gray-400 font-bold mb-1">희망 일정</p>
-                  <p className="text-gray-800 font-bold">{selectedQuoteDetail.date} / {selectedQuoteDetail.time}</p>
-                </div>
-                
-                <div>
-                  <p className="text-xs text-gray-400 font-bold mb-1">건물 형태 / 면적</p>
-                  <p className="text-gray-800 font-bold">{selectedQuoteDetail.house} / {selectedQuoteDetail.size}평</p>
-                </div>
-                <div>
-                  <p className="text-xs text-gray-400 font-bold mb-1">예상 결제 금액</p>
-                  <p className="text-rose-600 font-black text-lg">{selectedQuoteDetail.price}</p>
-                </div>
-                
-                {/* 세부사항 옵션 표시 */}
-                <div className="col-span-2">
-                  <p className="text-xs text-gray-400 font-bold mb-2">선택한 세부 옵션</p>
-                  <div className="bg-blue-50/50 flex flex-col p-3 px-4 rounded-xl border border-blue-100">
-                    <p className="text-gray-800 font-medium whitespace-pre-wrap leading-relaxed">
-                      {selectedQuoteDetail.options || (selectedQuoteDetail.detail && selectedQuoteDetail.detail.includes('옵션') ? selectedQuoteDetail.detail.split('\n').filter((l: string) => l.includes('옵션')).join('\n') : "선택된 세부 옵션이 없습니다.")}
-                    </p>
-                  </div>
-                </div>
-                
-                <div className="col-span-2">
-                  <p className="text-xs text-gray-400 font-bold mb-2">현장 위치 (상세 주소)</p>
-                  <div className="bg-gray-50 flex items-center p-3 px-4 rounded-xl border border-gray-200">
-                    <p className="text-gray-800 font-semibold">{selectedQuoteDetail.location}</p>
-                  </div>
-                </div>
-                
-                <div className="col-span-2">
-                  <p className="text-xs text-gray-400 font-bold mb-2">고객 요청사항 / 현장 특이사항</p>
-                  <div className="bg-emerald-50/50 p-4 rounded-xl border border-emerald-100 min-h-[80px]">
-                    <p className="text-gray-800 font-medium leading-relaxed whitespace-pre-wrap">{selectedQuoteDetail.detail || '기재된 특이사항 없음'}</p>
-                  </div>
-                </div>
+              {(() => {
+                const isSimpleForm = selectedQuoteDetail.cleaningType === '정기' || 
+                                     selectedQuoteDetail.cleaningType === '가전' || 
+                                     selectedQuoteDetail.type?.includes('정기') || 
+                                     selectedQuoteDetail.type?.includes('가전');
 
-                {selectedQuoteDetail.completedAt && (
-                  <div className="col-span-2 mt-2 p-5 rounded-xl border-2 border-emerald-200 bg-emerald-50">
-                    <h4 className="font-bold text-emerald-800 mb-3 flex items-center justify-between">
-                      <span className="flex items-center gap-2">
-                        <span className="bg-white px-2 py-0.5 rounded text-[10px] shadow-sm uppercase tracking-wider text-emerald-600">완료보고</span>
-                        작업 완료 점검 내역
-                      </span>
-                      <span className="text-xs text-emerald-600 font-bold">
-                        {new Date(selectedQuoteDetail.completedAt).toLocaleDateString()} {new Date(selectedQuoteDetail.completedAt).toLocaleTimeString().slice(0, -3)}
-                      </span>
-                    </h4>
-                    <div className="bg-white p-4 rounded-lg border border-emerald-100 shadow-sm mt-3 flex flex-wrap gap-2">
-                       {selectedQuoteDetail.completionItems && selectedQuoteDetail.completionItems.length > 0 ? (
-                         selectedQuoteDetail.completionItems.map((item: string, idx: number) => (
-                           <span key={idx} className="bg-emerald-100 text-emerald-700 text-xs font-bold px-3 py-1.5 rounded-full border border-emerald-200">
-                             {item}
-                           </span>
-                         ))
-                       ) : (
-                         <p className="text-sm text-gray-500 font-medium w-full text-center py-2">체크된 청소 구역 항목이 없습니다.</p>
-                       )}
-                    </div>
-                  </div>
-                )}
-
-                {selectedQuoteDetail.cancelReason && (
-                  <div className="col-span-2 mt-2 p-5 rounded-xl border-2 border-rose-200 bg-rose-50">
-                    <h4 className="font-bold text-rose-800 mb-3 flex items-center justify-between">
-                      <span className="flex items-center gap-2">
-                        <span className="bg-white px-2 py-0.5 rounded text-[10px] shadow-sm uppercase tracking-wider">긴급</span>
-                        파트너 취소 정보
-                      </span>
-                      {!selectedQuoteDetail.adminReviewedCancel && (
-                        <span className="text-xs bg-rose-600 text-white px-2.5 py-1 rounded-full font-bold shadow-sm animate-pulse">관리자 미확인</span>
-                      )}
-                    </h4>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
-                      <div>
-                        <p className="text-xs font-bold text-rose-700/70 mb-1.5 flex items-center gap-1">취소 사유</p>
-                        <p className="text-sm font-medium text-rose-900 bg-white p-3 border border-rose-100 rounded-lg leading-relaxed h-full shadow-sm">
-                          {selectedQuoteDetail.cancelReason}
-                        </p>
-                      </div>
-                      <div className="flex flex-col">
-                        <p className="text-xs font-bold text-rose-700/70 mb-1.5 flex items-center gap-1">부과된 페널티 상태</p>
-                        <div className="flex flex-col sm:flex-row sm:items-center justify-between bg-white p-3 border border-rose-100 rounded-lg h-full shadow-sm gap-3">
-                          <p className="text-sm font-bold text-rose-600 flex-1">
-                            {selectedQuoteDetail.cancelPenalty === 'free' ? '무료 취소 (패널티 없음)' :
-                             selectedQuoteDetail.cancelPenalty === 'penalty_3' ? '보증금 3만원 차감' :
-                             selectedQuoteDetail.cancelPenalty === 'penalty_10' ? '보증금 10만원 차감 + 7일 정지' :
-                             selectedQuoteDetail.cancelPenalty === 'penalty_all' ? '보증금 전액 몰수 + 제명' : 
-                             selectedQuoteDetail.cancelPenalty === 'waived' ? '패널티 면제됨' : '알 수 없음'}
-                          </p>
-                          <button 
-                            onClick={async () => {
-                              if (confirm('패널티를 면제하시겠습니까?\n이 작업은 파트너의 보증금 차감을 방지합니다.')) {
-                                if (!db) return;
-                                await updateDoc(doc(db, 'quotes', selectedQuoteDetail.id), { cancelPenalty: 'waived' });
-                                setSelectedQuoteDetail({...selectedQuoteDetail, cancelPenalty: 'waived'});
-                                alert('패널티가 정상적으로 면제 처리되었습니다.');
-                              }
-                            }}
-                            disabled={selectedQuoteDetail.cancelPenalty === 'free' || selectedQuoteDetail.cancelPenalty === 'waived'}
-                            className="text-xs font-bold px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-md disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                if (isSimpleForm) {
+                  return (
+                    <div className="space-y-6">
+                      <div className="bg-blue-50/50 p-4 rounded-xl border border-blue-100/50 grid grid-cols-2 gap-4">
+                        <div>
+                          <p className="text-xs text-blue-600/80 font-bold mb-1">상태 (진행 상황)</p>
+                          <select 
+                            className="text-sm font-bold border border-blue-200 bg-white rounded-md px-2 py-1 cursor-pointer outline-none text-blue-700 focus:ring-2 focus:ring-blue-500"
+                            value={selectedQuoteDetail.status}
+                            onChange={(e) => handleStatusChange(selectedQuoteDetail.id, e.target.value)}
                           >
-                            페널티 면제
+                            <option value="대기중">대기중</option>
+                            <option value="상담중">상담중</option>
+                            <option value="상담완료">상담완료</option>
+                            <option value="배정완료">배정완료</option>
+                            <option value="취소">취소</option>
+                          </select>
+                        </div>
+                        <div>
+                          <p className="text-xs text-blue-600/80 font-bold mb-1">담당 배차 파트너</p>
+                          <p className="font-bold text-gray-800 text-sm mt-1">본사 수동 배정 (정기/가전)</p>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <p className="text-xs text-gray-400 font-bold mb-1">고객명</p>
+                          <p className="text-gray-800 font-bold">{selectedQuoteDetail.name}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-400 font-bold mb-1">연락처</p>
+                          <p className="text-gray-800 font-bold tracking-wide">{selectedQuoteDetail.realPhone || selectedQuoteDetail.contactInfo || '등록 번호 없음'}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-400 font-bold mb-1">서비스 종류</p>
+                          <p className="text-gray-800 font-bold">{selectedQuoteDetail.cleaningType || (selectedQuoteDetail.type?.includes('정기') ? '정기' : '가전')} 청소 (간편 신청)</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-400 font-bold mb-1">희망 방문 일정</p>
+                          <p className="text-gray-800 font-bold">{selectedQuoteDetail.date || selectedQuoteDetail.cleaningDate} / {selectedQuoteDetail.time || selectedQuoteDetail.cleaningTime}</p>
+                        </div>
+                      </div>
+
+                      <div>
+                        <p className="text-xs text-gray-400 font-bold mb-2">방문 주소</p>
+                        <div className="bg-gray-50 p-3 px-4 rounded-xl border border-gray-200">
+                          <p className="text-gray-800 font-semibold">{selectedQuoteDetail.location}</p>
+                        </div>
+                      </div>
+
+                      <div>
+                        <p className="text-xs text-gray-400 font-bold mb-2">고객 추가 요청사항 (상세 신청 내용)</p>
+                        <div className="bg-emerald-50/50 p-4 rounded-xl border border-emerald-100 min-h-[80px]">
+                          <p className="text-gray-800 font-medium leading-relaxed whitespace-pre-wrap">{selectedQuoteDetail.detail || selectedQuoteDetail.memo || '기재된 특이사항 없음'}</p>
+                        </div>
+                      </div>
+
+                      {/* 관리자 상담 메모 영역 */}
+                      <div className="mt-4 p-4 rounded-xl border border-blue-200 bg-blue-50/20">
+                        <label className="block text-xs font-bold text-blue-700 mb-2">📝 관리자 상담 메모 (본사 관리용)</label>
+                        <textarea
+                          value={adminMemoInput}
+                          onChange={(e) => setAdminMemoInput(e.target.value)}
+                          placeholder="고객과의 통화 이력, 특이사항, 배정 예정 기사 등 관리 목적의 상담 메모를 입력하세요."
+                          rows={4}
+                          className="w-full border border-blue-200 rounded-lg p-3 text-sm outline-none focus:border-blue-500 bg-white text-gray-800 resize-none"
+                        />
+                        <div className="mt-2.5 flex justify-end">
+                          <button
+                            onClick={handleSaveAdminMemo}
+                            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg text-xs shadow-sm transition-all"
+                          >
+                            상담 메모 저장
                           </button>
                         </div>
                       </div>
                     </div>
-                    {!selectedQuoteDetail.adminReviewedCancel && (
-                      <div className="mt-5 flex justify-end">
-                        <button 
-                          onClick={async () => {
-                            if (!db) return;
-                            await updateDoc(doc(db, 'quotes', selectedQuoteDetail.id), { adminReviewedCancel: true });
-                            setSelectedQuoteDetail({...selectedQuoteDetail, adminReviewedCancel: true});
-                          }}
-                          className="px-5 py-2.5 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-lg text-sm shadow-md transition-all active:scale-95"
-                        >
-                          위 내용 확인 완료 (알림 지우기)
-                        </button>
+                  );
+                } else {
+                  return (
+                    <div className="grid grid-cols-2 gap-y-6 gap-x-6">
+                      <div className="bg-blue-50/50 p-4 rounded-xl border border-blue-100/50 col-span-2 grid grid-cols-2 gap-4">
+                        <div>
+                          <p className="text-xs text-blue-600/80 font-bold mb-1">상태 (진행 상황)</p>
+                          <p className="font-black text-blue-700 text-lg">{selectedQuoteDetail.status}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-blue-600/80 font-bold mb-1">담당 배차 파트너</p>
+                          <p className="font-bold text-gray-800 text-lg">
+                            {selectedQuoteDetail.designatedPartnerName 
+                              ? `${selectedQuoteDetail.designatedPartnerName} (지정요청)` 
+                              : (selectedQuoteDetail.assignedTo || '대기중 (배정전)')}
+                          </p>
+                        </div>
                       </div>
-                    )}
-                  </div>
-                )}
-              </div>
+                      
+                      <div>
+                        <p className="text-xs text-gray-400 font-bold mb-1">고객명</p>
+                        <p className="text-gray-800 font-bold">{selectedQuoteDetail.name}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-400 font-bold mb-1">실제 연락처</p>
+                        <p className="text-gray-800 font-bold tracking-wide">{selectedQuoteDetail.realPhone || '등록 번호 없음'}</p>
+                      </div>
+                      
+                      <div>
+                        <p className="text-xs text-gray-400 font-bold mb-1">서비스 종류</p>
+                        <p className="text-gray-800 font-bold">{selectedQuoteDetail.type}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-400 font-bold mb-1">희망 일정</p>
+                        <p className="text-gray-800 font-bold">{selectedQuoteDetail.date} / {selectedQuoteDetail.time}</p>
+                      </div>
+                      
+                      <div>
+                        <p className="text-xs text-gray-400 font-bold mb-1">건물 형태 / 면적</p>
+                        <p className="text-gray-800 font-bold">{selectedQuoteDetail.house} / {selectedQuoteDetail.size}평</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-400 font-bold mb-1">예상 결제 금액</p>
+                        <p className="text-rose-600 font-black text-lg">{selectedQuoteDetail.price}</p>
+                      </div>
+                      
+                      {/* 세부사항 옵션 표시 */}
+                      <div className="col-span-2">
+                        <p className="text-xs text-gray-400 font-bold mb-2">선택한 세부 옵션</p>
+                        <div className="bg-blue-50/50 flex flex-col p-3 px-4 rounded-xl border border-blue-100">
+                          <p className="text-gray-800 font-medium whitespace-pre-wrap leading-relaxed">
+                            {selectedQuoteDetail.options || (selectedQuoteDetail.detail && selectedQuoteDetail.detail.includes('옵션') ? selectedQuoteDetail.detail.split('\n').filter((l: string) => l.includes('옵션')).join('\n') : "선택된 세부 옵션이 없습니다.")}
+                          </p>
+                        </div>
+                      </div>
+                      
+                      <div className="col-span-2">
+                        <p className="text-xs text-gray-400 font-bold mb-2">현장 위치 (상세 주소)</p>
+                        <div className="bg-gray-50 flex items-center p-3 px-4 rounded-xl border border-gray-200">
+                          <p className="text-gray-800 font-semibold">{selectedQuoteDetail.location}</p>
+                        </div>
+                      </div>
+                      
+                      <div className="col-span-2">
+                        <p className="text-xs text-gray-400 font-bold mb-2">고객 요청사항 / 현장 특이사항</p>
+                        <div className="bg-emerald-50/50 p-4 rounded-xl border border-emerald-100 min-h-[80px]">
+                          <p className="text-gray-800 font-medium leading-relaxed whitespace-pre-wrap">{selectedQuoteDetail.detail || '기재된 특이사항 없음'}</p>
+                        </div>
+                      </div>
+
+                      {selectedQuoteDetail.completedAt && (
+                        <div className="col-span-2 mt-2 p-5 rounded-xl border-2 border-emerald-200 bg-emerald-50">
+                          <h4 className="font-bold text-emerald-800 mb-3 flex items-center justify-between">
+                            <span className="flex items-center gap-2">
+                              <span className="bg-white px-2 py-0.5 rounded text-[10px] shadow-sm uppercase tracking-wider text-emerald-600">완료보고</span>
+                              작업 완료 점검 내역
+                            </span>
+                            <span className="text-xs text-emerald-600 font-bold">
+                              {new Date(selectedQuoteDetail.completedAt).toLocaleDateString()} {new Date(selectedQuoteDetail.completedAt).toLocaleTimeString().slice(0, -3)}
+                            </span>
+                          </h4>
+                          <div className="bg-white p-4 rounded-lg border border-emerald-100 shadow-sm mt-3 flex flex-wrap gap-2">
+                             {selectedQuoteDetail.completionItems && selectedQuoteDetail.completionItems.length > 0 ? (
+                               selectedQuoteDetail.completionItems.map((item: string, idx: number) => (
+                                 <span key={idx} className="bg-emerald-100 text-emerald-700 text-xs font-bold px-3 py-1.5 rounded-full border border-emerald-200">
+                                   {item}
+                                 </span>
+                               ))
+                             ) : (
+                               <p className="text-sm text-gray-500 font-medium w-full text-center py-2">체크된 청소 구역 항목이 없습니다.</p>
+                             )}
+                          </div>
+                        </div>
+                      )}
+
+                      {selectedQuoteDetail.cancelReason && (
+                        <div className="col-span-2 mt-2 p-5 rounded-xl border-2 border-rose-200 bg-rose-50">
+                          <h4 className="font-bold text-rose-800 mb-3 flex items-center justify-between">
+                            <span className="flex items-center gap-2">
+                              <span className="bg-white px-2 py-0.5 rounded text-[10px] shadow-sm uppercase tracking-wider">긴급</span>
+                              파트너 취소 정보
+                            </span>
+                            {!selectedQuoteDetail.adminReviewedCancel && (
+                              <span className="text-xs bg-rose-600 text-white px-2.5 py-1 rounded-full font-bold shadow-sm animate-pulse">관리자 미확인</span>
+                            )}
+                          </h4>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
+                            <div>
+                              <p className="text-xs font-bold text-rose-700/70 mb-1.5 flex items-center gap-1">취소 사유</p>
+                              <p className="text-sm font-medium text-rose-900 bg-white p-3 border border-rose-100 rounded-lg leading-relaxed h-full shadow-sm">
+                                {selectedQuoteDetail.cancelReason}
+                              </p>
+                            </div>
+                            <div className="flex flex-col">
+                              <p className="text-xs font-bold text-rose-700/70 mb-1.5 flex items-center gap-1">부과된 페널티 상태</p>
+                              <div className="flex flex-col sm:flex-row sm:items-center justify-between bg-white p-3 border border-rose-100 rounded-lg h-full shadow-sm gap-3">
+                                <p className="text-sm font-bold text-rose-600 flex-1">
+                                  {selectedQuoteDetail.cancelPenalty === 'free' ? '무료 취소 (패널티 없음)' :
+                                   selectedQuoteDetail.cancelPenalty === 'penalty_3' ? '보증금 3만원 차감' :
+                                   selectedQuoteDetail.cancelPenalty === 'penalty_10' ? '보증금 10만원 차감 + 7일 정지' :
+                                   selectedQuoteDetail.cancelPenalty === 'penalty_all' ? '보증금 전액 몰수 + 제명' : 
+                                   selectedQuoteDetail.cancelPenalty === 'waived' ? '패널티 면제됨' : '알 수 없음'}
+                                </p>
+                                <button 
+                                  onClick={async () => {
+                                    if (confirm('패널티를 면제하시겠습니까?\n이 작업은 파트너의 보증금 차감을 방지합니다.')) {
+                                      if (!db) return;
+                                      await updateDoc(doc(db, 'quotes', selectedQuoteDetail.id), { cancelPenalty: 'waived' });
+                                      setSelectedQuoteDetail({...selectedQuoteDetail, cancelPenalty: 'waived'});
+                                      alert('패널티가 정상적으로 면제 처리되었습니다.');
+                                    }
+                                  }}
+                                  disabled={selectedQuoteDetail.cancelPenalty === 'free' || selectedQuoteDetail.cancelPenalty === 'waived'}
+                                  className="text-xs font-bold px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-md disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                                >
+                                  페널티 면제
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                          {!selectedQuoteDetail.adminReviewedCancel && (
+                            <div className="mt-5 flex justify-end">
+                              <button 
+                                onClick={async () => {
+                                  if (!db) return;
+                                  await updateDoc(doc(db, 'quotes', selectedQuoteDetail.id), { adminReviewedCancel: true });
+                                  setSelectedQuoteDetail({...selectedQuoteDetail, adminReviewedCancel: true});
+                                }}
+                                className="px-5 py-2.5 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-lg text-sm shadow-md transition-all active:scale-95"
+                              >
+                                위 내용 확인 완료 (알림 지우기)
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  );
+                }
+              })()}
             </div>
 
             {/* 모달 푸터 */}

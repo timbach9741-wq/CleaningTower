@@ -71,7 +71,7 @@ export default function CleaningAppliance() {
                 <div className="text-xs text-indigo-200 mt-3">* 기기 종류와 대수(시스템 에어컨 등)에 따라 금액이 변동될 수 있습니다.</div>
               </div>
               <div>
-                <Link to="/quote/premium" className="inline-block bg-white text-indigo-700 font-bold text-lg px-10 py-4 rounded-full shadow-lg hover:bg-slate-100 hover:-translate-y-1 transition-all duration-300">
+                <Link to="/quote/appliance" className="inline-block bg-white text-indigo-700 font-bold text-lg px-10 py-4 rounded-full shadow-lg hover:bg-slate-100 hover:-translate-y-1 transition-all duration-300">
                   청소 결합 견적 확인하기
                 </Link>
               </div>

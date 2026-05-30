@@ -98,10 +98,11 @@ export default function Quote() {
   // 입력 상태
   const [houseType, setHouseType] = useState('아파트');
   const [houseSubType, setHouseSubType] = useState('');
-  const [cleaningType, setCleaningType] = useState<'프리미엄' | '이사' | '거주' | '정기'>(() => {
+  const [cleaningType, setCleaningType] = useState<'프리미엄' | '이사' | '거주' | '정기' | '가전'>(() => {
     if (type === 'general' || type === '이사' || type === 'move-in') return '이사';
     if (type === 'residence' || type === '거주') return '거주';
     if (type === 'regular' || type === '정기') return '정기';
+    if (type === 'appliance' || type === '가전') return '가전';
     return '프리미엄';
   });
   const [size, setSize] = useState<number | ''>(24);
@@ -325,7 +326,7 @@ export default function Quote() {
       let assignedToId = partnerId;
       let assignedPartnerName = partnerName;
 
-      if (cleaningType === '정기') {
+      if (cleaningType === '정기' || cleaningType === '가전') {
         assignedToId = null;
         assignedPartnerName = '본사 수동 배정';
       } else if (!assignedToId && address) {
@@ -341,9 +342,13 @@ export default function Quote() {
         designatedPartnerName: assignedPartnerName || null
       });
 
-      // 정기 구독 청소 전용 텔레그램 알림 전송
-      if (cleaningType === '정기') {
-        const tgMessage = `<b>🚨 [정기 구독 청소 신청 접수]</b>\n\n` +
+      // 정기 구독 및 가전 분해 세척 전용 텔레그램 알림 전송
+      if (cleaningType === '정기' || cleaningType === '가전') {
+        const title = cleaningType === '정기' ? '[정기 구독 청소 신청 접수]' : '[가전 분해 세척 신청 접수]';
+        const note = cleaningType === '정기' 
+          ? '* 정기 청소 건은 파트너스앱에 노출되지 않으며, 관리자 확인 후 수동 배정이 필요합니다.'
+          : '* 가전 세척 건은 파트너스앱에 노출되지 않으며, 관리자 확인 후 수동 배정이 필요합니다.';
+        const tgMessage = `<b>🚨 ${title}</b>\n\n` +
                           `• <b>신청자:</b> ${businessName || '이름 미상'}\n` +
                           `• <b>연락처:</b> ${contactInfo}\n` +
                           `• <b>시공 희망일:</b> ${cleaningDate} (${cleaningTime || '시간 협의'})\n` +
@@ -351,12 +356,12 @@ export default function Quote() {
                           `• <b>현장 정보:</b> ${houseType} (${houseSubType || '구조 미선택'}) / ${size}평\n` +
                           `• <b>바닥재/주차:</b> ${floorType} / 주차 ${parking}\n` +
                           `• <b>추가 메모:</b> ${memos || '없음'}\n\n` +
-                          `<i>* 정기 청소 건은 파트너스앱에 노출되지 않으며, 관리자 확인 후 수동 배정이 필요합니다.</i>`;
+                          `<i>${note}</i>`;
         await sendTelegramAlert(tgMessage);
       }
       
-      const successMsg = cleaningType === '정기'
-        ? `정기 구독 청소 예약이 성공적으로 접수되었습니다.\n상세 상담 및 안내를 위해 본사 담당자가 빠른 시간 내에 연락드리겠습니다.`
+      const successMsg = (cleaningType === '정기' || cleaningType === '가전')
+        ? `${cleaningType === '정기' ? '정기 구독 청소' : '가전 분해 세척'} 예약이 성공적으로 접수되었습니다.\n상세 상담 및 안내를 위해 본사 담당자가 빠른 시간 내에 연락드리겠습니다.`
         : assignedPartnerName 
           ? `예약이 성공적으로 접수되었습니다.\n${assignedPartnerName} 업체에 견적이 전달되었습니다.\n담당자가 확인 후 곧 연락드리겠습니다.`
           : '예약이 성공적으로 접수되었습니다.\n최적의 전문 파트너를 배정 중입니다.\n담당자가 확인 후 곧 연락드리겠습니다.';
@@ -577,7 +582,7 @@ export default function Quote() {
                       <div className="flex flex-col items-end">
                         <span className="text-slate-400 text-[10px] mb-0.5">단가</span>
                         <span className="text-blue-300 text-xs font-bold bg-blue-500/20 px-2 py-1 rounded whitespace-nowrap flex-shrink-0">
-                          {cleaningType === '정기' ? '상담 후 결정' :
+                          {cleaningType === '정기' || cleaningType === '가전' ? '상담 후 결정' :
                            cleaningType === '이사' ? '평당 1.5만원' : 
                            cleaningType === '거주' ? '평당 1.8만원' : 
                            '평당 2.0만원'}
@@ -589,9 +594,12 @@ export default function Quote() {
 
                 {/* 중간 견적 안내 박스 */}
                 <div className="mt-8 bg-gradient-to-r from-slate-800 to-slate-800/60 p-4 rounded-xl flex flex-col border border-white/5 shadow-lg gap-3">
-                  {cleaningType === '정기' ? (
+                  {cleaningType === '정기' || cleaningType === '가전' ? (
                     <div className="text-center py-2 text-blue-300 font-bold text-sm">
-                      정기 구독 청소는 평수 및 주기에 따라 상담 후 요금이 결정됩니다.
+                      {cleaningType === '정기' 
+                        ? '정기 구독 청소는 평수 및 주기에 따라 상담 후 요금이 결정됩니다.'
+                        : '가전 분해 세척은 기기 종류 및 대수에 따라 상담 후 요금이 결정됩니다.'
+                      }
                     </div>
                   ) : (
                     <>
@@ -1063,8 +1071,8 @@ export default function Quote() {
                   >
                     <span className="material-symbols-outlined text-4xl">check_circle</span>
                   </motion.div>
-                  <h2 className="text-2xl font-bold text-white mb-2">예상 견적서 발급 완료!</h2>
-                  <p className="text-slate-400 text-sm">입력해주신 정보 기반의 산출 금액입니다.</p>
+                  <h2 className="text-2xl font-bold text-white mb-2">{cleaningType === '정기' || cleaningType === '가전' ? '예약 상담 신청 완료!' : '예상 견적서 발급 완료!'}</h2>
+                  <p className="text-slate-400 text-sm">{cleaningType === '정기' || cleaningType === '가전' ? '입력해주신 정보를 바탕으로 상담 도와드리겠습니다.' : '입력해주신 정보 기반의 산출 금액입니다.'}</p>
                 </div>
 
                 {/* 영수증 형태의 결과 영수증 */}
@@ -1092,7 +1100,7 @@ export default function Quote() {
                      </div>
                      
                      <div className="space-y-3 pb-4 border-b border-dashed border-white/10 mb-4">
-                       {cleaningType !== '정기' && (
+                       {cleaningType !== '정기' && cleaningType !== '가전' && (
                          <div className="flex justify-between items-center">
                             <span className="text-slate-400 text-sm">{cleaningType === '거주' ? '거주 청소비 (기본비용 포함)' : '기본 청소비'}</span>
                             <span className="text-slate-200 font-medium">
@@ -1100,24 +1108,26 @@ export default function Quote() {
                             </span>
                          </div>
                        )}
-                       {cleaningType === '정기' && (
+                       {(cleaningType === '정기' || cleaningType === '가전') && (
                          <div className="text-center py-2 text-blue-300 font-bold text-sm">
-                           정기 구독 청소는 평수 및 주기에 따라 상담 후 요금이 결정됩니다.
+                            {cleaningType === '정기' 
+                              ? '정기 구독 청소는 평수 및 주기에 따라 상담 후 요금이 결정됩니다.'
+                              : '가전 분해 세척은 기기 종류 및 대수에 따라 상담 후 요금이 결정됩니다.'}
                          </div>
                        )}
-                       {isBetweenCleaning && cleaningType !== '정기' && (
+                       {isBetweenCleaning && cleaningType !== '정기' && cleaningType !== '가전' && (
                          <div className="flex justify-between items-center">
                             <span className="text-slate-400 text-sm">당일 이사 (사이청소)</span>
                             <span className="text-slate-200 font-medium">+100,000원</span>
                          </div>
                        )}
-                       {elevator === '없음' && isHighFloorWithoutElevator && cleaningType !== '정기' && (
+                       {elevator === '없음' && isHighFloorWithoutElevator && cleaningType !== '정기' && cleaningType !== '가전' && (
                          <div className="flex justify-between items-center">
                             <span className="text-slate-400 text-sm">엘리베이터 없음 (3층 이상)</span>
                             <span className="text-slate-200 font-medium">+30,000원</span>
                          </div>
                        )}
-                       {Object.keys(selectedOptions).length > 0 && cleaningType !== '정기' && (
+                       {Object.keys(selectedOptions).length > 0 && cleaningType !== '정기' && cleaningType !== '가전' && (
                          <div className="flex flex-col gap-1">
                            <div className="flex justify-between items-center mt-1">
                               <span className="text-slate-400 text-sm text-balance">추가 선택 옵션</span>
@@ -1151,12 +1161,12 @@ export default function Quote() {
                        </div>
 
                        <div className="flex justify-between items-center pt-3 border-t border-white/10 mt-2">
-                          <span className="text-slate-400 text-sm font-bold">총 공급가액</span>
-                          <span className="text-slate-200 font-bold">{estimatedPrice.toLocaleString()}원</span>
+                           <span className="text-slate-400 text-sm font-bold">총 공급가액</span>
+                           <span className="text-slate-200 font-bold">{cleaningType === '정기' || cleaningType === '가전' ? '상담 후 결정' : `${estimatedPrice.toLocaleString()}원`}</span>
                        </div>
                        <div className="flex justify-between items-center mt-2">
                           <span className="text-rose-400 text-sm font-medium">부가세 (10%)</span>
-                          <span className="text-rose-400 font-medium">+{vatPrice.toLocaleString()}원</span>
+                          <span className="text-rose-400 font-medium">{cleaningType === '정기' || cleaningType === '가전' ? '상담 후 결정' : `+${vatPrice.toLocaleString()}원`}</span>
                        </div>
                      </div>
 
@@ -1164,9 +1174,9 @@ export default function Quote() {
                         <span className="text-blue-300 text-base font-bold mb-1">최종 예상 결제액</span>
                         <div className="text-right">
                           <span className="text-[32px] font-black text-white leading-none shadow-blue-500/50 drop-shadow-md">
-                            {totalPriceIncVat.toLocaleString()}
+                            {cleaningType === '정기' || cleaningType === '가전' ? '상담 후 결정' : totalPriceIncVat.toLocaleString()}
                           </span>
-                          <span className="text-blue-200 text-base ml-1 font-bold">원</span>
+                          {cleaningType !== '정기' && cleaningType !== '가전' && <span className="text-blue-200 text-base ml-1 font-bold">원</span>}
                         </div>
                      </div>
                    </div>
@@ -1203,15 +1213,15 @@ export default function Quote() {
                 </div>
 
                 <div className="space-y-3 mt-auto">
-                  <div className={`grid ${(partnerName || cleaningType === '정기') ? 'grid-cols-1' : 'grid-cols-2'} gap-3`}>
+                  <div className={`grid ${(partnerName || cleaningType === '정기' || cleaningType === '가전') ? 'grid-cols-1' : 'grid-cols-2'} gap-3`}>
                     <button 
                       onClick={handleFinish}
                       className="w-full bg-slate-700 hover:bg-slate-600 text-white font-bold py-4 rounded-xl text-sm md:text-base shadow-sm transition-all active:scale-95 flex items-center justify-center gap-1.5"
                     >
                       <span className="material-symbols-outlined pb-0.5 text-lg">bolt</span>
-                      {cleaningType === '정기' ? '정기 구독 청소 예약하기' : (partnerName ? `${partnerName} 파트너에게 지정 예약` : '빠른 예약 (자동 배정)')}
+                      {cleaningType === '정기' ? '정기 구독 청소 예약하기' : cleaningType === '가전' ? '가전 분해 세척 예약하기' : (partnerName ? `${partnerName} 파트너에게 지정 예약` : '빠른 예약 (자동 배정)')}
                     </button>
-                    {!partnerName && cleaningType !== '정기' && (
+                    {!partnerName && cleaningType !== '정기' && cleaningType !== '가전' && (
                       <button 
                         onClick={handleGoToPartnerList}
                         className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 rounded-xl text-sm md:text-base shadow-[0_0_20px_rgba(37,99,235,0.4)] transition-all active:scale-95 flex items-center justify-center gap-1.5"

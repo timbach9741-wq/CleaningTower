@@ -49,7 +49,7 @@ export default function CoreServicesSection() {
             <div className="h-56 overflow-hidden relative">
               <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent z-10 transition-opacity group-hover:opacity-80"></div>
               <img src="/service_appliance.webp" loading="lazy" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" alt="에어컨/세탁기 청소" />
-              <h3 className="absolute bottom-4 left-6 text-2xl font-bold text-white z-20 leading-snug">에어컨/세탁기<br/>청소</h3>
+              <h3 className="absolute bottom-4 left-6 text-2xl font-bold text-white z-20">에어컨/세탁기 청소</h3>
             </div>
             <div className="p-6">
               <p className="text-slate-600 mb-4 text-sm leading-relaxed break-keep">필터 교체와 다릅니다. 내부 냉각핀과 드럼통 안쪽의 찌든 세균과 곰팡이를 날려버립니다.</p>
@@ -64,7 +64,7 @@ export default function CoreServicesSection() {
             <div className="absolute top-0 right-0 bg-rose-500 text-white text-xs font-bold px-3 py-1.5 rounded-bl-lg z-30">인기 구독!</div>
             <div className="h-56 overflow-hidden relative">
               <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent z-10 transition-opacity group-hover:opacity-80"></div>
-              <img src="/service_regular.webp" loading="lazy" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" alt="집 정기 청소" />
+              <img src="/images/living_room_cleaning.webp" loading="lazy" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" alt="집 정기 청소" />
               <h3 className="absolute bottom-4 left-6 text-2xl font-bold text-white z-20">집 정기 청소</h3>
             </div>
             <div className="p-6">

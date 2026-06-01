@@ -175,6 +175,43 @@ export default function Admin() {
   });
   
   const adminNotifications = quotes.filter(q => q.cancelReason && !q.adminReviewedCancel);
+
+  // 수동 예약 등록 시 자동 견적가 계산기 헬퍼 함수
+  const calculateEstimatedPrice = (type: string, size: string) => {
+    const sizeNum = Number(size);
+    if (!sizeNum || isNaN(sizeNum) || sizeNum <= 0) return 0;
+    
+    let pricePerPyeong = 15000;
+    if (type === '프리미엄 청소') {
+      pricePerPyeong = 20000;
+    } else if (type === '상가/사무실 정기청소') {
+      pricePerPyeong = 18000;
+    }
+    
+    const basePrice = sizeNum * pricePerPyeong;
+    const vat = Math.floor(basePrice * 0.1);
+    return basePrice + vat;
+  };
+
+  const [prevType, setPrevType] = useState(newQuoteForm.type);
+  const [prevSize, setPrevSize] = useState(newQuoteForm.size);
+
+  useEffect(() => {
+    if (!isCreateQuoteModalOpen) return;
+    
+    if (newQuoteForm.type !== prevType || newQuoteForm.size !== prevSize) {
+      setPrevType(newQuoteForm.type);
+      setPrevSize(newQuoteForm.size);
+      
+      const calculated = calculateEstimatedPrice(newQuoteForm.type, newQuoteForm.size);
+      if (calculated > 0) {
+        setNewQuoteForm(prev => ({ 
+          ...prev, 
+          price: calculated.toLocaleString() + '원' 
+        }));
+      }
+    }
+  }, [newQuoteForm.type, newQuoteForm.size, isCreateQuoteModalOpen, prevType, prevSize]);
   
   useEffect(() => {
     if (!db) return;
@@ -3291,7 +3328,21 @@ export default function Admin() {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-gray-600 mb-1">수동 견적 금액</label>
+                  <div className="flex justify-between items-center mb-1">
+                    <label className="block text-xs font-bold text-gray-600">수동 견적 금액</label>
+                    {calculateEstimatedPrice(newQuoteForm.type, newQuoteForm.size) > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const autoPrice = calculateEstimatedPrice(newQuoteForm.type, newQuoteForm.size);
+                          setNewQuoteForm(prev => ({ ...prev, price: autoPrice.toLocaleString() + '원' }));
+                        }}
+                        className="text-[10px] bg-blue-50 hover:bg-blue-100 text-blue-600 font-extrabold px-1.5 py-0.5 rounded border border-blue-200 transition-colors"
+                      >
+                        ⚡ 자동 계산 가격 적용
+                      </button>
+                    )}
+                  </div>
                   <input 
                     type="text" 
                     value={newQuoteForm.price}
@@ -3299,6 +3350,11 @@ export default function Admin() {
                     className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:border-blue-500 outline-none"
                     placeholder="예: 350,000원"
                   />
+                  {calculateEstimatedPrice(newQuoteForm.type, newQuoteForm.size) > 0 && (
+                    <p className="text-[10px] text-slate-500 mt-1 font-semibold">
+                      💡 마법사 권장가: <span className="text-blue-600 font-bold">{calculateEstimatedPrice(newQuoteForm.type, newQuoteForm.size).toLocaleString()}원</span> (부가세 포함)
+                    </p>
+                  )}
                 </div>
               </div>
 

@@ -193,25 +193,7 @@ export default function Admin() {
     return basePrice + vat;
   };
 
-  const [prevType, setPrevType] = useState(newQuoteForm.type);
-  const [prevSize, setPrevSize] = useState(newQuoteForm.size);
 
-  useEffect(() => {
-    if (!isCreateQuoteModalOpen) return;
-    
-    if (newQuoteForm.type !== prevType || newQuoteForm.size !== prevSize) {
-      setPrevType(newQuoteForm.type);
-      setPrevSize(newQuoteForm.size);
-      
-      const calculated = calculateEstimatedPrice(newQuoteForm.type, newQuoteForm.size);
-      if (calculated > 0) {
-        setNewQuoteForm(prev => ({ 
-          ...prev, 
-          price: calculated.toLocaleString() + '원' 
-        }));
-      }
-    }
-  }, [newQuoteForm.type, newQuoteForm.size, isCreateQuoteModalOpen, prevType, prevSize]);
   
   useEffect(() => {
     if (!db) return;
@@ -3266,7 +3248,15 @@ export default function Admin() {
                   <label className="block text-xs font-bold text-gray-600 mb-1">서비스 종류</label>
                   <select 
                     value={newQuoteForm.type}
-                    onChange={e => setNewQuoteForm({...newQuoteForm, type: e.target.value})}
+                    onChange={e => {
+                      const nextType = e.target.value;
+                      const calculated = calculateEstimatedPrice(nextType, newQuoteForm.size);
+                      setNewQuoteForm({
+                        ...newQuoteForm,
+                        type: nextType,
+                        price: calculated > 0 ? calculated.toLocaleString() + '원' : newQuoteForm.price
+                      });
+                    }}
                     className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:border-blue-500 outline-none"
                   >
                     <option value="일반 청소">일반 청소</option>
@@ -3322,7 +3312,15 @@ export default function Admin() {
                   <input 
                     type="number" 
                     value={newQuoteForm.size}
-                    onChange={e => setNewQuoteForm({...newQuoteForm, size: e.target.value})}
+                    onChange={e => {
+                      const nextSize = e.target.value;
+                      const calculated = calculateEstimatedPrice(newQuoteForm.type, nextSize);
+                      setNewQuoteForm({
+                        ...newQuoteForm,
+                        size: nextSize,
+                        price: calculated > 0 ? calculated.toLocaleString() + '원' : newQuoteForm.price
+                      });
+                    }}
                     className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:border-blue-500 outline-none"
                     placeholder="예: 32"
                   />

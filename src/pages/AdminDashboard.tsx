@@ -2027,8 +2027,15 @@ export default function Admin() {
                                     >
                                       계정 정지
                                     </button>
+                                    <button 
+                                      onClick={() => handleDeletePartner(partner.id)}
+                                      className="w-full bg-red-50 hover:bg-red-100 text-red-600 font-bold py-2 rounded-lg text-xs border border-red-200 transition-all active:scale-[0.98] mt-1"
+                                    >
+                                      영구 삭제
+                                    </button>
                                   </>
                                 )}
+
                                 {partner.status === 'suspended' && (
                                   <>
                                     <button 
@@ -2184,8 +2191,15 @@ export default function Admin() {
                                     계정 정지
                                   </button>
                                 </div>
+                                <button 
+                                  onClick={() => handleDeletePartner(partner.id)}
+                                  className="w-full bg-red-50 hover:bg-red-100 text-red-600 font-bold py-3 rounded-xl border border-red-200 transition-all active:scale-[0.98] text-sm"
+                                >
+                                  영구 삭제
+                                </button>
                               </div>
                             )}
+
                             {partner.status === 'suspended' && (
                               <div className="flex flex-col gap-2 w-full">
                                 <button 

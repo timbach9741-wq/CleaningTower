@@ -202,18 +202,6 @@ export default function PartnerLanding() {
           </div>
         </section>
 
-        {/* 전환 유도 하단 */}
-        <section className="py-20 bg-blue-600 text-center px-4">
-          <div className="max-w-4xl mx-auto">
-            <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-white mb-6 break-keep leading-snug">지금 가입하면<br className="sm:hidden" /> 프리미엄 혜택 평생 무료!</h2>
-            <p className="text-blue-100 text-lg mb-10">
-              초기 파트너사 전용 오픈 혜택! 가입비 및 유지비 없이 상위 노출 혜택을 누리세요.
-            </p>
-            <Link to="/partners/register" state={{ plan: 'premium' }} className="inline-block bg-white text-blue-600 font-black py-4 px-12 rounded-full text-xl hover:scale-105 transition-transform shadow-xl">
-              무료 혜택받고 가입하기
-            </Link>
-          </div>
-        </section>
 
       </main>
     </div>

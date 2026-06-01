@@ -100,12 +100,12 @@ export default function PartnerLanding() {
         {/* 수익화 모델 / 멤버십 안내 섹션 */}
         <section className="py-24 px-4 bg-slate-50">
           <div className="max-w-6xl mx-auto">
-            <div className="text-center mb-12 flex flex-col items-center">
+            <div className="text-center mb-20 lg:mb-24 flex flex-col items-center">
               <span className="text-blue-600 font-bold mb-2 block tracking-wider">MEMBERSHIP</span>
               <h2 className="text-3xl md:text-4xl font-extrabold text-blue-950 mb-4 tracking-tight">사장님 상황에 맞는 맞춤형 플랜</h2>
               <p className="text-lg text-slate-500 font-medium mb-6">주문이 늘어남에 따라 알맞은 플랜을 선택해보세요.</p>
               
-              <div className="inline-flex items-center gap-2 bg-gradient-to-r from-rose-500 to-pink-500 text-white px-5 py-2.5 rounded-full text-xs sm:text-sm font-extrabold shadow-lg animate-pulse">
+              <div className="inline-flex items-center gap-3 bg-gradient-to-r from-rose-600 via-pink-600 to-rose-500 text-white px-8 py-4 rounded-2xl text-sm sm:text-base md:text-lg font-black shadow-xl animate-pulse ring-4 ring-rose-200/50 border border-rose-400/30">
                 🎁 런칭 기념 특급 프로모션: 지금 가입 시 모든 멤버십 3개월 무료!
               </div>
             </div>

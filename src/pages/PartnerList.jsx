@@ -483,6 +483,7 @@ export default function PartnerList() {
             : rawName[0] + '*';
 
           return {
+            ...data,
             id: doc.id,
             tier: data.plan === 'premium' ? 'PREMIUM' : data.plan === 'exclusive' ? 'EXCLUSIVE' : 'BASIC',
             name: maskedName,
@@ -495,8 +496,7 @@ export default function PartnerList() {
             monthlyEvent: data.monthlyEvent || '', // 이달의 행사 필드 연동
             portfolio: data.portfolio || [], // 작업 전후 사진
             recentReviews: data.recentReviews || [], // 리뷰 리스트
-            isReal: true,
-            ...data
+            isReal: true
           };
         }).sort((a, b) => {
           const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;

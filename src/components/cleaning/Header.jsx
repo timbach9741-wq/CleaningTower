@@ -112,6 +112,19 @@ export default function Header({ onOpenQuote, theme = 'light', hideQuoteButton =
 
         {/* Action Button & Mobile Menu Toggle */}
         <div className="flex items-center gap-4 z-50">
+          <button 
+            onClick={() => navigate('/partner-dashboard', { state: { showLogin: true } })}
+            className={`hidden sm:flex px-4 py-2.5 rounded-full font-bold text-sm transition-all duration-300 items-center gap-1.5 hover:-translate-y-0.5 ${
+              isScrolled || isMobileMenuOpen
+                ? 'text-slate-700 hover:text-blue-600' 
+                : (theme === 'dark'
+                    ? 'text-white/90 hover:text-white'
+                    : 'text-slate-700 hover:text-blue-600')
+            }`}
+          >
+            파트너 로그인
+          </button>
+
           {!hideQuoteButton && (
             <button 
               onClick={() => navigate('/partners')}
@@ -195,9 +208,18 @@ export default function Header({ onOpenQuote, theme = 'light', hideQuoteButton =
           <button 
             onClick={() => {
               setIsMobileMenuOpen(false);
+              navigate('/partner-dashboard', { state: { showLogin: true } });
+            }}
+            className="mt-2 w-full px-5 py-3 rounded-xl font-bold text-sm bg-slate-100 hover:bg-slate-200 text-slate-700 flex justify-center items-center gap-1.5"
+          >
+            파트너 로그인
+          </button>
+          <button 
+            onClick={() => {
+              setIsMobileMenuOpen(false);
               navigate('/partners');
             }}
-            className="mt-2 w-full px-5 py-3 rounded-xl font-bold text-sm bg-blue-600 text-white shadow-md flex justify-center items-center"
+            className="w-full px-5 py-3 rounded-xl font-bold text-sm bg-blue-600 text-white shadow-md flex justify-center items-center"
           >
             바로 전문가 찾기
           </button>

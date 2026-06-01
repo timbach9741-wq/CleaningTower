@@ -477,10 +477,27 @@ export default function PartnerList() {
         const querySnapshot = await getDocs(q);
         const fetched = querySnapshot.docs.map(doc => {
           const data = doc.data();
+          const isBusiness = !!data.companyName;
           const rawName = data.companyName || data.name || '무명 파트너';
-          const maskedName = rawName.length > 2 
-            ? rawName.substring(0, 2) + '*'.repeat(Math.max(1, rawName.length - 3)) + rawName.slice(-1)
-            : rawName[0] + '*';
+          let maskedName = '';
+          
+          if (isBusiness) {
+            // 사업자 상호명 마스킹: 앞 2글자 노출, 나머지 뒤는 전부 * 처리
+            maskedName = rawName.length > 2 
+              ? rawName.substring(0, 2) + '*'.repeat(rawName.length - 2)
+              : rawName[0] + '*';
+          } else {
+            // 개인 이름 마스킹: 3글자 홍길동 -> 홍*동, 4글자 -> 독**재, 2글자 -> 김*
+            if (rawName.length === 3) {
+              maskedName = rawName[0] + '*' + rawName[2];
+            } else if (rawName.length === 4) {
+              maskedName = rawName[0] + '**' + rawName[3];
+            } else if (rawName.length > 4) {
+              maskedName = rawName.substring(0, 2) + '*'.repeat(rawName.length - 3) + rawName.slice(-1);
+            } else {
+              maskedName = rawName[0] + '*';
+            }
+          }
 
           return {
             ...data,

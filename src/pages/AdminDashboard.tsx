@@ -127,6 +127,8 @@ export default function Admin() {
   const [partnerFilterStatus, setPartnerFilterStatus] = useState('전체');
   const [partnerFilterRegion, setPartnerFilterRegion] = useState('전체');
   const [partnerFilterPlan, setPartnerFilterPlan] = useState('전체');
+  const [partnerFilterTier, setPartnerFilterTier] = useState('전체');
+
 
   // 재무 탭 데이터 필터 상탯값
   const [financeStartDate, setFinanceStartDate] = useState('');
@@ -690,6 +692,13 @@ export default function Admin() {
       if (partnerFilterPlan === '1년' && !plan.includes('1년')) return false;
       if (partnerFilterPlan === '만료 임박' && cs.color !== 'red' && cs.color !== 'amber') return false;
     }
+    
+    // 3-2. 등급 필터 (일반, 프리미엄, 지역독점)
+    if (partnerFilterTier !== '전체') {
+      const pPlan = p.plan || 'basic';
+      if (partnerFilterTier !== pPlan) return false;
+    }
+
     
     // 4. 검색어 필터
     if (partnerSearchTerm) {
@@ -1756,6 +1765,70 @@ export default function Admin() {
                 </div>
               </div>
               
+              {/* 파트너 플랜 등급 탭 */}
+              <div className="flex border-b border-gray-200 bg-white px-4 pt-2 rounded-xl shadow-sm border overflow-x-auto whitespace-nowrap scrollbar-hide">
+                <button
+                  onClick={() => setPartnerFilterTier('전체')}
+                  className={`px-4 py-3 font-bold text-sm border-b-2 transition-all flex items-center gap-1.5 shrink-0 ${
+                    partnerFilterTier === '전체'
+                      ? 'border-blue-600 text-blue-600'
+                      : 'border-transparent text-gray-500 hover:text-gray-700'
+                  }`}
+                >
+                  전체 파트너스
+                  <span className={`px-1.5 py-0.5 text-[10px] rounded-full font-bold ${
+                    partnerFilterTier === '전체' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'
+                  }`}>
+                    {partners.length}
+                  </span>
+                </button>
+                <button
+                  onClick={() => setPartnerFilterTier('basic')}
+                  className={`px-4 py-3 font-bold text-sm border-b-2 transition-all flex items-center gap-1.5 shrink-0 ${
+                    partnerFilterTier === 'basic'
+                      ? 'border-blue-600 text-blue-600'
+                      : 'border-transparent text-gray-500 hover:text-gray-700'
+                  }`}
+                >
+                  일반
+                  <span className={`px-1.5 py-0.5 text-[10px] rounded-full font-bold ${
+                    partnerFilterTier === 'basic' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'
+                  }`}>
+                    {partners.filter(p => (p.plan || 'basic') === 'basic').length}
+                  </span>
+                </button>
+                <button
+                  onClick={() => setPartnerFilterTier('premium')}
+                  className={`px-4 py-3 font-bold text-sm border-b-2 transition-all flex items-center gap-1.5 shrink-0 ${
+                    partnerFilterTier === 'premium'
+                      ? 'border-blue-600 text-blue-600'
+                      : 'border-transparent text-gray-500 hover:text-gray-700'
+                  }`}
+                >
+                  프리미엄
+                  <span className={`px-1.5 py-0.5 text-[10px] rounded-full font-bold ${
+                    partnerFilterTier === 'premium' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'
+                  }`}>
+                    {partners.filter(p => p.plan === 'premium').length}
+                  </span>
+                </button>
+                <button
+                  onClick={() => setPartnerFilterTier('exclusive')}
+                  className={`px-4 py-3 font-bold text-sm border-b-2 transition-all flex items-center gap-1.5 shrink-0 ${
+                    partnerFilterTier === 'exclusive'
+                      ? 'border-blue-600 text-blue-600'
+                      : 'border-transparent text-gray-500 hover:text-gray-700'
+                  }`}
+                >
+                  지역독점
+                  <span className={`px-1.5 py-0.5 text-[10px] rounded-full font-bold ${
+                    partnerFilterTier === 'exclusive' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'
+                  }`}>
+                    {partners.filter(p => p.plan === 'exclusive').length}
+                  </span>
+                </button>
+              </div>
+
               {/* 파트너 검색 및 필터 UI */}
               <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex flex-col md:flex-row gap-4 items-center justify-between">
                 <div className="flex flex-wrap items-center gap-4 w-full md:w-auto">

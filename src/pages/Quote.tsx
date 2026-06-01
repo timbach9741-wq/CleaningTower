@@ -253,6 +253,10 @@ export default function Quote() {
         setErrorMsg('모바일 연락처는 필수 항목입니다!');
         return;
       }
+      if (!isAgreedPersonalInfo) {
+        setErrorMsg('개인정보 제3자 제공 및 약관 동의가 필요합니다.');
+        return;
+      }
     }
     setStep(prev => prev + 1);
   };
@@ -1312,6 +1316,28 @@ export default function Quote() {
                       className="w-full bg-white/5 border border-white/15 rounded-xl px-4 py-4 text-base text-white placeholder-slate-500 focus:outline-none focus:border-blue-600 transition-all resize-none focus:bg-blue-500/5"
                     ></textarea>
                   </div>
+
+                  {/* 필수 개인정보 제3자 제공 동의 */}
+                  <div className="bg-slate-800/80 rounded-xl p-4 mt-6 border border-white/5">
+                    <label className="flex items-start gap-3 cursor-pointer select-none">
+                      <input 
+                        type="checkbox" 
+                        checked={isAgreedPersonalInfo}
+                        onChange={(e) => setIsAgreedPersonalInfo(e.target.checked)}
+                        className="mt-1 w-5 h-5 rounded border-white/20 bg-slate-950 text-blue-500 focus:ring-blue-500 accent-blue-600 shrink-0"
+                      />
+                      <div className="flex-1 text-xs text-slate-300 leading-relaxed break-keep text-left">
+                        <span className="font-bold text-blue-400">[필수]</span> 개인정보 제3자 제공 동의 및 책임 한계 안내에 동의합니다.
+                        <button 
+                          type="button" 
+                          onClick={() => setShowPrivacyModal(true)} 
+                          className="text-blue-400 hover:text-blue-300 underline ml-1.5 font-bold"
+                        >
+                          [상세 약관 보기]
+                        </button>
+                      </div>
+                    </label>
+                  </div>
                 </div>
               </motion.div>
             )}
@@ -1446,33 +1472,11 @@ export default function Quote() {
                 </div>
 
                 {/* 신뢰도 문구 */}
-                <div className="bg-slate-800/80 rounded-xl p-4 mb-4 flex flex-col gap-1.5">
+                <div className="bg-slate-800/80 rounded-xl p-4 mb-6 flex flex-col gap-1.5">
                   <p className="text-[13px] text-slate-300 leading-relaxed text-center font-medium break-keep">
                     본 견적은 예상 금액이며, 오염도나 현장 상황에 따라<br/>
                     약간의 차이가 발생할 수 있습니다.
                   </p>
-                </div>
-
-                {/* 필수 개인정보 제3자 제공 동의 */}
-                <div className="bg-slate-800/80 rounded-xl p-4 mb-6 border border-white/5">
-                  <label className="flex items-start gap-3 cursor-pointer select-none">
-                    <input 
-                      type="checkbox" 
-                      checked={isAgreedPersonalInfo}
-                      onChange={(e) => setIsAgreedPersonalInfo(e.target.checked)}
-                      className="mt-1 w-5 h-5 rounded border-white/20 bg-slate-950 text-blue-500 focus:ring-blue-500 accent-blue-600 shrink-0"
-                    />
-                    <div className="flex-1 text-xs text-slate-300 leading-relaxed break-keep text-left">
-                      <span className="font-bold text-blue-400">[필수]</span> 개인정보 제3자 제공 동의 및 책임 한계 안내에 동의합니다.
-                      <button 
-                        type="button" 
-                        onClick={() => setShowPrivacyModal(true)} 
-                        className="text-blue-400 hover:text-blue-300 underline ml-1.5 font-bold"
-                      >
-                        [상세 약관 보기]
-                      </button>
-                    </div>
-                  </label>
                 </div>
 
                 <div className="space-y-3 mt-auto">

@@ -77,6 +77,8 @@ export default function Quote() {
   const [selectedOptions, setSelectedOptions] = useState<Record<string, number>>({});
   const [isBetweenCleaning, setIsBetweenCleaning] = useState(false);
   const [isOccupiedCleaning, setIsOccupiedCleaning] = useState(false);
+  const [isAgreedPersonalInfo, setIsAgreedPersonalInfo] = useState(false);
+  const [showPrivacyModal, setShowPrivacyModal] = useState(false);
   
   const handleBetweenCleaningToggle = () => {
     const nextState = !isBetweenCleaning;
@@ -181,11 +183,19 @@ export default function Quote() {
         setErrorMsg('모바일 연락처는 필수 항목입니다!');
         return;
       }
+      if (!isAgreedPersonalInfo) {
+        setErrorMsg('개인정보 제3자 제공 및 약관 동의가 필요합니다.');
+        return;
+      }
     }
     setStep(prev => prev + 1);
   };
 
   const handleSubmitQuote = async () => {
+    if (!isAgreedPersonalInfo) {
+      alert('개인정보 제3자 제공 및 약관 동의가 필요합니다. 동의란에 체크해주세요.');
+      return;
+    }
     const optionLabels = Object.entries(selectedOptions).map(([id, count]) => {
       const option = optionsList.find(o => o.id === id);
       if (!option) return null;
@@ -894,6 +904,28 @@ export default function Quote() {
                       className="w-full bg-white/5 border border-white/15 rounded-xl px-4 py-4 text-base text-white placeholder-slate-500 focus:outline-none focus:border-blue-600 transition-all resize-none focus:bg-blue-500/5"
                     ></textarea>
                   </div>
+
+                  {/* 필수 개인정보 제3자 제공 동의 */}
+                  <div className="bg-slate-800/80 rounded-xl p-4 mt-6 border border-white/5">
+                    <label className="flex items-start gap-3 cursor-pointer select-none">
+                      <input 
+                        type="checkbox" 
+                        checked={isAgreedPersonalInfo}
+                        onChange={(e) => setIsAgreedPersonalInfo(e.target.checked)}
+                        className="mt-1 w-5 h-5 rounded border-white/20 bg-slate-950 text-blue-500 focus:ring-blue-500 accent-blue-600 shrink-0"
+                      />
+                      <div className="flex-1 text-xs text-slate-300 leading-relaxed break-keep text-left">
+                        <span className="font-bold text-blue-400">[필수]</span> 개인정보 제3자 제공 동의 및 책임 한계 안내에 동의합니다.
+                        <button 
+                          type="button" 
+                          onClick={() => setShowPrivacyModal(true)} 
+                          className="text-blue-400 hover:text-blue-300 underline ml-1.5 font-bold"
+                        >
+                          [상세 약관 보기]
+                        </button>
+                      </div>
+                    </label>
+                  </div>
                 </div>
               </motion.div>
             )}
@@ -1081,6 +1113,64 @@ export default function Quote() {
         )}
       </AnimatePresence>
 
+      {/* 개인정보 제3자 제공 동의 모달 */}
+      {showPrivacyModal && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="bg-slate-800 border border-slate-700 text-white rounded-2xl w-full max-w-lg max-h-[80vh] overflow-y-auto shadow-2xl p-6 relative flex flex-col justify-between">
+            <div>
+              <div className="flex justify-between items-center border-b border-white/10 pb-3 mb-4">
+                <h3 className="text-lg font-bold text-white">개인정보 제3자 제공 동의 및 중개 안내</h3>
+                <button onClick={() => setShowPrivacyModal(false)} className="text-slate-400 hover:text-slate-200 text-xl leading-none">✕</button>
+              </div>
+              
+              <div className="space-y-4 text-xs text-slate-300 leading-relaxed overflow-y-auto pr-1 max-h-[50vh] break-keep text-left">
+                <div>
+                  <h4 className="font-bold text-white text-sm mb-1.5">1. 개인정보를 제공받는 자</h4>
+                  <p>청소타워에 등록된 서비스 수행 파트너사 (소비자가 직접 선택한 업체 혹은 견적 요청 지역 내 활동하는 추천 배정 파트너사)</p>
+                </div>
+
+                <div>
+                  <h4 className="font-bold text-white text-sm mb-1.5">2. 제공받는 자의 개인정보 이용 목적</h4>
+                  <p>청소 견적 상세 안내, 시공 가능 일정 협의, 청소 시공 서비스의 수행 및 사후 관리(A/S) 등 목적</p>
+                </div>
+
+                <div>
+                  <h4 className="font-bold text-white text-sm mb-1.5">3. 제공하는 개인정보의 항목</h4>
+                  <p>신청자명, 연락처, 시공 주소(도로명/지번 및 상세주소), 주거 형태, 면적(평수), 선택 옵션, 비밀번호(공동/현관) 및 고객 추가 요청사항</p>
+                </div>
+
+                <div>
+                  <h4 className="font-bold text-white text-sm mb-1.5">4. 개인정보의 보유 및 이용 기간</h4>
+                  <p className="font-semibold text-amber-400">청소 서비스 제공 완료 및 요금 정산 완료 시까지 (단, 관계 법령에 의거하여 보존할 필요가 있는 경우 관련 법령이 정한 기간 동안 보관)</p>
+                </div>
+
+                <div className="border-t border-white/10 pt-3 mt-3">
+                  <h4 className="font-bold text-rose-400 text-sm mb-1.5">5. 통신판매중개 책임 한계 고지 (필수 확인)</h4>
+                  <p className="text-slate-300 font-medium">청소타워는 청소 서비스의 통신판매중개자이며 거래 당사자가 아닙니다. 파트너 대표님이 독자적으로 제공하는 청소 서비스의 품질, 시공 미이행, 현장 파손, 하자보수 및 배상 책임은 실제 청소를 수행한 파트너사에게 있으며 본사는 중개 역할만 수행합니다. 동의를 거부하실 수 있으나 동의하지 않으실 경우 견적 요청 및 매칭이 제한됩니다.</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-6 pt-4 border-t border-white/10 flex gap-2">
+              <button 
+                onClick={() => {
+                  setIsAgreedPersonalInfo(true);
+                  setShowPrivacyModal(false);
+                }}
+                className="flex-grow py-3 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-xl shadow-md transition-colors"
+              >
+                약관 동의 및 닫기
+              </button>
+              <button 
+                onClick={() => setShowPrivacyModal(false)}
+                className="px-5 py-3 bg-slate-700 hover:bg-slate-650 text-slate-300 text-sm font-bold rounded-xl transition-colors"
+              >
+                닫기
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

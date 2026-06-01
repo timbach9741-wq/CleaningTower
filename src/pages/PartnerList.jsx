@@ -799,10 +799,11 @@ export default function PartnerList() {
                             </div>
                           )}
                           <div>
-                            <div className="flex items-center gap-1.5 mb-1 lg:mb-2">
-                              <span className="bg-amber-400 text-amber-950 text-[8px] lg:text-[10px] font-black px-1.5 py-0.5 lg:py-1 rounded-full uppercase tracking-wider shadow-sm">Premium Exclusive</span>
-                              <span className="text-blue-200 text-[9px] lg:text-xs font-semibold">📍 {partner.area} 독점 추천</span>
+                            <div className="flex flex-col sm:flex-row sm:items-center gap-1.5 lg:gap-2 mb-1.5 lg:mb-2">
+                              <span className="bg-amber-400 text-amber-950 text-[8px] lg:text-[10px] font-black px-1.5 py-0.5 lg:py-1 rounded-full uppercase tracking-wider shadow-sm w-max">Premium Exclusive</span>
+                              <span className="text-blue-200 text-[9px] lg:text-xs font-semibold break-keep">📍 {partner.area} 독점 추천</span>
                             </div>
+
                             <h2 className="text-lg lg:text-3xl font-extrabold tracking-tight group-hover:text-amber-300 transition-colors">{partner.name}</h2>
                           </div>
                         </div>

@@ -482,10 +482,8 @@ export default function PartnerList() {
           let maskedName = '';
           
           if (isBusiness) {
-            // 사업자 상호명 마스킹: 앞 2글자 노출, 나머지 뒤는 전부 * 처리
-            maskedName = rawName.length > 2 
-              ? rawName.substring(0, 2) + '*'.repeat(rawName.length - 2)
-              : rawName[0] + '*';
+            // 사업자 상호명은 마스킹 없이 100% 그대로 다 노출
+            maskedName = rawName;
           } else {
             // 개인 이름 마스킹: 3글자 홍길동 -> 홍*동, 4글자 -> 독**재, 2글자 -> 김*
             if (rawName.length === 3) {

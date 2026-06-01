@@ -533,7 +533,29 @@ export default function PartnerList() {
     const area = partnerArea;
     if (area.includes('전국')) return true;
 
-    return selectedRegions.some(region => area.includes(region));
+    return selectedRegions.some(region => {
+      // 1. 완전 일치 검사
+      if (area.includes(region)) return true;
+
+      // region 파싱: "시도 시군구" (예: "인천 계양구")
+      const parts = region.split(' ');
+      if (parts.length >= 1) {
+        const sido = parts[0]; // "인천", "부산", "경기" 등
+        
+        // 2. "전지역" 패턴 검사 (예: area가 "인천 전지역"이고 sido가 "인천"인 경우)
+        if (area.includes(`${sido} 전지역`) || area.includes(`${sido} 전체`)) {
+          return true;
+        }
+
+        // 3. 서울/경기가 아닌 지방 광역시/도의 경우, 광역 범위 내 매칭 허용
+        const isSeoulOrGyeonggi = (sido === '서울' || sido === '경기');
+        if (!isSeoulOrGyeonggi && area.includes(sido)) {
+          return true;
+        }
+      }
+      
+      return false;
+    });
   };
 
   const {

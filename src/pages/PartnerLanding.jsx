@@ -100,10 +100,14 @@ export default function PartnerLanding() {
         {/* 수익화 모델 / 멤버십 안내 섹션 */}
         <section className="py-24 px-4 bg-slate-50">
           <div className="max-w-6xl mx-auto">
-            <div className="text-center mb-16">
+            <div className="text-center mb-12 flex flex-col items-center">
               <span className="text-blue-600 font-bold mb-2 block tracking-wider">MEMBERSHIP</span>
               <h2 className="text-3xl md:text-4xl font-extrabold text-blue-950 mb-4 tracking-tight">사장님 상황에 맞는 맞춤형 플랜</h2>
-              <p className="text-lg text-slate-500 font-medium">처음엔 가볍게 시작하고, 주문이 늘면 업그레이드 하세요.</p>
+              <p className="text-lg text-slate-500 font-medium mb-6">주문이 늘어남에 따라 알맞은 플랜을 선택해보세요.</p>
+              
+              <div className="inline-flex items-center gap-2 bg-gradient-to-r from-rose-500 to-pink-500 text-white px-5 py-2.5 rounded-full text-xs sm:text-sm font-extrabold shadow-lg animate-pulse">
+                🎁 런칭 기념 특급 프로모션: 지금 가입 시 모든 멤버십 3개월 무료!
+              </div>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-end">
@@ -128,10 +132,15 @@ export default function PartnerLanding() {
                     </li>
                   </ul>
                 </div>
-                <div className="mt-auto">
-                  <div className="text-2xl font-black text-slate-900 mb-4">₩0<span className="text-base font-normal text-slate-500"> / 월</span></div>
-                  <Link to="/partners/register" state={{ plan: 'basic' }} className="block w-full bg-slate-100 text-slate-700 font-bold py-3 rounded-xl hover:bg-slate-200 transition-colors text-center">
-                    무료로 시작하기
+                <div className="mt-auto pt-6 border-t border-slate-100">
+                  <div className="flex flex-col mb-4 text-left">
+                    <span className="text-xs text-rose-500 font-bold line-through opacity-85">₩39,000 / 월</span>
+                    <div className="text-2xl lg:text-3xl font-black text-slate-900 flex items-baseline gap-1">
+                      ₩39,000 <span className="text-[10px] font-extrabold text-rose-500 bg-rose-50 px-2 py-0.5 rounded border border-rose-200 ml-1">3개월 무료</span>
+                    </div>
+                  </div>
+                  <Link to="/partners/register" state={{ plan: 'basic' }} className="block w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-3 rounded-xl transition-colors text-center">
+                    3개월 무료로 시작하기
                   </Link>
                 </div>
               </div>
@@ -162,10 +171,15 @@ export default function PartnerLanding() {
                     </li>
                   </ul>
                 </div>
-                <div className="mt-auto">
-                  <div className="text-2xl font-black text-white mb-4">상담 후 결정<span className="text-base font-normal text-slate-400 block sm:inline"> (지역별 상이)</span></div>
+                <div className="mt-auto pt-6 border-t border-slate-800">
+                  <div className="flex flex-col mb-4 text-left">
+                    <span className="text-xs text-amber-400 font-bold line-through opacity-85">₩299,000 / 월</span>
+                    <div className="text-2xl lg:text-3xl font-black text-white flex items-baseline gap-1">
+                      ₩299,000 <span className="text-[10px] font-extrabold text-amber-950 bg-amber-400 px-2 py-0.5 rounded ml-1">3개월 무료</span>
+                    </div>
+                  </div>
                   <Link to="/partners/register" state={{ plan: 'exclusive' }} className="block w-full bg-gradient-to-r from-amber-400 to-yellow-500 text-amber-950 font-bold py-4 rounded-xl hover:from-amber-300 hover:to-yellow-400 transition-colors shadow-[0_0_15px_rgba(251,191,36,0.3)] text-center">
-                    지역 독점 TO 문의
+                    3개월 무료 신청하기
                   </Link>
                 </div>
               </div>
@@ -190,10 +204,15 @@ export default function PartnerLanding() {
                     </li>
                   </ul>
                 </div>
-                <div className="mt-auto">
-                  <div className="text-2xl font-black text-slate-900 mb-4">무료<span className="text-base font-normal text-slate-500"> (0원)</span></div>
-                  <Link to="/partners/register" state={{ plan: 'premium' }} className="block w-full bg-blue-600 text-white font-bold py-3 rounded-xl hover:bg-blue-700 transition-colors shadow-md text-center">
-                    프리미엄 무료 가입
+                <div className="mt-auto pt-6 border-t border-slate-100">
+                  <div className="flex flex-col mb-4 text-left">
+                    <span className="text-xs text-rose-500 font-bold line-through opacity-85">₩79,000 / 월</span>
+                    <div className="text-2xl lg:text-3xl font-black text-slate-900 flex items-baseline gap-1">
+                      ₩79,000 <span className="text-[10px] font-extrabold text-rose-500 bg-rose-50 px-2 py-0.5 rounded border border-rose-200 ml-1">3개월 무료</span>
+                    </div>
+                  </div>
+                  <Link to="/partners/register" state={{ plan: 'premium' }} className="block w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 rounded-xl transition-all shadow-md text-center">
+                    3개월 무료로 가입하기
                   </Link>
                 </div>
               </div>

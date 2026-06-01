@@ -126,6 +126,9 @@ export default function Partner() {
   const navigate = useNavigate();
   const [showLogin, setShowLogin] = useState(location.state?.showLogin || false);
   const [loginForm, setLoginForm] = useState({ id: '', password: '' });
+  const [showInstallGuide, setShowInstallGuide] = useState(false);
+  const [guideDevice, setGuideDevice] = useState<'ios' | 'android'>('android');
+
 
   // 비밀번호 변경 모달 상태
   const [showChangePasswordModal, setShowChangePasswordModal] = useState(false);
@@ -1090,8 +1093,98 @@ export default function Partner() {
                 </button>
               </div>
             </form>
+            
+            {/* 앱 설치 문제 안내 아코디언 카드 */}
+            <div className="mt-6 border border-slate-200 rounded-2xl bg-white shadow-sm overflow-hidden text-left">
+              <button
+                type="button"
+                onClick={() => setShowInstallGuide(!showInstallGuide)}
+                className="w-full px-5 py-4 flex items-center justify-between font-bold text-slate-800 hover:bg-slate-50 transition-colors"
+              >
+                <div className="flex items-center gap-2">
+                  <span className="text-blue-500">📱</span>
+                  <span>휴대폰에 앱 설치가 안 되시나요?</span>
+                </div>
+                <span className={`transform transition-transform duration-200 text-slate-400 text-xs font-bold`}>
+                  {showInstallGuide ? '닫기 ▲' : '열기 ▼'}
+                </span>
+              </button>
+
+              {showInstallGuide && (
+                <div className="px-5 pb-5 border-t border-slate-100 bg-slate-50/50 space-y-5 animate-in fade-in slide-in-from-top-1 duration-200">
+                  {/* QR 코드 영역 (PC 환경용) */}
+                  <div className="pt-4 flex flex-col sm:flex-row items-center gap-4 bg-white p-4 rounded-xl border border-slate-100 shadow-inner">
+                    <img
+                      src={`https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent(window.location.origin + '/partner-dashboard')}`}
+                      alt="파트너 로그인 QR"
+                      className="w-[100px] h-[100px] border border-slate-200 p-1 rounded-lg shrink-0 bg-white"
+                    />
+                    <div className="text-center sm:text-left space-y-1">
+                      <h4 className="text-xs font-black text-slate-800">스마트폰 카메라로 스캔해보세요!</h4>
+                      <p className="text-[11px] text-slate-500 font-medium leading-relaxed">
+                        PC에서 보고 계신다면 스마트폰 카메라로 QR 코드를 찍어 즉시 파트너 모바일 화면으로 접속할 수 있습니다.
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* 기종별 가이드 탭 */}
+                  <div className="space-y-3">
+                    <div className="flex border-b border-slate-200">
+                      <button
+                        type="button"
+                        onClick={() => setGuideDevice('android')}
+                        className={`flex-1 py-2 font-bold text-xs text-center border-b-2 transition-all ${
+                          guideDevice === 'android' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-400'
+                        }`}
+                      >
+                        삼성/안드로이드폰
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setGuideDevice('ios')}
+                        className={`flex-1 py-2 font-bold text-xs text-center border-b-2 transition-all ${
+                          guideDevice === 'ios' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-400'
+                        }`}
+                      >
+                        아이폰 (Apple)
+                      </button>
+                    </div>
+
+                    {guideDevice === 'android' ? (
+                      <div className="text-[11px] text-slate-600 space-y-2 leading-relaxed">
+                        <p className="font-bold text-slate-800 text-xs">🛠️ 1초 설치 방법 (Chrome / 삼성인터넷)</p>
+                        <ol className="list-decimal pl-4 space-y-1.5 font-medium">
+                          <li>인터넷 브라우저 주소창 우측의 <strong className="text-blue-600">[앱 다운로드/설치]</strong> 아이콘(📥 모양)을 클릭합니다.</li>
+                          <li>또는, 우측 하단 <strong className="text-slate-700">[메뉴 ☰]</strong> 버튼을 누르고 <strong className="text-blue-600">[현재 페이지 추가]</strong> ➔ <strong className="text-blue-600">[홈 화면]</strong>을 차례로 터치합니다.</li>
+                          <li>바탕화면에 앱 모양의 바로가기 아이콘이 정상 생성됩니다!</li>
+                        </ol>
+                      </div>
+                    ) : (
+                      <div className="text-[11px] text-slate-600 space-y-2 leading-relaxed">
+                        <p className="font-bold text-slate-800 text-xs">🛠️ 1초 설치 방법 (Safari 브라우저)</p>
+                        <ol className="list-decimal pl-4 space-y-1.5 font-medium">
+                          <li>반드시 <strong className="text-blue-600">Safari(사파리)</strong> 브라우저로 접속해 주세요.</li>
+                          <li>화면 하단 중앙의 <strong className="text-blue-600">[공유 버튼 📤 (네모 속 화살표)]</strong>을 터치합니다.</li>
+                          <li>메뉴 리스트를 밑으로 내려 <strong className="text-blue-600">[홈 화면에 추가]</strong>를 누르고 등록을 완료합니다.</li>
+                          <li>바탕화면에 설치된 청소타워 아이콘을 누르면 앱처럼 실행됩니다.</li>
+                        </ol>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* 인앱 브라우저 주의 안내 */}
+                  <div className="bg-amber-50 border border-amber-100 rounded-xl p-3 text-[10px] text-amber-800 leading-normal flex gap-1.5">
+                    <span className="shrink-0 text-xs">⚠️</span>
+                    <p className="font-semibold">
+                      카카오톡이나 네이버 앱 내부에서 접속한 경우 보안상 앱 설치가 제한됩니다. 반드시 주소창 우측 더보기 아이콘을 눌러 <strong>[다른 브라우저로 열기]</strong>(Safari 또는 Chrome)를 진행한 후 설치해주시기 바랍니다.
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
 
             <div className="mt-8 text-center flex flex-col gap-3">
+
               <button
                 onClick={() => setShowLogin(false)}
                 className="text-sm text-slate-500 font-bold hover:text-slate-900 transition-colors"

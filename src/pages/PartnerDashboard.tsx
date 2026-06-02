@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MapPin, Calendar, CheckCircle, AlertTriangle, Phone, Home, List, User, Briefcase, Info, Bell, CalendarCheck } from 'lucide-react';
+import { MapPin, Calendar, CheckCircle, AlertTriangle, Phone, Home, List, User, Briefcase, Info, Bell, CalendarCheck, Sparkles } from 'lucide-react';
 import { db, storage, getMessagingInstance } from '../firebase';
+import PartnerGuideModal from '../components/common/PartnerGuideModal';
 import { getToken } from 'firebase/messaging';
 import { collection, onSnapshot, doc, updateDoc, getDocs, query, where, deleteDoc } from 'firebase/firestore';
 import type { Unsubscribe } from 'firebase/firestore';
@@ -103,6 +104,7 @@ export default function Partner() {
   const [partnerId, setPartnerId] = useState<string | null>(localStorage.getItem('partnerId'));
   const [showLanding, setShowLanding] = useState(!localStorage.getItem('partnerId'));
   const [notiRegions, setNotiRegions] = useState<string[]>([]);
+  const [showGuideModal, setShowGuideModal] = useState(false);
   
   // 홍보 정보 수정 모달 상태
   const [showEditProfileModal, setShowEditProfileModal] = useState(false);
@@ -1703,6 +1705,24 @@ export default function Partner() {
               exit={{ opacity: 0, x: 10 }}
               className="space-y-4"
             >
+              {/* 파트너스 매칭 가이드 배너 */}
+              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 p-4 rounded-2xl flex items-start gap-3.5 shadow-sm text-slate-800">
+                <Sparkles size={20} className="shrink-0 text-blue-600 animate-pulse mt-0.5" />
+                <div className="flex-1">
+                  <h3 className="font-bold text-sm text-slate-900">매출을 3.5배 올리는 프로필 가이드</h3>
+                  <p className="text-xs text-slate-500 font-medium leading-relaxed mt-1">
+                    상호명 기재 팁, 전후사진 갤러리 활용법, 이달의 이벤트 구성, 실시간 달력 관리법을 확인해 보세요.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setShowGuideModal(true)}
+                    className="mt-2.5 bg-blue-600 hover:bg-blue-700 text-white font-black text-xs px-3 py-2 rounded-xl transition-all shadow-sm active:scale-95 whitespace-nowrap"
+                  >
+                    가이드 안내문 확인하기
+                  </button>
+                </div>
+              </div>
+
               <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 text-center">
                 <div className="w-20 h-20 bg-slate-200 rounded-full mx-auto mb-4 flex items-center justify-center">
                   <User size={40} className="text-slate-400" />
@@ -2367,6 +2387,20 @@ export default function Partner() {
               </div>
               
               <div className="p-6 overflow-y-auto flex-1 bg-slate-50 space-y-6">
+                {/* 정보 수정 팁 링크 배너 */}
+                <button
+                  type="button"
+                  onClick={() => setShowGuideModal(true)}
+                  className="w-full bg-blue-50 hover:bg-blue-100/80 border border-blue-200 rounded-2xl p-4 text-left flex items-start gap-3 transition-colors text-slate-800 shadow-sm"
+                >
+                  <Sparkles size={18} className="shrink-0 text-blue-600 animate-pulse mt-0.5" />
+                  <div className="flex-1">
+                    <h4 className="text-xs font-black text-slate-900">어떻게 적어야 고객 매칭률이 오를까요?</h4>
+                    <p className="text-[10px] text-slate-500 font-medium leading-relaxed mt-0.5 flex items-center gap-1">
+                      상호, 전후사진, 행사 입력법 가이드 보기 <span className="text-blue-600 font-bold">→</span>
+                    </p>
+                  </div>
+                </button>
                 
                 {/* 기본 정보 */}
                 <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
@@ -2778,6 +2812,9 @@ export default function Partner() {
           </button>
         </div>
       </nav>
+
+      {/* 파트너 안내 가이드 모달 */}
+      <PartnerGuideModal isOpen={showGuideModal} onClose={() => setShowGuideModal(false)} />
     </div>
   );
 }

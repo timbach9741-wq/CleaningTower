@@ -11,7 +11,7 @@ export default function CleaningMoveIn() {
             <span className="material-symbols-outlined">arrow_back</span>
             메인으로
           </Link>
-          <h1 className="text-xl font-black text-slate-900 tracking-tight">청소타워 프리미엄 입주청소</h1>
+          <span className="text-xl font-black text-slate-900 tracking-tight">청소타워 프리미엄 입주청소</span>
           <div className="w-24"></div> {/* Balance spacer */}
         </div>
       </header>

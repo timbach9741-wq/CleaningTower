@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Building2, User, Upload, ArrowRight, CheckCircle, ShieldCheck } from 'lucide-react';
+import { Building2, User, Upload, ArrowRight, CheckCircle, ShieldCheck, Sparkles } from 'lucide-react';
 import { getDb } from '../firebase';
 import { collection, addDoc, query, where, getDocs } from 'firebase/firestore';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { sendTelegramAlert } from '../telegramService';
+import PartnerGuideModal from '../components/common/PartnerGuideModal';
 
 import { REGION_DATA } from '../data/regions';
 import RegionSelector from '../components/common/RegionSelector';
@@ -18,6 +19,7 @@ export default function PartnerSignup() {
   const location = useLocation();
   const initialPlan = location.state?.plan || 'basic';
   const [step, setStep] = useState(1);
+  const [showGuideModal, setShowGuideModal] = useState(false);
 
   const [formData, setFormData] = useState({
     plan: initialPlan,
@@ -524,6 +526,26 @@ export default function PartnerSignup() {
                   </div>
                 </div>
 
+                {/* 파트너 정보 입력 가이드 배너 */}
+                <div className="w-full bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-2xl p-5 mb-8 text-left flex items-start gap-3.5 relative overflow-hidden group">
+                  <div className="bg-blue-100 text-blue-600 p-2 rounded-xl">
+                    <Sparkles size={20} className="animate-pulse" />
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="text-sm font-black text-slate-800">매출을 3.5배 올리는 정보 등록 팁</h4>
+                    <p className="text-[11px] text-slate-500 font-medium leading-relaxed mt-1">
+                      상호명, 전후사진 갤러리, 이달의 이벤트, 달력 설정 등 오더 매칭을 극대화하는 작성 요령을 확인하세요.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => setShowGuideModal(true)}
+                      className="mt-3 bg-blue-600 hover:bg-blue-700 text-white text-xs font-black px-4 py-2.5 rounded-xl transition-all shadow-md active:scale-95 whitespace-nowrap"
+                    >
+                      필수 입력 가이드 확인하기
+                    </button>
+                  </div>
+                </div>
+
                 <div className="flex gap-3 w-full">
                   <button 
                     onClick={() => navigate('/')}
@@ -605,6 +627,9 @@ export default function PartnerSignup() {
           </div>
         </div>
       )}
+
+      {/* 파트너 안내 가이드 모달 */}
+      <PartnerGuideModal isOpen={showGuideModal} onClose={() => setShowGuideModal(false)} />
     </div>
   );
 }

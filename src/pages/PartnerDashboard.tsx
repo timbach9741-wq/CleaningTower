@@ -76,7 +76,7 @@ export interface PartnerUser {
   regions?: string[];
   dailyUploadCount?: number;
   lastUploadDate?: string;
-  availableDates?: string[];
+  unavailableDates?: string[];
   password?: string;
   loginPassword?: string;
   loginId?: string;
@@ -710,21 +710,23 @@ export default function Partner() {
   const handleToggleAvailableDate = async (dateStr: string) => {
     if (!db || !currentUser) return;
     
-    const currentDates = currentUser.availableDates || [];
+    const currentDates = currentUser.unavailableDates || [];
     let updatedDates: string[] = [];
     
     if (currentDates.includes(dateStr)) {
+      // 이미 휴무(마감) 상태인 경우 -> 예약 가능으로 변경 (배열에서 제거)
       updatedDates = currentDates.filter(d => d !== dateStr);
     } else {
+      // 예약 가능 상태인 경우 -> 휴무(마감) 상태로 변경 (배열에 추가)
       updatedDates = [...currentDates, dateStr];
     }
     
     try {
       await updateDoc(doc(db, 'partners', currentUser.id), {
-        availableDates: updatedDates
+        unavailableDates: updatedDates
       });
     } catch (e) {
-      console.error("Failed to update available dates", e);
+      console.error("Failed to update unavailable dates", e);
       alert("일정 변경 중 오류가 발생했습니다.");
     }
   };
@@ -758,7 +760,7 @@ export default function Partner() {
     
     for (let day = 1; day <= daysInMonth; day++) {
       const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-      const isAvailable = currentUser?.availableDates?.includes(dateStr) || false;
+      const isAvailable = !currentUser?.unavailableDates?.includes(dateStr);
       const isToday = new Date().toISOString().split('T')[0] === dateStr;
       
       dayCells.push(

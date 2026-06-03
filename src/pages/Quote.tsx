@@ -65,13 +65,13 @@ export default function Quote() {
   // 파트너 정보 상태 (우회 시 변경 가능하도록 state로 관리)
   const [partnerId, setPartnerId] = useState<string | null>(() => location.state?.selectedPartnerId || null);
   const [partnerName, setPartnerName] = useState<string | null>(() => location.state?.selectedPartnerName || null);
-  const [partnerAvailableDates, setPartnerAvailableDates] = useState<string[]>([]);
+  const [partnerUnavailableDates, setPartnerUnavailableDates] = useState<string[]>([]);
   const [isInterceptOpen, setIsInterceptOpen] = useState(false);
 
   // 파트너 가능일 데이터 조회
   useEffect(() => {
     if (!partnerId) {
-      setPartnerAvailableDates([]);
+      setPartnerUnavailableDates([]);
       return;
     }
     const fetchPartnerDates = async () => {
@@ -80,8 +80,8 @@ export default function Quote() {
         const partnerSnap = await getDoc(partnerDocRef);
         if (partnerSnap.exists()) {
           const data = partnerSnap.data();
-          setPartnerAvailableDates(data.availableDates || []);
-          console.log(`[Quote] Loaded partner available dates:`, data.availableDates);
+          setPartnerUnavailableDates(data.unavailableDates || []);
+          console.log(`[Quote] Loaded partner unavailable dates:`, data.unavailableDates);
         } else {
           console.warn(`[Quote] Partner document not found for ID: ${partnerId}`);
         }
@@ -238,8 +238,8 @@ export default function Quote() {
       }
       // 파트너 지정 예약인 경우 청소 가능일 여부 검증
       if (partnerId) {
-        const isDateAvailable = partnerAvailableDates.includes(cleaningDate);
-        if (!isDateAvailable) {
+        const isDateUnavailable = partnerUnavailableDates.includes(cleaningDate);
+        if (isDateUnavailable) {
           setIsInterceptOpen(true);
           return; // 모달 오픈 후 진행 차단
         }

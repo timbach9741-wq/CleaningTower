@@ -9,7 +9,7 @@ import { REGION_DATA } from '../data/regions';
 import RegionSelector from '../components/common/RegionSelector';
 
 // 고객용 읽기 전용 달력 컴포넌트
-const PartnerCalendar = ({ availableDates }) => {
+const PartnerCalendar = ({ unavailableDates }) => {
   const [currentMonth, setCurrentMonth] = React.useState(new Date());
 
   const getDaysInMonth = (year, month) => new Date(year, month + 1, 0).getDate();
@@ -35,7 +35,7 @@ const PartnerCalendar = ({ availableDates }) => {
 
   for (let day = 1; day <= daysInMonth; day++) {
     const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-    const isAvailable = availableDates?.includes(dateStr) || false;
+    const isAvailable = !unavailableDates?.includes(dateStr);
     const isToday = new Date().toISOString().split('T')[0] === dateStr;
 
     dayCells.push(
@@ -175,7 +175,7 @@ const PartnerDetailModal = ({ partner, onClose, quoteData }) => {
                           <span className="text-blue-600 text-sm">📅</span>
                           <span className="text-blue-900 font-bold text-sm">실시간 청소 가능일</span>
                         </div>
-                        <PartnerCalendar availableDates={partner.availableDates} />
+                        <PartnerCalendar unavailableDates={partner.unavailableDates} />
                       </div>
 
                       {/* 이달의 행사 영역 */}

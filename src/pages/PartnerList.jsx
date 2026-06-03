@@ -9,10 +9,10 @@ import { REGION_DATA } from '../data/regions';
 import RegionSelector from '../components/common/RegionSelector';
 
 const DEFAULT_IMAGES = [
-  '/images/korean_cleaner_livingroom.png',
-  '/images/korean_cleaner_bathroom.png',
-  '/images/korean_cleaner_kitchen.png',
-  '/images/korean_cleaning_team.png'
+  '/images/korean_cleaner_livingroom.webp',
+  '/images/korean_cleaner_bathroom.webp',
+  '/images/korean_cleaner_kitchen.webp',
+  '/images/korean_cleaning_team.webp'
 ];
 
 const getDeterministicDefaultImage = (docId) => {

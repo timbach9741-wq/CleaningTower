@@ -15,6 +15,23 @@ const regionsData = REGION_DATA as RegionData;
 
 import RegionSelector from '../components/common/RegionSelector';
 
+const DEFAULT_IMAGES = [
+  '/images/living_room_cleaning.webp',
+  '/images/cleaner_in_action.webp',
+  '/images/cleaning_couple_team.webp',
+  '/images/premium_cleaning_setup.webp',
+  '/images/sparkling_living_room.webp'
+];
+
+const getDeterministicDefaultImage = (docId: string | undefined) => {
+  if (!docId) return DEFAULT_IMAGES[0];
+  let sum = 0;
+  for (let i = 0; i < docId.length; i++) {
+    sum += docId.charCodeAt(i);
+  }
+  return DEFAULT_IMAGES[sum % DEFAULT_IMAGES.length];
+};
+
 export interface Order {
   id: string;
   type?: string;
@@ -832,7 +849,7 @@ export default function Partner() {
       teamSize: currentUser?.teamSize || '',
       mainServices: currentUser?.mainServices || [],
       tags: currentUser?.tags || [],
-      image: currentUser?.image || '/images/cleaner_in_action.webp'
+      image: currentUser?.image || getDeterministicDefaultImage(currentUser?.id)
     });
     setCustomService('');
     setShowEditProfileModal(true);
@@ -2449,7 +2466,7 @@ export default function Partner() {
                   </div>
                   <div className="flex items-center gap-4">
                     <div className="w-32 h-32 rounded-xl overflow-hidden bg-white shrink-0 border border-slate-200 relative p-2 flex items-center justify-center shadow-sm">
-                      <img src={editProfileForm.image || '/images/cleaner_in_action.webp'} alt="대표 이미지" className="max-w-full max-h-full object-contain" />
+                      <img src={editProfileForm.image || getDeterministicDefaultImage(currentUser?.id)} alt="대표 이미지" className="max-w-full max-h-full object-contain" />
                       {uploadProgress !== null && (
                         <div className="absolute inset-0 bg-black/50 flex items-center justify-center backdrop-blur-sm transition-all">
                           <span className="text-white text-xs font-bold">{Math.round(uploadProgress)}%</span>

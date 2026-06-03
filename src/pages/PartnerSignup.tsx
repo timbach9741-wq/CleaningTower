@@ -48,6 +48,15 @@ export default function PartnerSignup() {
       const finalRegionArray = formData.region; // Array of 'SIDO SIGUNGU'
       const finalRegionString = [finalRegionArray.join(', '), formData.regionDetail.trim()].filter(Boolean).join(' ');
 
+      const defaultImages = [
+        '/images/living_room_cleaning.webp',
+        '/images/cleaner_in_action.webp',
+        '/images/cleaning_couple_team.webp',
+        '/images/premium_cleaning_setup.webp',
+        '/images/sparkling_living_room.webp'
+      ];
+      const randomImage = defaultImages[Math.floor(Math.random() * defaultImages.length)];
+
       const firestoreData = {
         plan: formData.plan,
         businessType: formData.businessType,
@@ -64,6 +73,7 @@ export default function PartnerSignup() {
         password: formData.password === '휴대폰 뒤 4자리' ? formData.phone.replace(/[^0-9]/g, '').slice(-4) : formData.password,
         isNotificationEnabled: true,
         notificationRegions: finalRegionArray,
+        image: randomImage, // 신규 가입 시 랜덤 기본 이미지 배정
         createdAt: new Date().toISOString()
       };
 

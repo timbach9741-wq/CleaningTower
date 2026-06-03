@@ -8,6 +8,23 @@ import { REGION_DATA } from '../data/regions';
 
 import RegionSelector from '../components/common/RegionSelector';
 
+const DEFAULT_IMAGES = [
+  '/images/living_room_cleaning.webp',
+  '/images/cleaner_in_action.webp',
+  '/images/cleaning_couple_team.webp',
+  '/images/premium_cleaning_setup.webp',
+  '/images/sparkling_living_room.webp'
+];
+
+const getDeterministicDefaultImage = (docId) => {
+  if (!docId) return DEFAULT_IMAGES[0];
+  let sum = 0;
+  for (let i = 0; i < docId.length; i++) {
+    sum += docId.charCodeAt(i);
+  }
+  return DEFAULT_IMAGES[sum % DEFAULT_IMAGES.length];
+};
+
 // 고객용 읽기 전용 달력 컴포넌트
 const PartnerCalendar = ({ unavailableDates }) => {
   const [currentMonth, setCurrentMonth] = React.useState(new Date());
@@ -493,7 +510,9 @@ export default function PartnerList() {
             reviews: 0, // 초기값
             desc: data.desc || `안녕하세요. 책임감 있는 청소 약속드립니다.`,
             tags: data.tags && data.tags.length > 0 ? data.tags.map(t => t.startsWith('#') ? t : `#${t}`) : (data.mainServices ? data.mainServices.map(s => `#${s}`) : ['#신규등록']),
-            image: data.image || '/images/living_room_cleaning.webp',
+            image: (!data.image || data.image === '/images/living_room_cleaning.webp' || data.image === '/images/cleaner_in_action.webp')
+              ? getDeterministicDefaultImage(doc.id)
+              : data.image,
             area: data.region || '전국',
             monthlyEvent: data.monthlyEvent || '', // 이달의 행사 필드 연동
             portfolio: data.portfolio || [], // 작업 전후 사진

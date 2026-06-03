@@ -16,6 +16,10 @@
     "cleanUrls": false,
     "rewrites": [
       {
+        "source": "/naver22c0b7ebc99668722bf81b88034713c8*",
+        "destination": "/naver22c0b7ebc99668722bf81b88034713c8.html"
+      },
+      {
         "source": "**",
         "destination": "/index.html"
       }

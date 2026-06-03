@@ -17,6 +17,17 @@ import { fileURLToPath } from 'url';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const DIST_DIR = join(__dirname, 'dist');
 
+const PSEO_SLUGS = [
+  "seoul-gangnam", "seoul-seocho", "seoul-songpa", "seoul-mapo", "seoul-yongsan",
+  "seoul-seongdong", "seoul-gangdong", "seoul-nowon", "seoul-yeongdeungpo",
+  "gyeonggi-bundang", "gyeonggi-suwon", "gyeonggi-ilsan", "gyeonggi-gimpo",
+  "gyeonggi-hwaseong", "gyeonggi-yongin", "gyeonggi-hanami", "gyeonggi-namyangju",
+  "gyeonggi-anyang", "gyeonggi-bucheon", "gyeonggi-gwangmyeong",
+  "incheon-yeonsu", "incheon-bupyeong",
+  "busan-haeundae", "busan-suyeong", "busan-dongnae",
+  "daegu-suseong", "daejeon-yuseong"
+];
+
 // 프리렌더링할 공개 페이지 목록
 // (관리자/대시보드/동적 파라미터 페이지는 SEO 불필요하므로 제외)
 const ROUTES_TO_PRERENDER = [
@@ -28,6 +39,7 @@ const ROUTES_TO_PRERENDER = [
   '/cleaning/sick-building',
   '/cleaning/appliance',
   '/cleaning/regular',
+  ...PSEO_SLUGS.map(slug => `/${slug}`)
 ];
 
 // 각 라우트별 검색엔진 메타 정보 설정 (네이버/구글 등 검색봇 노출 최적화용)
@@ -164,6 +176,38 @@ async function prerender() {
         // 비동기 데이터 로딩/애니메이션 안정화 대기 단축 (2000ms -> 300ms)
         await new Promise(r => setTimeout(r, 300));
 
+        // 메타 정보 조회 또는 동적 생성 (pSEO용)
+        let metaInfo = ROUTE_META[route];
+        if (!metaInfo && route.startsWith('/')) {
+          const slug = route.substring(1);
+          const parts = slug.split('-');
+          if (parts.length >= 2) {
+            const SIDO_MAP = {
+              seoul: "서울", gyeonggi: "경기", incheon: "인천", busan: "부산",
+              daegu: "대구", gwangju: "광주", daejeon: "대전", ulsan: "울산",
+              sejong: "세종", gangwon: "강원", chungbuk: "충북", chungnam: "충남",
+              jeonbuk: "전북", jeonnam: "전남", gyeongbuk: "경북", gyeongnam: "경남", jeju: "제주"
+            };
+            const GU_MAP = {
+              gangnam: "강남구", seocho: "서초구", songpa: "송파구", mapo: "마포구", yongsan: "용산구",
+              seongdong: "성동구", gangdong: "강동구", nowon: "노원구", yeongdeungpo: "영등포구",
+              bundang: "분당구", suwon: "수원시", ilsan: "일산동구", gimpo: "김포시",
+              hwaseong: "화성시", yongin: "용인시", hanami: "하남시", namyangju: "남양주시",
+              anyang: "안양시", bucheon: "부천시", gwangmyeong: "광명시",
+              yeonsu: "연수구", bupyeong: "부평구", haeundae: "해운대구",
+              suyeong: "수영구", dongnae: "동래구", suseong: "수성구", yuseong: "유성구"
+            };
+            const sido = SIDO_MAP[parts[0]] || "";
+            const gu = GU_MAP[parts[1]] || parts[1];
+            const fullRegion = `${sido} ${gu}`.trim();
+            metaInfo = {
+              title: `${fullRegion} 입주청소 이사청소 추천 가격 1위 업체 | 청소타워`,
+              description: `${fullRegion} 입주청소, 이사청소 평당 정찰제 비용 가이드 및 평점 우수 청소 전문가 비교. 청소타워 100% 본사 보증 무상 A/S 정책으로 안심하고 예약하세요.`,
+              keywords: `${fullRegion} 입주청소, ${fullRegion} 이사청소, ${fullRegion} 청소업체, ${fullRegion} 입주청소 가격, ${fullRegion} 이사청소 추천`
+            };
+          }
+        }
+
         // Puppeteer에서 DOM 직접 수정 (경로별 SEO 메타 정보 동적 주입)
         await page.evaluate((currentRoute, metaInfo) => {
           if (!metaInfo) return;
@@ -207,7 +251,7 @@ async function prerender() {
           updateOrCreateMeta('property', 'twitter:title', metaInfo.title);
           updateOrCreateMeta('property', 'twitter:description', metaInfo.description);
           
-        }, route, ROUTE_META[route]);
+        }, route, metaInfo);
 
         // 렌더링된 HTML 추출
         let html = await page.content();

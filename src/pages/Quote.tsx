@@ -108,7 +108,7 @@ export default function Quote() {
   const [size, setSize] = useState<number | ''>(24);
   
   const [businessName, setBusinessName] = useState('');
-  const [address, setAddress] = useState('');
+  const [address, setAddress] = useState(() => location.state?.preselectedRegion || '');
   const [floorType, setFloorType] = useState('장판');
   const [waterCleaning, setWaterCleaning] = useState('가능');
   const [parking, setParking] = useState('가능');

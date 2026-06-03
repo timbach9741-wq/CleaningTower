@@ -22,6 +22,7 @@ const ServiceGuide = lazy(() => import('./pages/ServiceGuide'));
 const B2BQuote = lazy(() => import('./pages/B2BQuote'));
 const B2BSignup = lazy(() => import('./pages/B2BSignup'));
 const ReviewWrite = lazy(() => import('./pages/ReviewWrite'));
+const LocalSEO = lazy(() => import('./pages/LocalSEO'));
 
 // 페이지 전환 시 보여줄 로딩 스피너 (최소한의 인라인 스타일로 별도 CSS 없이 동작)
 function PageLoader() {
@@ -75,6 +76,9 @@ function App() {
 
           {/* 고객용 알림톡 전용 라우트 - 헤더/푸터 메뉴 노출 안됨 */}
           <Route path="/review-write/:orderId" element={<ReviewWrite />} />
+
+          {/* Programmatic SEO 지역별 랜딩 페이지 (모든 고정 라우트 매칭 실패 시 최종 매칭) */}
+          <Route path="/:regionKey" element={<LocalSEO />} />
         </Routes>
       </Suspense>
       </BrowserRouter>

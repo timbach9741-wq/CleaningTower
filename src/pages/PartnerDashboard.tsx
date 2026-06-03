@@ -16,11 +16,10 @@ const regionsData = REGION_DATA as RegionData;
 import RegionSelector from '../components/common/RegionSelector';
 
 const DEFAULT_IMAGES = [
-  '/images/living_room_cleaning.webp',
-  '/images/cleaner_in_action.webp',
-  '/images/cleaning_couple_team.webp',
-  '/images/premium_cleaning_setup.webp',
-  '/images/sparkling_living_room.webp'
+  '/images/korean_cleaner_livingroom.png',
+  '/images/korean_cleaner_bathroom.png',
+  '/images/korean_cleaner_kitchen.png',
+  '/images/korean_cleaning_team.png'
 ];
 
 const getDeterministicDefaultImage = (docId: string | undefined) => {
@@ -2490,7 +2489,7 @@ export default function Partner() {
                         </label>
                         {/* 데모용 버튼 */}
                         <button 
-                          onClick={() => setEditProfileForm({...editProfileForm, image: '/images/cleaning_couple_team.webp'})}
+                          onClick={() => setEditProfileForm({...editProfileForm, image: '/images/korean_cleaning_team.png'})}
                           className="text-xs bg-slate-100 hover:bg-slate-200 font-bold px-3 py-2.5 rounded-xl text-slate-600 transition-colors whitespace-nowrap"
                           disabled={uploadProgress !== null}
                         >

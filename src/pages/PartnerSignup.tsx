@@ -49,11 +49,10 @@ export default function PartnerSignup() {
       const finalRegionString = [finalRegionArray.join(', '), formData.regionDetail.trim()].filter(Boolean).join(' ');
 
       const defaultImages = [
-        '/images/living_room_cleaning.webp',
-        '/images/cleaner_in_action.webp',
-        '/images/cleaning_couple_team.webp',
-        '/images/premium_cleaning_setup.webp',
-        '/images/sparkling_living_room.webp'
+        '/images/korean_cleaner_livingroom.png',
+        '/images/korean_cleaner_bathroom.png',
+        '/images/korean_cleaner_kitchen.png',
+        '/images/korean_cleaning_team.png'
       ];
       const randomImage = defaultImages[Math.floor(Math.random() * defaultImages.length)];
 

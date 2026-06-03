@@ -9,11 +9,10 @@ import { REGION_DATA } from '../data/regions';
 import RegionSelector from '../components/common/RegionSelector';
 
 const DEFAULT_IMAGES = [
-  '/images/living_room_cleaning.webp',
-  '/images/cleaner_in_action.webp',
-  '/images/cleaning_couple_team.webp',
-  '/images/premium_cleaning_setup.webp',
-  '/images/sparkling_living_room.webp'
+  '/images/korean_cleaner_livingroom.png',
+  '/images/korean_cleaner_bathroom.png',
+  '/images/korean_cleaner_kitchen.png',
+  '/images/korean_cleaning_team.png'
 ];
 
 const getDeterministicDefaultImage = (docId) => {
@@ -510,7 +509,12 @@ export default function PartnerList() {
             reviews: 0, // 초기값
             desc: data.desc || `안녕하세요. 책임감 있는 청소 약속드립니다.`,
             tags: data.tags && data.tags.length > 0 ? data.tags.map(t => t.startsWith('#') ? t : `#${t}`) : (data.mainServices ? data.mainServices.map(s => `#${s}`) : ['#신규등록']),
-            image: (!data.image || data.image === '/images/living_room_cleaning.webp' || data.image === '/images/cleaner_in_action.webp')
+            image: (!data.image || 
+                    data.image === '/images/living_room_cleaning.webp' || 
+                    data.image === '/images/cleaner_in_action.webp' || 
+                    data.image === '/images/cleaning_couple_team.webp' || 
+                    data.image === '/images/premium_cleaning_setup.webp' || 
+                    data.image === '/images/sparkling_living_room.webp')
               ? getDeterministicDefaultImage(doc.id)
               : data.image,
             area: data.region || '전국',

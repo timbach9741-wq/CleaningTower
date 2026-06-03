@@ -481,21 +481,8 @@ export default function PartnerList() {
           const rawName = data.companyName || data.name || '무명 파트너';
           let maskedName = '';
           
-          if (isBusiness) {
-            // 사업자 상호명은 마스킹 없이 100% 그대로 다 노출
-            maskedName = rawName;
-          } else {
-            // 개인 이름 마스킹: 3글자 홍길동 -> 홍*동, 4글자 -> 독**재, 2글자 -> 김*
-            if (rawName.length === 3) {
-              maskedName = rawName[0] + '*' + rawName[2];
-            } else if (rawName.length === 4) {
-              maskedName = rawName[0] + '**' + rawName[3];
-            } else if (rawName.length > 4) {
-              maskedName = rawName.substring(0, 2) + '*'.repeat(rawName.length - 3) + rawName.slice(-1);
-            } else {
-              maskedName = rawName[0] + '*';
-            }
-          }
+          // 개인 이름 및 상호명 모두 마스킹 없이 100% 그대로 다 노출
+          maskedName = rawName;
 
           return {
             ...data,

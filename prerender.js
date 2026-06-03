@@ -146,7 +146,7 @@ async function prerender() {
   });
 
   try {
-    for (const route of ROUTES_TO_PRERENDER) {
+    await Promise.all(ROUTES_TO_PRERENDER.map(async (route) => {
       try {
         const page = await browser.newPage();
         const url = `http://localhost:${PORT}${route}`;
@@ -154,9 +154,6 @@ async function prerender() {
         console.log(`  📄 렌더링 중: ${route}`);
         
         // 페이지 방문 & 대기
-        // networkidle2 사용: Firebase WebSocket 연결이 유지되므로
-        // networkidle0(연결 0개)는 절대 도달할 수 없음
-        // networkidle2는 동시 연결이 2개 이하면 완료로 판단
         await page.goto(url, { 
           waitUntil: 'networkidle2',
           timeout: 45000,
@@ -164,8 +161,8 @@ async function prerender() {
 
         // React가 렌더링을 완료할 시간을 추가로 대기
         await page.waitForSelector('#root > *', { timeout: 15000 });
-        // 비동기 데이터 로딩/애니메이션 안정화 대기
-        await new Promise(r => setTimeout(r, 2000));
+        // 비동기 데이터 로딩/애니메이션 안정화 대기 단축 (2000ms -> 300ms)
+        await new Promise(r => setTimeout(r, 300));
 
         // Puppeteer에서 DOM 직접 수정 (경로별 SEO 메타 정보 동적 주입)
         await page.evaluate((currentRoute, metaInfo) => {
@@ -220,7 +217,6 @@ async function prerender() {
         if (route === '/') {
           outputPath = join(DIST_DIR, 'index.html');
         } else {
-          // /partners → /partners/index.html
           const dir = join(DIST_DIR, route);
           if (!existsSync(dir)) {
             mkdirSync(dir, { recursive: true });
@@ -233,10 +229,9 @@ async function prerender() {
         
         await page.close();
       } catch (err) {
-        // 개별 페이지 실패 시에도 나머지 페이지는 계속 처리
         console.warn(`  ⚠️ ${route} 렌더링 실패 (건너뜀): ${err.message}`);
       }
-    }
+    }));
 
     console.log(`\n🎉 프리렌더링 완료! ${ROUTES_TO_PRERENDER.length}개 페이지가 정적 HTML로 변환되었습니다.`);
     console.log('   네이버봇이 이제 콘텐츠를 읽을 수 있습니다.\n');

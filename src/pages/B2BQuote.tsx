@@ -480,35 +480,56 @@ export default function Quote() {
 
                 {/* 타사 vs 청소타워 비교 */}
                 <div className="px-5 lg:px-8 mb-8 lg:mb-12">
-                  <div className="grid grid-cols-2 gap-3 lg:gap-6">
+                  {/* 섹션 타이틀 */}
+                  <div className="text-center mb-5 lg:mb-8">
+                    <span className="inline-block px-4 py-1.5 lg:px-5 lg:py-2 rounded-full bg-white/5 border border-white/10 text-[11px] lg:text-sm font-bold text-slate-300 tracking-wider uppercase">왜 청소타워인가?</span>
+                  </div>
+
+                  <div className="relative grid grid-cols-2 gap-3 lg:gap-0">
+                    {/* VS 뱃지 - 데스크톱 */}
+                    <div className="hidden lg:flex absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-20 w-14 h-14 rounded-full bg-slate-800 border-2 border-slate-600 items-center justify-center shadow-xl">
+                      <span className="text-sm font-black text-slate-300">VS</span>
+                    </div>
+
                     {/* 타사 */}
-                    <div className="bg-red-950/50 border border-red-500/20 rounded-2xl lg:rounded-3xl p-4 lg:p-8">
-                      <div className="flex items-center gap-1.5 lg:gap-2.5 mb-3 lg:mb-5">
-                        <span className="text-red-400 text-sm lg:text-xl">⚠️</span>
-                        <span className="text-[11px] lg:text-base font-bold text-red-300">타사 업체</span>
+                    <div className="bg-gradient-to-br from-red-950/80 to-red-950/40 border border-red-500/20 rounded-2xl lg:rounded-3xl lg:rounded-r-none p-4 lg:p-10">
+                      <div className="flex items-center gap-2 lg:gap-3 mb-4 lg:mb-7">
+                        <div className="w-8 h-8 lg:w-12 lg:h-12 rounded-full bg-red-500/20 flex items-center justify-center">
+                          <span className="text-red-400 text-sm lg:text-2xl">✗</span>
+                        </div>
+                        <span className="text-xs lg:text-xl font-black text-red-300">타사 업체</span>
                       </div>
-                      <ul className="space-y-2 lg:space-y-3.5">
+                      <ul className="space-y-3 lg:space-y-5">
                         {['그냥 청소만 합니다', '보수는 별도 업체 부르세요', '하자 발견해도 내 일 아닙니다', '입주 후? 연락 안 됩니다'].map((t, i) => (
-                          <li key={i} className="flex items-start gap-1.5 lg:gap-2.5">
-                            <span className="text-red-400/80 text-xs lg:text-base mt-0.5 shrink-0">✗</span>
-                            <span className="text-red-200/80 text-[11px] lg:text-[15px] font-medium break-keep leading-snug">{t}</span>
+                          <li key={i} className="flex items-center gap-2 lg:gap-3">
+                            <span className="w-5 h-5 lg:w-6 lg:h-6 rounded-full bg-red-500/15 flex items-center justify-center shrink-0">
+                              <span className="text-red-400/80 text-[10px] lg:text-xs">✗</span>
+                            </span>
+                            <span className="text-red-200/90 text-[11px] lg:text-lg font-semibold break-keep">{t}</span>
                           </li>
                         ))}
                       </ul>
                     </div>
+
                     {/* 청소타워 */}
-                    <div className="bg-emerald-950/50 border border-emerald-500/20 rounded-2xl lg:rounded-3xl p-4 lg:p-8 relative overflow-hidden">
+                    <div className="bg-gradient-to-br from-emerald-950/80 to-emerald-950/40 border border-emerald-500/30 rounded-2xl lg:rounded-3xl lg:rounded-l-none p-4 lg:p-10 relative overflow-hidden">
                       {/* 글로우 */}
-                      <div className="hidden lg:block absolute -top-10 -right-10 w-40 h-40 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
-                      <div className="flex items-center gap-1.5 lg:gap-2.5 mb-3 lg:mb-5 relative z-10">
-                        <span className="text-emerald-400 text-sm lg:text-xl">✅</span>
-                        <span className="text-[11px] lg:text-base font-bold text-emerald-300">청소타워</span>
+                      <div className="hidden lg:block absolute -top-20 -right-20 w-60 h-60 bg-emerald-500/10 rounded-full blur-[60px] pointer-events-none" />
+                      <div className="hidden lg:block absolute bottom-0 left-0 w-40 h-40 bg-emerald-500/5 rounded-full blur-[40px] pointer-events-none" />
+
+                      <div className="flex items-center gap-2 lg:gap-3 mb-4 lg:mb-7 relative z-10">
+                        <div className="w-8 h-8 lg:w-12 lg:h-12 rounded-full bg-emerald-500/20 flex items-center justify-center">
+                          <span className="text-emerald-400 text-sm lg:text-2xl">✓</span>
+                        </div>
+                        <span className="text-xs lg:text-xl font-black text-emerald-300">청소타워</span>
                       </div>
-                      <ul className="space-y-2 lg:space-y-3.5 relative z-10">
+                      <ul className="space-y-3 lg:space-y-5 relative z-10">
                         {['청소하면서 하자까지 잡습니다', '실리콘·마루·벽지·장판 원스톱', '소비자가 말하기 전에 먼저 합니다', '사장님 평판을 지켜드립니다'].map((t, i) => (
-                          <li key={i} className="flex items-start gap-1.5 lg:gap-2.5">
-                            <span className="text-emerald-400 text-xs lg:text-base mt-0.5 shrink-0">✓</span>
-                            <span className="text-emerald-200/80 text-[11px] lg:text-[15px] font-medium break-keep leading-snug">{t}</span>
+                          <li key={i} className="flex items-center gap-2 lg:gap-3">
+                            <span className="w-5 h-5 lg:w-6 lg:h-6 rounded-full bg-emerald-500/20 flex items-center justify-center shrink-0">
+                              <span className="text-emerald-400 text-[10px] lg:text-xs font-bold">✓</span>
+                            </span>
+                            <span className="text-emerald-100 text-[11px] lg:text-lg font-semibold break-keep">{t}</span>
                           </li>
                         ))}
                       </ul>

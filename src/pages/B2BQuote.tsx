@@ -461,9 +461,9 @@ export default function Quote() {
                   {/* 데스크톱 글로우 장식 */}
                   <div className="hidden lg:block absolute top-[10%] left-1/2 -translate-x-1/2 w-[600px] h-[300px] rounded-full bg-amber-200/30 blur-[100px] pointer-events-none" />
                   <div className="relative z-10">
-                    <div className="inline-flex items-center gap-2 px-5 py-2 lg:px-6 lg:py-2.5 mb-6 lg:mb-8 rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 shadow-lg shadow-blue-500/25">
-                      <span className="text-white text-sm lg:text-lg">🔧</span>
-                      <span className="text-xs lg:text-sm font-bold text-white tracking-wide">청소타워만의 차별화</span>
+                    <div className="inline-flex items-center gap-2 px-4 py-1.5 lg:px-7 lg:py-3 mb-6 lg:mb-8 rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 shadow-lg shadow-blue-500/25">
+                      <span className="text-white text-xs lg:text-xl">🔧</span>
+                      <span className="text-[11px] lg:text-base font-bold text-white tracking-wide">청소타워만의 차별화</span>
                     </div>
                     <h2 className="text-2xl lg:text-[3.2rem] lg:leading-[1.2] font-black text-slate-900 mb-3 lg:mb-6 leading-tight tracking-tight break-keep">
                       청소만 하는 곳이 아닙니다.<br/>

@@ -375,7 +375,7 @@ export default function Partner() {
 
   // 내 일정: 날짜 오름차순(가까운 날짜부터), '상담완료' 상태인 오더만
   const myJobs = [...quotes]
-    .filter(o => o.assignedTo === currentUser?.id && o.status === '상담완료')
+    .filter(o => !o.isB2B && o.assignedTo === currentUser?.id && o.status === '상담완료')
     .sort((a, b) => {
       const dateA = a.date || a.cleaningDate || '';
       const dateB = b.date || b.cleaningDate || '';
@@ -395,7 +395,7 @@ export default function Partner() {
     
   // 대기중인 오더: 긴급 오더 최우선, 그 다음 최신 생성일 순
   const remainingOrders = [...quotes]
-    .filter(o => (o.status === '대기중' || o.status === 'pending') && (!o.assignedTo || o.assignedTo === currentUser?.id) && o.cleaningType !== '정기' && o.cleaningType !== '가전')
+    .filter(o => !o.isB2B && (o.status === '대기중' || o.status === 'pending') && (!o.assignedTo || o.assignedTo === currentUser?.id) && o.cleaningType !== '정기' && o.cleaningType !== '가전')
     .sort((a, b) => {
       if (a.isUrgent && !b.isUrgent) return -1;
       if (!a.isUrgent && b.isUrgent) return 1;

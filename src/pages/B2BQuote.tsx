@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import DaumPostcode from 'react-daum-postcode';
 import { db } from '../firebase';
 import { collection, addDoc, getDocs, query, where } from 'firebase/firestore';
+import { sendTelegramAlert } from '../telegramService';
 
 const optionCategories = [
   {
@@ -314,6 +315,26 @@ export default function Quote() {
           realPhone: contactInfo,
           createdAt: new Date().toISOString()
         });
+
+        // 텔레그램 관리자 알림
+        const telegramMsg = [
+          `🏢 <b>[업체전용] 새 견적 접수</b>`,
+          ``,
+          `📋 <b>업체명:</b> ${businessName || '미입력'}`,
+          `🧹 <b>청소종류:</b> ${cleaningType} 청소`,
+          `🏠 <b>주거형태:</b> ${houseSubType ? `${houseType} (${houseSubType})` : houseType}`,
+          `📐 <b>평수:</b> ${size}평`,
+          `📍 <b>주소:</b> ${address ? `${address} ${detailAddress}`.trim() : '미입력'}`,
+          `📅 <b>날짜:</b> ${cleaningDate || '미정'}`,
+          `⏰ <b>시간:</b> ${cleaningTime || '시간협의'}`,
+          `💰 <b>견적금액:</b> ${totalPriceIncVat.toLocaleString()}원`,
+          `📞 <b>연락처:</b> ${contactInfo || '미입력'}`,
+          optionLabels.length > 0 ? `🔧 <b>옵션:</b> ${optionLabels.join(', ')}` : '',
+          ``,
+          `⚠️ 파트너 앱에는 노출되지 않습니다. 직접 업체를 선정해주세요.`
+        ].filter(Boolean).join('\n');
+        
+        sendTelegramAlert(telegramMsg);
         
         alert('사업자 전용 예약이 성공적으로 접수되었습니다.\n담당 매니저가 확인 후 신속하게 연락드리겠습니다.');
         navigate('/');

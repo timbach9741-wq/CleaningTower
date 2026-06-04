@@ -1,9 +1,9 @@
-import { useState, type ChangeEvent } from 'react';
+import { useState, useEffect, useRef, type ChangeEvent } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import DaumPostcode from 'react-daum-postcode';
 import { db } from '../firebase';
-import { collection, addDoc } from 'firebase/firestore';
+import { collection, addDoc, getDocs, query, where } from 'firebase/firestore';
 
 const optionCategories = [
   {
@@ -48,6 +48,61 @@ const optionsList = optionCategories.flatMap(cat => cat.items);
 export default function Quote() {
   const navigate = useNavigate();
   const { type } = useParams();
+
+  // 업체 전용 로그인 상태
+  const [isB2BLoggedIn, setIsB2BLoggedIn] = useState(() => {
+    return sessionStorage.getItem('b2b_logged_in') === 'true';
+  });
+  const [b2bLoginForm, setB2bLoginForm] = useState({ id: '', password: '' });
+  const [b2bLoginError, setB2bLoginError] = useState('');
+  const [b2bLoginLoading, setB2bLoginLoading] = useState(false);
+  const [showB2BLoginModal, setShowB2BLoginModal] = useState(false);
+  const [pendingSubmit, setPendingSubmit] = useState(false);
+
+  const handleB2BLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setB2bLoginError('');
+    setB2bLoginLoading(true);
+    try {
+      if (!db) {
+        // Firebase 미연동 시 데모 로그인
+        if (b2bLoginForm.id === 'demo' && b2bLoginForm.password === '1234') {
+          sessionStorage.setItem('b2b_logged_in', 'true');
+          sessionStorage.setItem('b2b_business_name', '데모 업체');
+          setIsB2BLoggedIn(true);
+          return;
+        }
+        setB2bLoginError('아이디 또는 비밀번호가 일치하지 않습니다.');
+        return;
+      }
+      const q = query(
+        collection(db, 'b2bAccounts'),
+        where('loginId', '==', b2bLoginForm.id)
+      );
+      const snapshot = await getDocs(q);
+      if (snapshot.empty) {
+        setB2bLoginError('아이디 또는 비밀번호가 일치하지 않습니다.');
+        return;
+      }
+      const accountDoc = snapshot.docs[0];
+      const accountData = accountDoc.data();
+      if (accountData.password !== b2bLoginForm.password) {
+        setB2bLoginError('아이디 또는 비밀번호가 일치하지 않습니다.');
+        return;
+      }
+      sessionStorage.setItem('b2b_logged_in', 'true');
+      sessionStorage.setItem('b2b_business_name', accountData.businessName || accountData.name || '');
+      setBusinessName(accountData.businessName || accountData.name || '');
+      setIsB2BLoggedIn(true);
+      setShowB2BLoginModal(false);
+      setPendingSubmit(true);
+    } catch (err) {
+      console.error(err);
+      setB2bLoginError('로그인 처리 중 오류가 발생했습니다.');
+    } finally {
+      setB2bLoginLoading(false);
+    }
+  };
 
   // 스텝 상태 (0: 서비스 안내, 1: 주거/면적, 2: 세부사항, 3: 일정/주소, 4: 정보입력, 5: 견적완료)
   const [step, setStep] = useState(0);
@@ -208,6 +263,11 @@ export default function Quote() {
       alert('개인정보 제3자 제공 및 약관 동의가 필요합니다. 동의란에 체크해주세요.');
       return;
     }
+    // 로그인 안 되어있으면 로그인 모달 표시
+    if (!isB2BLoggedIn) {
+      setShowB2BLoginModal(true);
+      return;
+    }
     const optionLabels = Object.entries(selectedOptions).map(([id, count]) => {
       const option = optionsList.find(o => o.id === id);
       if (!option) return null;
@@ -264,6 +324,57 @@ export default function Quote() {
     }
   };
 
+  // 로그인 성공 후 자동 제출
+  const pendingSubmitRef = useRef(false);
+  useEffect(() => {
+    if (pendingSubmit && isB2BLoggedIn) {
+      setPendingSubmit(false);
+      // 약간의 딜레이 후 자동 제출
+      setTimeout(() => handleSubmitQuote(), 300);
+    }
+  }, [pendingSubmit, isB2BLoggedIn]);
+
+  // 가입 페이지에서 돌아왔을 때 폼 데이터 복원
+  useEffect(() => {
+    const saved = sessionStorage.getItem('b2b_draft_quote');
+    if (saved) {
+      try {
+        const data = JSON.parse(saved);
+        setStep(data.step || 0);
+        setHouseType(data.houseType || '아파트');
+        setHouseSubType(data.houseSubType || '');
+        setCleaningType(data.cleaningType || '프리미엄');
+        setSize(data.size || 24);
+        setBusinessName(data.businessName || '');
+        setAddress(data.address || '');
+        setFloorType(data.floorType || '장판');
+        setWaterCleaning(data.waterCleaning || '가능');
+        setParking(data.parking || '가능');
+        setElevator(data.elevator || '있음');
+        setDetailAddress(data.detailAddress || '');
+        setCleaningDate(data.cleaningDate || '');
+        setCleaningTime(data.cleaningTime || '');
+        setContactInfo(data.contactInfo || '');
+        setMemos(data.memos || '');
+        setSelectedOptions(data.selectedOptions || {});
+        setIsAgreedPersonalInfo(data.isAgreedPersonalInfo || false);
+        sessionStorage.removeItem('b2b_draft_quote');
+      } catch(e) { /* ignore */ }
+    }
+  }, []);
+
+  // 가입 페이지로 이동 전 폼 데이터 저장
+  const saveAndGoSignup = () => {
+    const draft = {
+      step, houseType, houseSubType, cleaningType, size,
+      businessName, address, floorType, waterCleaning, parking,
+      elevator, detailAddress, cleaningDate, cleaningTime,
+      contactInfo, memos, selectedOptions, isAgreedPersonalInfo
+    };
+    sessionStorage.setItem('b2b_draft_quote', JSON.stringify(draft));
+    navigate('/b2b/signup');
+  };
+
   const handlePrev = () => {
     setErrorMsg('');
     if (step > 0) {
@@ -272,6 +383,7 @@ export default function Quote() {
       navigate('/');
     }
   };
+
 
   return (
     <div className="min-h-screen bg-slate-900 text-white font-sans flex flex-col">
@@ -288,9 +400,21 @@ export default function Quote() {
               {step === 5 ? 'home' : 'arrow_back'}
             </span>
           </button>
-          <span className="font-bold text-base text-white tracking-tight text-center flex-1 pr-8">
+          <span className="font-bold text-base text-white tracking-tight text-center flex-1">
             {step === 0 ? '청소타워 서비스 안내' : `사업자 전용 앱 (${cleaningType})`}
           </span>
+          {isB2BLoggedIn && (
+            <button
+              onClick={() => {
+                sessionStorage.removeItem('b2b_logged_in');
+                sessionStorage.removeItem('b2b_business_name');
+                setIsB2BLoggedIn(false);
+              }}
+              className="text-[11px] text-slate-400 font-bold px-2 py-1 rounded-lg hover:bg-white/10 transition-colors whitespace-nowrap"
+            >
+              로그아웃
+            </button>
+          )}
         </div>
       </header>
 
@@ -1516,6 +1640,82 @@ export default function Quote() {
           </div>
         </div>
       )}
+      {/* B2B 로그인 모달 */}
+      <AnimatePresence>
+        {showB2BLoginModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center"
+            onClick={() => setShowB2BLoginModal(false)}
+          >
+            <motion.div
+              initial={{ y: '100%' }}
+              animate={{ y: 0 }}
+              exit={{ y: '100%' }}
+              transition={{ type: 'spring', bounce: 0, duration: 0.4 }}
+              onClick={e => e.stopPropagation()}
+              className="w-full max-w-md bg-slate-900 border-t border-white/10 rounded-t-3xl sm:rounded-3xl p-6 pb-8 sm:mb-0"
+            >
+              {/* 핸들바 */}
+              <div className="w-10 h-1 bg-white/20 rounded-full mx-auto mb-6 sm:hidden" />
+
+              <div className="text-center mb-6">
+                <div className="inline-flex items-center gap-2 px-3 py-1 mb-3 rounded-full bg-blue-500/15 border border-blue-400/30">
+                  <span className="text-blue-400 text-xs">🔐</span>
+                  <span className="text-[11px] font-bold text-blue-300">업체 인증 필요</span>
+                </div>
+                <h3 className="text-xl font-black text-white mb-1">예약 접수를 위해 로그인해주세요</h3>
+                <p className="text-xs text-slate-400 font-medium">작성하신 견적 내용은 그대로 유지됩니다</p>
+              </div>
+
+              <form onSubmit={handleB2BLogin} className="space-y-3">
+                <input
+                  type="text"
+                  required
+                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all text-sm font-medium"
+                  placeholder="아이디 (가입 시 연락처)"
+                  value={b2bLoginForm.id}
+                  onChange={e => setB2bLoginForm({ ...b2bLoginForm, id: e.target.value })}
+                />
+                <input
+                  type="password"
+                  required
+                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all text-sm font-medium"
+                  placeholder="비밀번호"
+                  value={b2bLoginForm.password}
+                  onChange={e => setB2bLoginForm({ ...b2bLoginForm, password: e.target.value })}
+                />
+
+                {b2bLoginError && (
+                  <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-red-500/10 border border-red-500/20">
+                    <span className="text-red-400 text-xs">⚠️</span>
+                    <span className="text-red-300 text-xs font-medium">{b2bLoginError}</span>
+                  </div>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={b2bLoginLoading}
+                  className="w-full py-3.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-black rounded-xl shadow-xl shadow-blue-600/20 active:scale-[0.98] transition-all disabled:opacity-50 text-sm"
+                >
+                  {b2bLoginLoading ? '인증 중...' : '로그인 후 예약 접수'}
+                </button>
+              </form>
+
+              <div className="mt-5 text-center">
+                <button
+                  onClick={saveAndGoSignup}
+                  className="text-sm text-slate-400 font-bold hover:text-white transition-colors"
+                >
+                  처음이신가요? <span className="text-blue-400 underline underline-offset-4">1분 가입</span>
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

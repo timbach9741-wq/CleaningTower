@@ -113,6 +113,18 @@ export default function Header({ onOpenQuote, theme = 'light', hideQuoteButton =
         {/* Action Button & Mobile Menu Toggle */}
         <div className="flex items-center gap-4 z-50">
           <button 
+            onClick={() => navigate('/b2b/quote')}
+            className={`hidden sm:flex px-4 py-2.5 rounded-full font-bold text-sm transition-all duration-300 items-center gap-1.5 hover:-translate-y-0.5 ${
+              isScrolled || isMobileMenuOpen
+                ? 'text-blue-600 hover:text-blue-700' 
+                : (theme === 'dark'
+                    ? 'text-blue-300 hover:text-white'
+                    : 'text-blue-600 hover:text-blue-700')
+            }`}
+          >
+            🏢 업체 전용
+          </button>
+          <button 
             onClick={() => navigate('/partner-dashboard', { state: { showLogin: true } })}
             className={`hidden sm:flex px-4 py-2.5 rounded-full font-bold text-sm transition-all duration-300 items-center gap-1.5 hover:-translate-y-0.5 ${
               isScrolled || isMobileMenuOpen
@@ -208,9 +220,18 @@ export default function Header({ onOpenQuote, theme = 'light', hideQuoteButton =
           <button 
             onClick={() => {
               setIsMobileMenuOpen(false);
+              navigate('/b2b/quote');
+            }}
+            className="mt-2 w-full px-5 py-3 rounded-xl font-bold text-sm bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 flex justify-center items-center gap-1.5"
+          >
+            🏢 업체 전용 로그인
+          </button>
+          <button 
+            onClick={() => {
+              setIsMobileMenuOpen(false);
               navigate('/partner-dashboard', { state: { showLogin: true } });
             }}
-            className="mt-2 w-full px-5 py-3 rounded-xl font-bold text-sm bg-slate-100 hover:bg-slate-200 text-slate-700 flex justify-center items-center gap-1.5"
+            className="w-full px-5 py-3 rounded-xl font-bold text-sm bg-slate-100 hover:bg-slate-200 text-slate-700 flex justify-center items-center gap-1.5"
           >
             파트너스 로그인
           </button>

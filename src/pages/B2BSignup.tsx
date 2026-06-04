@@ -136,14 +136,23 @@ export default function Signup() {
           phone: formData.phone,
           email: formData.email,
           businessNumber: formData.businessNumber,
-          status: isVerified ? 'active' : 'pending', // 진위확인이 되었으면 자동 승인(active)
+          status: isVerified ? 'active' : 'pending',
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString()
         });
+
+        // B2B 전용 로그인 계정 저장 (연락처 = 로그인ID)
+        await addDoc(collection(db, "b2bAccounts"), {
+          loginId: formData.phone,
+          password: formData.password,
+          businessName: formData.name,
+          phone: formData.phone,
+          email: formData.email,
+          businessNumber: formData.businessNumber,
+          createdAt: new Date().toISOString()
+        });
       } catch (fbError) {
         console.error("Firebase 저장 중 오류:", fbError);
-        // Firebase 저장 실패 시에도 일단 로컬 로그인은 진행하도록 할 수 있으나, 
-        // 실제 운영 시에는 이 부분을 더 엄격하게 처리해야 할 수 있습니다.
       }
 
       // 텔레그램 알림 발송 (비동기)
@@ -484,15 +493,27 @@ export default function Signup() {
                   <CheckCircle2 size={48} className="text-blue-600" />
                 </div>
                 <h3 className="text-2xl font-black text-slate-900 mb-2">제휴 가입이 완료되었습니다!</h3>
-                <p className="text-slate-500 mb-8 break-keep leading-relaxed font-medium">
-                  사업자 진위확인이 완료되어 <strong className="text-blue-600">자동으로 승인 처리</strong> 되었습니다!<br/>지금 바로 로그인하여 고객들의 견적 요청을 확인하고 제안해보세요!
+                <p className="text-slate-500 mb-4 break-keep leading-relaxed font-medium">
+                  사업자 진위확인이 완료되어 <strong className="text-blue-600">자동으로 승인 처리</strong> 되었습니다!
                 </p>
 
+                <div className="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 mb-8 text-left">
+                  <p className="text-xs font-bold text-slate-400 mb-2">로그인 정보</p>
+                  <div className="space-y-1.5">
+                    <p className="text-sm text-slate-700 font-medium">
+                      <span className="text-slate-400">아이디:</span> <strong>{formData.phone}</strong>
+                    </p>
+                    <p className="text-sm text-slate-700 font-medium">
+                      <span className="text-slate-400">비밀번호:</span> 가입 시 설정한 비밀번호
+                    </p>
+                  </div>
+                </div>
+
                 <button 
-                  onClick={() => navigate('/')}
+                  onClick={() => navigate('/b2b/quote')}
                   className="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl active:scale-[0.98] transition-transform shadow-lg"
                 >
-                  홈으로 이동
+                  업체 전용 앱으로 이동 →
                 </button>
               </motion.div>
             )}

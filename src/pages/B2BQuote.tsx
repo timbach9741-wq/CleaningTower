@@ -709,7 +709,7 @@ export default function Quote() {
                       </div>
                     </button>
 
-                    {/* 벽지 들뜸 보수 */}
+                    {/* 벽지콕 시공 */}
                     <button
                       type="button"
                       onClick={() => setActiveRepairCard(activeRepairCard === 'wallpaper' ? null : 'wallpaper')}
@@ -719,23 +719,16 @@ export default function Quote() {
                           : 'border-white/10 hover:border-white/20'
                       }`}
                     >
-                      {/* 이미지 영역 */}
+                      {/* 이미지 영역 - 좌우 비교 사진 크롭 */}
                       <div className="relative aspect-[16/9] bg-slate-800 overflow-hidden">
-                        {/* Before 이미지 */}
-                        <img
-                          src="/repair_wallpaper_before.png"
-                          alt="벽지 들뜸 보수 전"
-                          className={`absolute inset-0 w-full h-full object-cover object-top transition-opacity duration-500 z-[1] ${
-                            activeRepairCard === 'wallpaper' ? 'opacity-0' : 'opacity-100'
-                          }`}
-                        />
-                        {/* After 이미지 */}
-                        <img
-                          src="/repair_wallpaper_after.png"
-                          alt="벽지 들뜸 보수 후"
-                          className={`absolute inset-0 w-full h-full object-cover object-top transition-opacity duration-500 z-[1] ${
-                            activeRepairCard === 'wallpaper' ? 'opacity-100' : 'opacity-0'
-                          }`}
+                        <div
+                          className="absolute inset-0 z-[1] transition-all duration-700 ease-in-out"
+                          style={{
+                            backgroundImage: 'url(/repair_wallpaper.png)',
+                            backgroundSize: '200% 120%',
+                            backgroundPosition: activeRepairCard === 'wallpaper' ? '100% 30%' : '0% 30%',
+                            backgroundRepeat: 'no-repeat',
+                          }}
                         />
                         {/* Before/After 뱃지 */}
                         <div className="absolute top-3 left-3 z-10">
@@ -758,8 +751,8 @@ export default function Quote() {
                       <div className="p-4 bg-white/5">
                         <div className="flex items-center justify-between">
                           <div>
-                            <h4 className="text-base font-black text-white">벽지 들뜸 보수</h4>
-                            <p className="text-[11px] text-slate-400 font-medium mt-0.5">코너 벌어짐 · 이음새 들뜸 재접착</p>
+                            <h4 className="text-base font-black text-white">벽지콕 시공</h4>
+                            <p className="text-[11px] text-slate-400 font-medium mt-0.5">벽지 찍힘 · 긁힘 · 구멍 복원 보수</p>
                           </div>
                           <span className="text-[10px] font-bold text-amber-400 bg-amber-500/10 border border-amber-400/20 px-2.5 py-1 rounded-full">무상</span>
                         </div>

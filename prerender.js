@@ -157,125 +157,141 @@ async function prerender() {
     args: ['--no-sandbox', '--disable-setuid-sandbox'],
   });
 
+  const CONCURRENCY_LIMIT = 4;
+  const queue = [...ROUTES_TO_PRERENDER];
+  let processedCount = 0;
+
   try {
-    await Promise.all(ROUTES_TO_PRERENDER.map(async (route) => {
-      try {
-        const page = await browser.newPage();
-        const url = `http://localhost:${PORT}${route}`;
+    const worker = async () => {
+      while (queue.length > 0) {
+        const route = queue.shift();
+        if (!route) continue;
         
-        console.log(`  📄 렌더링 중: ${route}`);
-        
-        // 페이지 방문 & 대기
-        await page.goto(url, { 
-          waitUntil: 'networkidle2',
-          timeout: 45000,
-        });
-
-        // React가 렌더링을 완료할 시간을 추가로 대기
-        await page.waitForSelector('#root > *', { timeout: 15000 });
-        // 비동기 데이터 로딩/애니메이션 안정화 대기 단축 (2000ms -> 300ms)
-        await new Promise(r => setTimeout(r, 300));
-
-        // 메타 정보 조회 또는 동적 생성 (pSEO용)
-        let metaInfo = ROUTE_META[route];
-        if (!metaInfo && route.startsWith('/')) {
-          const slug = route.substring(1);
-          const parts = slug.split('-');
-          if (parts.length >= 2) {
-            const SIDO_MAP = {
-              seoul: "서울", gyeonggi: "경기", incheon: "인천", busan: "부산",
-              daegu: "대구", gwangju: "광주", daejeon: "대전", ulsan: "울산",
-              sejong: "세종", gangwon: "강원", chungbuk: "충북", chungnam: "충남",
-              jeonbuk: "전북", jeonnam: "전남", gyeongbuk: "경북", gyeongnam: "경남", jeju: "제주"
-            };
-            const GU_MAP = {
-              gangnam: "강남구", seocho: "서초구", songpa: "송파구", mapo: "마포구", yongsan: "용산구",
-              seongdong: "성동구", gangdong: "강동구", nowon: "노원구", yeongdeungpo: "영등포구",
-              bundang: "분당구", suwon: "수원시", ilsan: "일산동구", gimpo: "김포시",
-              hwaseong: "화성시", yongin: "용인시", hanami: "하남시", namyangju: "남양주시",
-              anyang: "안양시", bucheon: "부천시", gwangmyeong: "광명시",
-              yeonsu: "연수구", bupyeong: "부평구", haeundae: "해운대구",
-              suyeong: "수영구", dongnae: "동래구", suseong: "수성구", yuseong: "유성구"
-            };
-            const sido = SIDO_MAP[parts[0]] || "";
-            const gu = GU_MAP[parts[1]] || parts[1];
-            const fullRegion = `${sido} ${gu}`.trim();
-            metaInfo = {
-              title: `${fullRegion} 입주청소 이사청소 추천 가격 1위 업체 | 청소타워`,
-              description: `${fullRegion} 입주청소, 이사청소 평당 정찰제 비용 가이드 및 평점 우수 청소 전문가 비교. 청소타워 100% 본사 보증 무상 A/S 정책으로 안심하고 예약하세요.`,
-              keywords: `${fullRegion} 입주청소, ${fullRegion} 이사청소, ${fullRegion} 청소업체, ${fullRegion} 입주청소 가격, ${fullRegion} 이사청소 추천`
-            };
-          }
-        }
-
-        // Puppeteer에서 DOM 직접 수정 (경로별 SEO 메타 정보 동적 주입)
-        await page.evaluate((currentRoute, metaInfo) => {
-          if (!metaInfo) return;
+        try {
+          const page = await browser.newPage();
+          const url = `http://localhost:${PORT}${route}`;
+          processedCount++;
           
-          // 1. Title 변경
-          document.title = metaInfo.title;
+          console.log(`  📄 렌더링 중 (${processedCount}/${ROUTES_TO_PRERENDER.length}): ${route}`);
           
-          // 2. Canonical URL 변경
-          let canonical = document.querySelector('link[rel="canonical"]');
-          if (!canonical) {
-            canonical = document.createElement('link');
-            canonical.setAttribute('rel', 'canonical');
-            document.head.appendChild(canonical);
-          }
-          canonical.setAttribute('href', `https://cheongsotower.kr${currentRoute === '/' ? '/' : currentRoute + '/'}`);
-
-          // Helper: meta 태그 업데이트 또는 생성
-          const updateOrCreateMeta = (attrName, attrValue, contentValue) => {
-            let meta = document.querySelector(`meta[${attrName}="${attrValue}"]`);
-            if (!meta) {
-              meta = document.createElement('meta');
-              meta.setAttribute(attrName, attrValue);
-              document.head.appendChild(meta);
+          // 페이지 방문 & 대기
+          await page.goto(url, { 
+            waitUntil: 'networkidle2',
+            timeout: 45000,
+          });
+  
+          // React가 렌더링을 완료할 시간을 추가로 대기
+          await page.waitForSelector('#root > *', { timeout: 15000 });
+          // 비동기 데이터 로딩/애니메이션 안정화 대기 단축
+          await new Promise(r => setTimeout(r, 300));
+  
+          // 메타 정보 조회 또는 동적 생성 (pSEO용)
+          let metaInfo = ROUTE_META[route];
+          if (!metaInfo && route.startsWith('/')) {
+            const slug = route.substring(1);
+            const parts = slug.split('-');
+            if (parts.length >= 2) {
+              const SIDO_MAP = {
+                seoul: "서울", gyeonggi: "경기", incheon: "인천", busan: "부산",
+                daegu: "대구", gwangju: "광주", daejeon: "대전", ulsan: "울산",
+                sejong: "세종", gangwon: "강원", chungbuk: "충북", chungnam: "충남",
+                jeonbuk: "전북", jeonnam: "전남", gyeongbuk: "경북", gyeongnam: "경남", jeju: "제주"
+              };
+              const GU_MAP = {
+                gangnam: "강남구", seocho: "서초구", songpa: "송파구", mapo: "마포구", yongsan: "용산구",
+                seongdong: "성동구", gangdong: "강동구", nowon: "노원구", yeongdeungpo: "영등포구",
+                bundang: "분당구", suwon: "수원시", ilsan: "일산동구", gimpo: "김포시",
+                hwaseong: "화성시", yongin: "용인시", hanami: "하남시", namyangju: "남양주시",
+                anyang: "안양시", bucheon: "부천시", gwangmyeong: "광명시",
+                yeonsu: "연수구", bupyeong: "부평구", haeundae: "해운대구",
+                suyeong: "수영구", dongnae: "동래구", suseong: "수성구", yuseong: "유성구"
+              };
+              const sido = SIDO_MAP[parts[0]] || "";
+              const gu = GU_MAP[parts[1]] || parts[1];
+              const fullRegion = `${sido} ${gu}`.trim();
+              metaInfo = {
+                title: `${fullRegion} 입주청소 이사청소 추천 가격 1위 업체 | 청소타워`,
+                description: `${fullRegion} 입주청소, 이사청소 평당 정찰제 비용 가이드 및 평점 우수 청소 전문가 비교. 청소타워 100% 본사 보증 무상 A/S 정책으로 안심하고 예약하세요.`,
+                keywords: `${fullRegion} 입주청소, ${fullRegion} 이사청소, ${fullRegion} 청소업체, ${fullRegion} 입주청소 가격, ${fullRegion} 이사청소 추천`
+              };
             }
-            meta.setAttribute('content', contentValue);
-          };
-
-          // 3. Description 변경
-          updateOrCreateMeta('name', 'description', metaInfo.description);
-
-          // 4. Keywords 변경
-          updateOrCreateMeta('name', 'keywords', metaInfo.keywords);
-
-          // 5. Open Graph url, title, description 변경
-          updateOrCreateMeta('property', 'og:url', `https://cheongsotower.kr${currentRoute === '/' ? '/' : currentRoute + '/'}`);
-          updateOrCreateMeta('property', 'og:title', metaInfo.title);
-          updateOrCreateMeta('property', 'og:description', metaInfo.description);
-
-          // 6. Twitter url, title, description 변경
-          updateOrCreateMeta('property', 'twitter:url', `https://cheongsotower.kr${currentRoute === '/' ? '/' : currentRoute + '/'}`);
-          updateOrCreateMeta('property', 'twitter:title', metaInfo.title);
-          updateOrCreateMeta('property', 'twitter:description', metaInfo.description);
-          
-        }, route, metaInfo);
-
-        // 렌더링된 HTML 추출
-        let html = await page.content();
-        
-        // 저장 경로 결정
-        let outputPath;
-        if (route === '/') {
-          outputPath = join(DIST_DIR, 'index.html');
-        } else {
-          const dir = join(DIST_DIR, route);
-          if (!existsSync(dir)) {
-            mkdirSync(dir, { recursive: true });
           }
-          outputPath = join(dir, 'index.html');
+  
+          // Puppeteer에서 DOM 직접 수정 (경로별 SEO 메타 정보 동적 주입)
+          await page.evaluate((currentRoute, metaInfo) => {
+            if (!metaInfo) return;
+            
+            // 1. Title 변경
+            document.title = metaInfo.title;
+            
+            // 2. Canonical URL 변경
+            let canonical = document.querySelector('link[rel="canonical"]');
+            if (!canonical) {
+              canonical = document.createElement('link');
+              canonical.setAttribute('rel', 'canonical');
+              document.head.appendChild(canonical);
+            }
+            canonical.setAttribute('href', `https://cheongsotower.kr${currentRoute === '/' ? '/' : currentRoute + '/'}`);
+  
+            // Helper: meta 태그 업데이트 또는 생성
+            const updateOrCreateMeta = (attrName, attrValue, contentValue) => {
+              let meta = document.querySelector(`meta[${attrName}="${attrValue}"]`);
+              if (!meta) {
+                meta = document.createElement('meta');
+                meta.setAttribute(attrName, attrValue);
+                document.head.appendChild(meta);
+              }
+              meta.setAttribute('content', contentValue);
+            };
+  
+            // 3. Description 변경
+            updateOrCreateMeta('name', 'description', metaInfo.description);
+  
+            // 4. Keywords 변경
+            updateOrCreateMeta('name', 'keywords', metaInfo.keywords);
+  
+            // 5. Open Graph url, title, description 변경
+            updateOrCreateMeta('property', 'og:url', `https://cheongsotower.kr${currentRoute === '/' ? '/' : currentRoute + '/'}`);
+            updateOrCreateMeta('property', 'og:title', metaInfo.title);
+            updateOrCreateMeta('property', 'og:description', metaInfo.description);
+  
+            // 6. Twitter url, title, description 변경
+            updateOrCreateMeta('property', 'twitter:url', `https://cheongsotower.kr${currentRoute === '/' ? '/' : currentRoute + '/'}`);
+            updateOrCreateMeta('property', 'twitter:title', metaInfo.title);
+            updateOrCreateMeta('property', 'twitter:description', metaInfo.description);
+            
+          }, route, metaInfo);
+  
+          // 렌더링된 HTML 추출
+          let html = await page.content();
+          
+          // 저장 경로 결정
+          let outputPath;
+          if (route === '/') {
+            outputPath = join(DIST_DIR, 'index.html');
+          } else {
+            const dir = join(DIST_DIR, route);
+            if (!existsSync(dir)) {
+              mkdirSync(dir, { recursive: true });
+            }
+            outputPath = join(dir, 'index.html');
+          }
+  
+          writeFileSync(outputPath, html, 'utf-8');
+          console.log(`  ✅ 저장 완료: ${outputPath.replace(DIST_DIR, 'dist')}`);
+          
+          await page.close();
+        } catch (err) {
+          console.warn(`  ⚠️ ${route} 렌더링 실패 (건너뜀): ${err.message}`);
         }
-
-        writeFileSync(outputPath, html, 'utf-8');
-        console.log(`  ✅ 저장 완료: ${outputPath.replace(DIST_DIR, 'dist')}`);
-        
-        await page.close();
-      } catch (err) {
-        console.warn(`  ⚠️ ${route} 렌더링 실패 (건너뜀): ${err.message}`);
       }
-    }));
+    };
+  
+    const workers = Array(Math.min(CONCURRENCY_LIMIT, ROUTES_TO_PRERENDER.length))
+      .fill(null)
+      .map(() => worker());
+  
+    await Promise.all(workers);
 
     console.log(`\n🎉 프리렌더링 완료! ${ROUTES_TO_PRERENDER.length}개 페이지가 정적 HTML로 변환되었습니다.`);
     console.log('   네이버봇이 이제 콘텐츠를 읽을 수 있습니다.\n');

@@ -122,7 +122,7 @@ export default function Header({ onOpenQuote, theme = 'light', hideQuoteButton =
                     : 'text-slate-700 hover:text-blue-600')
             }`}
           >
-            파트너 로그인
+            파트너스 로그인
           </button>
 
           {!hideQuoteButton && (
@@ -212,7 +212,7 @@ export default function Header({ onOpenQuote, theme = 'light', hideQuoteButton =
             }}
             className="mt-2 w-full px-5 py-3 rounded-xl font-bold text-sm bg-slate-100 hover:bg-slate-200 text-slate-700 flex justify-center items-center gap-1.5"
           >
-            파트너 로그인
+            파트너스 로그인
           </button>
           <button 
             onClick={() => {

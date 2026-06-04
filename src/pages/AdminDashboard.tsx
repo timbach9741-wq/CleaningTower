@@ -52,6 +52,7 @@ export interface Order {
   adminMemo?: string;
   cleaningTime?: string;
   memo?: string;
+  isB2B?: boolean;
 }
 
 export interface PartnerUser {
@@ -162,6 +163,7 @@ export default function Admin() {
   const [customersData, setCustomersData] = useState<any[]>([]);
   const [selectedCustomerPhones, setSelectedCustomerPhones] = useState<string[]>([]);
   const [customerSort, setCustomerSort] = useState<'latest' | 'totalSpent'>('latest');
+  const [customerSearchTerm, setCustomerSearchTerm] = useState('');
   const [isCustomerNoteModalOpen, setIsCustomerNoteModalOpen] = useState(false);
   const [selectedCustomerForNote, setSelectedCustomerForNote] = useState<any>(null);
   const [isBulkMessageModalOpen, setIsBulkMessageModalOpen] = useState(false);
@@ -582,45 +584,51 @@ export default function Admin() {
   };
 
   // 재무 탭 데이터 필터링 적용 로직
-  const filteredFinanceQuotes = quotes.filter(q => {
-    if (q.status === '취소') return false; // 기본적으로 취소건은 재무 통계에서 제외
-    
-    // 1. 기간 필터
-    if (financeStartDate && q.date && q.date < financeStartDate) return false;
-    if (financeEndDate && q.date && q.date > financeEndDate) return false;
-    
-    // 2. 파트너 필터
-    if (financePartnerFilter !== '전체') {
-      const isUnassigned = !q.assignedTo;
-      if (financePartnerFilter === '미배정') {
-        if (!isUnassigned) return false;
-      } else {
-        if (q.assignedTo !== financePartnerFilter) return false;
+  const filteredFinanceQuotes = useMemo(() => {
+    return quotes.filter(q => {
+      if (q.status === '취소') return false; // 기본적으로 취소건은 재무 통계에서 제외
+      
+      // 1. 기간 필터
+      if (financeStartDate && q.date && q.date < financeStartDate) return false;
+      if (financeEndDate && q.date && q.date > financeEndDate) return false;
+      
+      // 2. 파트너 필터
+      if (financePartnerFilter !== '전체') {
+        const isUnassigned = !q.assignedTo;
+        if (financePartnerFilter === '미배정') {
+          if (!isUnassigned) return false;
+        } else {
+          if (q.assignedTo !== financePartnerFilter) return false;
+        }
       }
-    }
-    
-    return true;
-  });
+      
+      return true;
+    });
+  }, [quotes, financeStartDate, financeEndDate, financePartnerFilter]);
 
   // 견적 관리 탭 데이터 필터링 적용 로직
-  const filteredQuotesList = quotes.filter(q => {
-    if (q.cleaningType === '정기' || q.cleaningType === '가전' || q.type === '정기 청소' || q.type === '가전 청소') return false;
-    if (quoteFilters.status !== '전체' && q.status !== quoteFilters.status) return false;
-    if (quoteFilters.startDate && q.date && q.date < quoteFilters.startDate) return false;
-    if (quoteFilters.endDate && q.date && q.date > quoteFilters.endDate) return false;
-    return true;
-  });
+  const filteredQuotesList = useMemo(() => {
+    return quotes.filter(q => {
+      if (q.cleaningType === '정기' || q.cleaningType === '가전' || q.type === '정기 청소' || q.type === '가전 청소') return false;
+      if (quoteFilters.status !== '전체' && q.status !== quoteFilters.status) return false;
+      if (quoteFilters.startDate && q.date && q.date < quoteFilters.startDate) return false;
+      if (quoteFilters.endDate && q.date && q.date > quoteFilters.endDate) return false;
+      return true;
+    });
+  }, [quotes, quoteFilters]);
 
   // 간편 신청 접수 탭 데이터 필터링 적용 로직
-  const filteredSimpleQuotesList = quotes.filter(q => {
-    if (q.cleaningType !== '정기' && q.cleaningType !== '가전' && q.type !== '정기 청소' && q.type !== '가전 청소') return false;
-    if (quoteFilters.status !== '전체' && q.status !== quoteFilters.status) return false;
-    if (quoteFilters.startDate && q.date && q.date < quoteFilters.startDate) return false;
-    if (quoteFilters.endDate && q.date && q.date > quoteFilters.endDate) return false;
-    return true;
-  });
+  const filteredSimpleQuotesList = useMemo(() => {
+    return quotes.filter(q => {
+      if (q.cleaningType !== '정기' && q.cleaningType !== '가전' && q.type !== '정기 청소' && q.type !== '가전 청소') return false;
+      if (quoteFilters.status !== '전체' && q.status !== quoteFilters.status) return false;
+      if (quoteFilters.startDate && q.date && q.date < quoteFilters.startDate) return false;
+      if (quoteFilters.endDate && q.date && q.date > quoteFilters.endDate) return false;
+      return true;
+    });
+  }, [quotes, quoteFilters]);
 
-  const calculateTotalFinances = () => {
+  const totalFinances = useMemo(() => {
     let totalCustomer = 0;
     let totalPartner = 0;
     let totalPlatform = 0;
@@ -633,9 +641,58 @@ export default function Admin() {
     });
 
     return { totalCustomer, totalPartner, totalPlatform };
-  };
+  }, [filteredFinanceQuotes]);
 
-  const totalFinances = calculateTotalFinances();
+  // CRM 고객 데이터 그룹핑 및 가공 (useMemo 적용)
+  const allCustomers = useMemo(() => {
+    const customerMap = new Map<string, { name: string; phone: string; orders: Order[]; totalSpent: number; completedCount: number; latestDate: string }>();
+    
+    quotes.forEach(q => {
+      const phone = q.realPhone || q.contactInfo || '';
+      if (!phone) return; // 연락처가 없는 건은 제외
+      
+      const existing = customerMap.get(phone);
+      const orderDate = q.date || q.cleaningDate || '';
+      const price = parseInt(String(q.price || '0').replace(/[^0-9]/g, ''), 10) || 0;
+      const isCompleted = q.status === '청소완료';
+      
+      if (existing) {
+        existing.orders.push(q);
+        existing.totalSpent += isCompleted ? price : 0;
+        existing.completedCount += isCompleted ? 1 : 0;
+        if (orderDate > existing.latestDate) {
+          existing.latestDate = orderDate;
+          existing.name = q.name || q.customerName || existing.name;
+        }
+      } else {
+        customerMap.set(phone, {
+          name: q.name || q.customerName || '이름 없음',
+          phone,
+          orders: [q],
+          totalSpent: isCompleted ? price : 0,
+          completedCount: isCompleted ? 1 : 0,
+          latestDate: orderDate,
+        });
+      }
+    });
+
+    return Array.from(customerMap.values()).map(c => {
+      const cData = customersData.find(d => d.id === c.phone) || {};
+      return { ...c, note: cData.note || '', isBlacklist: !!cData.isBlacklist };
+    }).sort((a, b) => {
+      if (customerSort === 'totalSpent') return b.totalSpent - a.totalSpent;
+      return b.latestDate.localeCompare(a.latestDate);
+    });
+  }, [quotes, customersData, customerSort]);
+
+  // CRM 고객 검색 필터 캐싱 (useMemo 적용)
+  const filteredCustomers = useMemo(() => {
+    if (!customerSearchTerm) return allCustomers;
+    const term = customerSearchTerm.toLowerCase();
+    return allCustomers.filter(c => 
+      c.name.toLowerCase().includes(term) || c.phone.includes(term)
+    );
+  }, [allCustomers, customerSearchTerm]);
 
   const handleDownloadExcel = () => {
     // 엑셀(CSV) 한글 깨짐 방지를 위해 BOM(\uFEFF) 추가
@@ -1110,7 +1167,16 @@ export default function Admin() {
                       {quotes.map((quote) => (
                         <tr key={quote.id} className="hover:bg-gray-50/50 transition-colors">
                           <td className="px-4 lg:px-6 py-3 lg:py-4 text-xs lg:text-sm text-gray-600">{quote.date}</td>
-                          <td className="px-4 lg:px-6 py-3 lg:py-4 text-xs lg:text-sm font-medium text-gray-800">{quote.name}</td>
+                          <td className="px-4 lg:px-6 py-3 lg:py-4 text-xs lg:text-sm font-medium text-gray-800">
+                            <div className="flex flex-col gap-0.5">
+                              <span>{quote.name}</span>
+                              {quote.isB2B && (
+                                <span className="inline-flex items-center self-start px-1.5 py-0.5 rounded text-[10px] font-bold bg-purple-100 text-purple-700 border border-purple-200">
+                                  [사업자] {quote.businessName || ''}
+                                </span>
+                              )}
+                            </div>
+                          </td>
                           <td className="px-4 lg:px-6 py-3 lg:py-4 text-xs lg:text-sm text-gray-600">{quote.type}</td>
                           <td className="px-4 lg:px-6 py-3 lg:py-4">
                             {quote.assignedTo ? (
@@ -1174,7 +1240,16 @@ export default function Admin() {
                           <tr key={quote.id} className="hover:bg-gray-50/50 transition-colors">
                           <td className="px-4 lg:px-6 py-3 lg:py-4 text-xs lg:text-sm text-gray-500">#{quote.id.slice(0,6)}</td>
                           <td className="px-4 lg:px-6 py-3 lg:py-4 text-xs lg:text-sm text-gray-600">{quote.date || quote.cleaningDate || '미지정'}</td>
-                          <td className="px-4 lg:px-6 py-3 lg:py-4 text-xs lg:text-sm font-medium text-gray-800">{quote.name || quote.customerName || '이름 없음'}</td>
+                          <td className="px-4 lg:px-6 py-3 lg:py-4 text-xs lg:text-sm font-medium text-gray-800">
+                            <div className="flex flex-col gap-0.5">
+                              <span>{quote.name || quote.customerName || '이름 없음'}</span>
+                              {quote.isB2B && (
+                                <span className="inline-flex items-center self-start px-1.5 py-0.5 rounded text-[10px] font-bold bg-purple-100 text-purple-700 border border-purple-200">
+                                  [사업자] {quote.businessName || ''}
+                                </span>
+                              )}
+                            </div>
+                          </td>
                           <td className="px-4 lg:px-6 py-3 lg:py-4 text-xs lg:text-sm text-gray-600">{quote.type || quote.cleaningType || '일반 청소'}</td>
                           <td className="px-4 lg:px-6 py-3 lg:py-4">
                              {quote.assignedTo ? (
@@ -1228,6 +1303,13 @@ export default function Admin() {
                               <h4 className="font-bold text-gray-900 text-lg">{quote.name || quote.customerName || '이름 없음'}</h4>
                               <span className="text-xs font-bold bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full border border-blue-100">{quote.type || quote.cleaningType || '일반 청소'}</span>
                             </div>
+                            {quote.isB2B && (
+                              <div className="mt-1">
+                                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-purple-100 text-purple-700 border border-purple-200">
+                                  [사업자] {quote.businessName || ''}
+                                </span>
+                              </div>
+                            )}
                             <div className="text-xs text-gray-500 mt-0.5 font-medium">{quote.date || quote.cleaningDate || '미지정'} ({quote.time || '시간협의'})</div>
                           </div>
                           {/* 진행 상태 select */}
@@ -1416,46 +1498,6 @@ export default function Admin() {
 
           {/* Customers Tab - 고객 관리 (realPhone 기준 중복 제거, 검색, 상세 모달 지원) */}
           {activeTab === 'customers' && (() => {
-            // 왜: 같은 고객이 여러 견적을 넣으면 중복 표시되므로, realPhone 기준으로 그룹핑
-            const customerMap = new Map<string, { name: string; phone: string; orders: Order[]; totalSpent: number; completedCount: number; latestDate: string }>();
-            
-            quotes.forEach(q => {
-              const phone = q.realPhone || q.contactInfo || '';
-              if (!phone) return; // 연락처가 없는 건은 제외
-              
-              const existing = customerMap.get(phone);
-              const orderDate = q.date || q.cleaningDate || '';
-              const price = parseInt(String(q.price || '0').replace(/[^0-9]/g, ''), 10) || 0;
-              const isCompleted = q.status === '청소완료';
-              
-              if (existing) {
-                existing.orders.push(q);
-                existing.totalSpent += isCompleted ? price : 0;
-                existing.completedCount += isCompleted ? 1 : 0;
-                if (orderDate > existing.latestDate) {
-                  existing.latestDate = orderDate;
-                  existing.name = q.name || q.customerName || existing.name;
-                }
-              } else {
-                customerMap.set(phone, {
-                  name: q.name || q.customerName || '이름 없음',
-                  phone,
-                  orders: [q],
-                  totalSpent: isCompleted ? price : 0,
-                  completedCount: isCompleted ? 1 : 0,
-                  latestDate: orderDate,
-                });
-              }
-            });
-
-            const allCustomers = Array.from(customerMap.values()).map(c => {
-              const cData = customersData.find(d => d.id === c.phone) || {};
-              return { ...c, note: cData.note || '', isBlacklist: !!cData.isBlacklist };
-            }).sort((a, b) => {
-              if (customerSort === 'totalSpent') return b.totalSpent - a.totalSpent;
-              return b.latestDate.localeCompare(a.latestDate);
-            });
-
             const handleToggleCustomer = (phone: string) => {
               setSelectedCustomerPhones(prev => 
                 prev.includes(phone) ? prev.filter(p => p !== phone) : [...prev, phone]
@@ -1469,14 +1511,6 @@ export default function Admin() {
                 setSelectedCustomerPhones(filteredCustomers.map(c => c.phone));
               }
             };
-
-            // 검색 필터 적용
-            const customerSearchTerm = (document.getElementById('customer-search-input') as HTMLInputElement)?.value?.toLowerCase() || '';
-            const filteredCustomers = allCustomers.filter(c => {
-              if (!customerSearchTerm) return true;
-              return c.name.toLowerCase().includes(customerSearchTerm) || 
-                     c.phone.includes(customerSearchTerm);
-            });
 
             return (
             <div className="space-y-6">
@@ -1497,14 +1531,11 @@ export default function Admin() {
                   <div className="flex items-center gap-2 w-full md:w-96 relative">
                     <Search size={18} className="text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
                     <input 
-                      id="customer-search-input"
                       type="text" 
                       placeholder="고객명, 연락처 검색..." 
                       className="w-full border border-gray-300 rounded-lg pl-10 pr-4 py-2.5 text-sm font-medium focus:border-purple-500 outline-none bg-white text-gray-700 placeholder:text-gray-400 shadow-sm"
-                      onChange={() => {
-                        // 왜: React의 forceUpdate 대신 간단하게 상태 트리거로 리렌더
-                        setActiveTab('customers');
-                      }}
+                      value={customerSearchTerm}
+                      onChange={(e) => setCustomerSearchTerm(e.target.value)}
                     />
                   </div>
                 </div>
@@ -2622,7 +2653,14 @@ export default function Admin() {
                       
                       <div>
                         <p className="text-xs text-gray-400 font-bold mb-1">고객명</p>
-                        <p className="text-gray-800 font-bold">{selectedQuoteDetail.name}</p>
+                        <div className="flex items-center gap-1.5">
+                          <p className="text-gray-800 font-bold">{selectedQuoteDetail.name}</p>
+                          {selectedQuoteDetail.isB2B && (
+                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-purple-100 text-purple-700 border border-purple-200">
+                              [사업자] {selectedQuoteDetail.businessName || ''}
+                            </span>
+                          )}
+                        </div>
                       </div>
                       <div>
                         <p className="text-xs text-gray-400 font-bold mb-1">실제 연락처</p>

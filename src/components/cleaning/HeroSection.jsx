@@ -42,6 +42,7 @@ export default function HeroSection({ onOpenQuote }) {
             
             {/* Headline */}
             <h1 className="text-4xl sm:text-5xl lg:text-[54px] xl:text-6xl font-black mb-6 leading-[1.25] tracking-tight text-slate-900 break-keep">
+              <span className="sr-only">청소타워 | </span>
               이사 앞두고<br/>
               고민 많으셨죠? <br/>
               <span className="text-blue-600">설렘만 남겨드릴게요.</span>

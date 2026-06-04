@@ -1073,7 +1073,7 @@ export default function Partner() {
         <div className="min-h-screen bg-slate-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8 font-sans max-w-md mx-auto shadow-2xl relative">
           <div className="sm:mx-auto sm:w-full sm:max-w-md px-6 z-10">
             <h2 className="text-3xl font-black text-slate-900 tracking-tight mb-2">
-              파트너 로그인
+              파트너스 로그인
             </h2>
             <p className="text-sm text-slate-500 font-medium mb-8">
               발급받은 로그인 아이디와 비밀번호를 입력해주세요.
@@ -1136,7 +1136,7 @@ export default function Partner() {
                   <div className="pt-4 flex flex-col sm:flex-row items-center gap-4 bg-white p-4 rounded-xl border border-slate-100 shadow-inner">
                     <img
                       src={`https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent(window.location.origin + '/partner-dashboard')}`}
-                      alt="파트너 로그인 QR"
+                      alt="파트너스 로그인 QR"
                       className="w-[100px] h-[100px] border border-slate-200 p-1 rounded-lg shrink-0 bg-white"
                     />
                     <div className="text-center sm:text-left space-y-1">

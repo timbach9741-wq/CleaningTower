@@ -40,22 +40,26 @@ const optionCategories = [
 const optionsList = optionCategories.flatMap(cat => cat.items);
 
 /**
- * 입주청소 사업자용 홈페이지 - 모바일 퍼스트 설계 (Funnel 버전)
+ * 사업자 전용 앱 - 모바일 퍼스트 설계 (Funnel 버전)
  * 
- * 긴 스크롤 폼 대신 한 화면에 하나의 컨텍스트만 묻는 스텝(Funnel) 방식으로 변경.
- * 전환율(Conversion Rate)을 높이기 위해 사용자 피로도를 낮추고 직관적으로 설계함.
+ * 사장님(B2B) 전용 오더 접수 및 실시간 견적 산출 시스템.
+ * 긴 스크롤 폼 대신 한 화면에 하나의 컨텍스트만 묻는 스텝(Funnel) 방식으로 설계함.
  */
 export default function Quote() {
   const navigate = useNavigate();
   const { type } = useParams();
 
-  // 스텝 상태 (1: 주거/면적, 2: 일정/주소, 3: 연락처/메모, 4: 결과)
-  const [step, setStep] = useState(1);
+  // 스텝 상태 (0: 서비스 안내, 1: 주거/면적, 2: 세부사항, 3: 일정/주소, 4: 정보입력, 5: 견적완료)
+  const [step, setStep] = useState(0);
 
   // 입력 상태
   const [houseType, setHouseType] = useState('아파트');
   const [houseSubType, setHouseSubType] = useState('');
-  const [cleaningType] = useState(type === 'general' ? '일반' : '프리미엄');
+  const [cleaningType, setCleaningType] = useState<'프리미엄' | '이사' | '거주'>(() => {
+    if (type === 'general' || type === '이사') return '이사';
+    if (type === 'residence' || type === '거주') return '거주';
+    return '프리미엄';
+  });
   const [size, setSize] = useState<number | ''>(24);
   
   const [businessName, setBusinessName] = useState('');
@@ -76,9 +80,9 @@ export default function Quote() {
   
   const [selectedOptions, setSelectedOptions] = useState<Record<string, number>>({});
   const [isBetweenCleaning, setIsBetweenCleaning] = useState(false);
-  const [isOccupiedCleaning, setIsOccupiedCleaning] = useState(false);
   const [isAgreedPersonalInfo, setIsAgreedPersonalInfo] = useState(false);
   const [showPrivacyModal, setShowPrivacyModal] = useState(false);
+  const [activeRepairCard, setActiveRepairCard] = useState<string | null>(null);
   
   const handleBetweenCleaningToggle = () => {
     const nextState = !isBetweenCleaning;
@@ -109,10 +113,13 @@ export default function Quote() {
 
   // 견적 산출 로직
   const getEstimatedPrice = () => {
-    let basePricePerPyeong = cleaningType === '일반' ? 15000 : 20000;
-    
-    if (cleaningType === '일반' && isOccupiedCleaning) {
+    let basePricePerPyeong = 15000;
+    if (cleaningType === '프리미엄') {
+      basePricePerPyeong = 20000;
+    } else if (cleaningType === '거주') {
       basePricePerPyeong = 18000;
+    } else if (cleaningType === '이사') {
+      basePricePerPyeong = 15000;
     }
 
     const currentSize = typeof size === 'number' ? size : 0;
@@ -158,6 +165,11 @@ export default function Quote() {
 
   const handleNext = () => {
     setErrorMsg('');
+    if (step === 0) {
+      // 서비스 안내 → 견적 시작 (유효성 검사 없음)
+      setStep(1);
+      return;
+    }
     if (step === 1) {
       if (!houseSubType) {
         setErrorMsg('상세 구조(원룸, 투룸 등)를 선택해주세요.');
@@ -208,7 +220,7 @@ export default function Quote() {
     }).filter(Boolean) as string[];
     
     if (isBetweenCleaning) optionLabels.push('당일 이사 (사이청소)');
-    if (isOccupiedCleaning && cleaningType === '일반') optionLabels.push('거주 청소 (짐 있음)');
+    if (cleaningType === '거주') optionLabels.push('거주 청소 (짐 있음)');
     if (elevator === '없음' && isHighFloorWithoutElevator) optionLabels.push('엘리베이터 없음 (3층 이상)');
 
     const memoParts = [];
@@ -225,6 +237,7 @@ export default function Quote() {
     try {
       if (db) {
         await addDoc(collection(db, 'quotes'), {
+          isB2B: true, // 사업자 전용 앱 주문 플래그
           date: cleaningDate || '미정',
           time: cleaningTime || '시간협의',
           name: businessName || '기본고객',
@@ -242,7 +255,7 @@ export default function Quote() {
           createdAt: new Date().toISOString()
         });
         
-        alert('예약이 성공적으로 접수되었습니다.\n곧 파트너 배정 및 알림톡 안내가 진행됩니다.');
+        alert('사업자 전용 예약이 성공적으로 접수되었습니다.\n담당 매니저가 확인 후 신속하게 연락드리겠습니다.');
         navigate('/');
       }
     } catch (err) {
@@ -253,7 +266,7 @@ export default function Quote() {
 
   const handlePrev = () => {
     setErrorMsg('');
-    if (step > 1) {
+    if (step > 0) {
       setStep(prev => prev - 1);
     } else {
       navigate('/');
@@ -276,14 +289,15 @@ export default function Quote() {
             </span>
           </button>
           <span className="font-bold text-base text-white tracking-tight text-center flex-1 pr-8">
-            견적 마법사 ({cleaningType})
+            {step === 0 ? '청소타워 서비스 안내' : `사업자 전용 앱 (${cleaningType})`}
           </span>
         </div>
       </header>
 
-      <main className="flex-1 w-full max-w-lg mx-auto p-5 pb-28 flex flex-col relative overflow-hidden">
+      <main className={`flex-1 w-full max-w-lg mx-auto ${step === 0 ? 'p-0 pb-24' : 'p-5 pb-28'} flex flex-col relative overflow-hidden`}>
         
-        {/* Progress Bar (상단 고정) */}
+        {/* Progress Bar (step 0에서는 숨김) */}
+        {step > 0 && (
         <div className="mb-6">
           <div className="flex justify-between text-[11px] font-bold text-slate-500 mb-2.5 px-1">
             <span className={step >= 1 ? 'text-blue-400' : ''}>면적/단가</span>
@@ -301,10 +315,327 @@ export default function Quote() {
             />
           </div>
         </div>
+        )}
 
         {/* Content Area within AnimatePresence for slide effect */}
         <div className="flex-1 relative w-full h-full">
           <AnimatePresence mode="wait">
+
+            {/* ================= STEP 0: 서비스 안내 (보수 서비스 강조) ================= */}
+            {step === 0 && (
+              <motion.div
+                key="step0"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.4 }}
+                className="flex flex-col"
+              >
+                {/* Hero Banner */}
+                <div className="relative px-5 pt-8 pb-10 text-center overflow-hidden">
+                  <div className="absolute inset-0 bg-gradient-to-b from-amber-500/10 via-transparent to-transparent pointer-events-none"></div>
+                  <div className="relative z-10">
+                    <div className="inline-flex items-center gap-1.5 px-4 py-1.5 mb-5 rounded-full bg-amber-500/15 border border-amber-400/30">
+                      <span className="text-amber-400 text-sm">🔧</span>
+                      <span className="text-xs font-bold text-amber-300 tracking-wide">청소타워만의 차별화</span>
+                    </div>
+                    <h2 className="text-2xl font-black text-white mb-3 leading-tight tracking-tight break-keep">
+                      청소만 하는 곳이 아닙니다.<br/>
+                      <span className="bg-gradient-to-r from-amber-400 to-yellow-300 bg-clip-text text-transparent">
+                        하자까지 잡아드립니다.
+                      </span>
+                    </h2>
+                    <p className="text-sm text-slate-400 font-medium break-keep leading-relaxed max-w-xs mx-auto">
+                      사장님, 소비자 컴플레인 걱정 마세요.<br/>
+                      청소타워가 <strong className="text-white">사전에 차단</strong>해드립니다.
+                    </p>
+                  </div>
+                </div>
+
+                {/* 타사 vs 청소타워 비교 */}
+                <div className="px-5 mb-6">
+                  <div className="grid grid-cols-2 gap-3">
+                    {/* 타사 */}
+                    <div className="bg-red-950/50 border border-red-500/20 rounded-2xl p-4">
+                      <div className="flex items-center gap-1.5 mb-3">
+                        <span className="text-red-400 text-sm">⚠️</span>
+                        <span className="text-[11px] font-bold text-red-300">타사 업체</span>
+                      </div>
+                      <ul className="space-y-2">
+                        {['그냥 청소만 합니다', '보수는 별도 업체 부르세요', '하자 발견해도 내 일 아닙니다', '입주 후? 연락 안 됩니다'].map((t, i) => (
+                          <li key={i} className="flex items-start gap-1.5">
+                            <span className="text-red-400/80 text-xs mt-0.5 shrink-0">✗</span>
+                            <span className="text-red-200/80 text-[11px] font-medium break-keep leading-snug">{t}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                    {/* 청소타워 */}
+                    <div className="bg-emerald-950/50 border border-emerald-500/20 rounded-2xl p-4">
+                      <div className="flex items-center gap-1.5 mb-3">
+                        <span className="text-emerald-400 text-sm">✅</span>
+                        <span className="text-[11px] font-bold text-emerald-300">청소타워</span>
+                      </div>
+                      <ul className="space-y-2">
+                        {['청소하면서 하자까지 잡습니다', '실리콘·마루·벽지·장판 원스톱', '소비자가 말하기 전에 먼저 합니다', '사장님 평판을 지켜드립니다'].map((t, i) => (
+                          <li key={i} className="flex items-start gap-1.5">
+                            <span className="text-emerald-400 text-xs mt-0.5 shrink-0">✓</span>
+                            <span className="text-emerald-200/80 text-[11px] font-medium break-keep leading-snug">{t}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 실리콘 · 마루콕 전/후 사진 카드 */}
+                <div className="px-5 mb-6">
+                  <h3 className="text-sm font-bold text-slate-300 mb-3 flex items-center gap-2">
+                    <span className="w-5 h-0.5 bg-amber-500 rounded-full"></span>
+                    프리미엄 무상 보수 항목 — 사진을 터치해보세요
+                  </h3>
+                  <div className="space-y-4">
+
+                    {/* 마루콕 시공 */}
+                    <button
+                      type="button"
+                      onClick={() => setActiveRepairCard(activeRepairCard === 'marucok' ? null : 'marucok')}
+                      className={`w-full text-left rounded-2xl overflow-hidden border transition-all duration-300 ${
+                        activeRepairCard === 'marucok'
+                          ? 'border-amber-400/40 shadow-lg shadow-amber-500/10'
+                          : 'border-white/10 hover:border-white/20'
+                      }`}
+                    >
+                      {/* 이미지 영역 */}
+                      <div className="relative aspect-[16/9] bg-slate-800 overflow-hidden">
+                        {/* Before 이미지 */}
+                        <img
+                          src="/repair_marucok_before.jpg"
+                          alt="마루콕 시공 전"
+                          className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-500 z-[1] ${
+                            activeRepairCard === 'marucok' ? 'opacity-0' : 'opacity-100'
+                          }`}
+                        />
+                        {/* After 이미지 */}
+                        <img
+                          src="/repair_marucok_after.jpg"
+                          alt="마루콕 시공 후"
+                          className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-500 z-[1] ${
+                            activeRepairCard === 'marucok' ? 'opacity-100' : 'opacity-0'
+                          }`}
+                        />
+                        {/* Before/After 뱃지 */}
+                        <div className="absolute top-3 left-3 z-10">
+                          <span className={`inline-block px-3 py-1 rounded-full text-xs font-black shadow-lg transition-colors duration-300 ${
+                            activeRepairCard === 'marucok'
+                              ? 'bg-emerald-500 text-white'
+                              : 'bg-red-500 text-white'
+                          }`}>
+                            {activeRepairCard === 'marucok' ? 'AFTER ✓' : 'BEFORE'}
+                          </span>
+                        </div>
+                        {/* 터치 안내 */}
+                        <div className="absolute bottom-3 right-3 z-10">
+                          <span className="inline-block px-2.5 py-1 rounded-full bg-black/50 backdrop-blur-sm text-[10px] font-bold text-white/80">
+                            {activeRepairCard === 'marucok' ? '다시 터치하면 전' : '터치하면 후 →'}
+                          </span>
+                        </div>
+                      </div>
+                      {/* 텍스트 정보 */}
+                      <div className="p-4 bg-white/5">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <h4 className="text-base font-black text-white">마루콕 시공</h4>
+                            <p className="text-[11px] text-slate-400 font-medium mt-0.5">마루 찍힘·긁힘 복원 · 틈새 충진</p>
+                          </div>
+                          <span className="text-[10px] font-bold text-amber-400 bg-amber-500/10 border border-amber-400/20 px-2.5 py-1 rounded-full">무상</span>
+                        </div>
+                      </div>
+                    </button>
+
+                    {/* 실리콘 보수 */}
+                    <button
+                      type="button"
+                      onClick={() => setActiveRepairCard(activeRepairCard === 'silicone' ? null : 'silicone')}
+                      className={`w-full text-left rounded-2xl overflow-hidden border transition-all duration-300 ${
+                        activeRepairCard === 'silicone'
+                          ? 'border-amber-400/40 shadow-lg shadow-amber-500/10'
+                          : 'border-white/10 hover:border-white/20'
+                      }`}
+                    >
+                      {/* 이미지 영역 */}
+                      <div className="relative aspect-[16/9] bg-slate-800 overflow-hidden">
+                        {/* Before 이미지 */}
+                        <img
+                          src="/repair_silicone_before.png"
+                          alt="실리콘 보수 전"
+                          className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-500 z-[1] ${
+                            activeRepairCard === 'silicone' ? 'opacity-0' : 'opacity-100'
+                          }`}
+                        />
+                        {/* After 이미지 */}
+                        <img
+                          src="/repair_silicone_after.png"
+                          alt="실리콘 보수 후"
+                          className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-500 z-[1] ${
+                            activeRepairCard === 'silicone' ? 'opacity-100' : 'opacity-0'
+                          }`}
+                        />
+                        {/* Before/After 뱃지 */}
+                        <div className="absolute top-3 left-3 z-10">
+                          <span className={`inline-block px-3 py-1 rounded-full text-xs font-black shadow-lg transition-colors duration-300 ${
+                            activeRepairCard === 'silicone'
+                              ? 'bg-emerald-500 text-white'
+                              : 'bg-red-500 text-white'
+                          }`}>
+                            {activeRepairCard === 'silicone' ? 'AFTER ✓' : 'BEFORE'}
+                          </span>
+                        </div>
+                        {/* 터치 안내 */}
+                        <div className="absolute bottom-3 right-3 z-10">
+                          <span className="inline-block px-2.5 py-1 rounded-full bg-black/50 backdrop-blur-sm text-[10px] font-bold text-white/80">
+                            {activeRepairCard === 'silicone' ? '다시 터치하면 전' : '터치하면 후 →'}
+                          </span>
+                        </div>
+                      </div>
+                      {/* 텍스트 정보 */}
+                      <div className="p-4 bg-white/5">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <h4 className="text-base font-black text-white">실리콘 보수</h4>
+                            <p className="text-[11px] text-slate-400 font-medium mt-0.5">곰팡이 제거 후 항균 실리콘 재시공</p>
+                          </div>
+                          <span className="text-[10px] font-bold text-amber-400 bg-amber-500/10 border border-amber-400/20 px-2.5 py-1 rounded-full">무상</span>
+                        </div>
+                      </div>
+                    </button>
+
+                    {/* 장판 이음매 용착 */}
+                    <button
+                      type="button"
+                      onClick={() => setActiveRepairCard(activeRepairCard === 'jangpan' ? null : 'jangpan')}
+                      className={`w-full text-left rounded-2xl overflow-hidden border transition-all duration-300 ${
+                        activeRepairCard === 'jangpan'
+                          ? 'border-amber-400/40 shadow-lg shadow-amber-500/10'
+                          : 'border-white/10 hover:border-white/20'
+                      }`}
+                    >
+                      {/* 이미지 영역 - 좌우 비교 사진 크롭 */}
+                      <div className="relative aspect-[16/9] bg-slate-800 overflow-hidden">
+                        <div
+                          className="absolute inset-0 z-[1] transition-all duration-700 ease-in-out"
+                          style={{
+                            backgroundImage: 'url(/repair_jangpan.png)',
+                            backgroundSize: '200% 140%',
+                            backgroundPosition: activeRepairCard === 'jangpan' ? '100% 20%' : '0% 20%',
+                            backgroundRepeat: 'no-repeat',
+                          }}
+                        />
+                        {/* Before/After 뱃지 */}
+                        <div className="absolute top-3 left-3 z-10">
+                          <span className={`inline-block px-3 py-1 rounded-full text-xs font-black shadow-lg transition-colors duration-300 ${
+                            activeRepairCard === 'jangpan'
+                              ? 'bg-emerald-500 text-white'
+                              : 'bg-red-500 text-white'
+                          }`}>
+                            {activeRepairCard === 'jangpan' ? 'AFTER ✓' : 'BEFORE'}
+                          </span>
+                        </div>
+                        {/* 터치 안내 */}
+                        <div className="absolute bottom-3 right-3 z-10">
+                          <span className="inline-block px-2.5 py-1 rounded-full bg-black/50 backdrop-blur-sm text-[10px] font-bold text-white/80">
+                            {activeRepairCard === 'jangpan' ? '다시 터치하면 전' : '터치하면 후 →'}
+                          </span>
+                        </div>
+                      </div>
+                      {/* 텍스트 정보 */}
+                      <div className="p-4 bg-white/5">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <h4 className="text-base font-black text-white">장판 이음매 용착</h4>
+                            <p className="text-[11px] text-slate-400 font-medium mt-0.5">이음매 벌어짐 · 들뜸 열용착 보수</p>
+                          </div>
+                          <span className="text-[10px] font-bold text-amber-400 bg-amber-500/10 border border-amber-400/20 px-2.5 py-1 rounded-full">무상</span>
+                        </div>
+                      </div>
+                    </button>
+
+                    {/* 벽지 들뜸 보수 */}
+                    <button
+                      type="button"
+                      onClick={() => setActiveRepairCard(activeRepairCard === 'wallpaper' ? null : 'wallpaper')}
+                      className={`w-full text-left rounded-2xl overflow-hidden border transition-all duration-300 ${
+                        activeRepairCard === 'wallpaper'
+                          ? 'border-amber-400/40 shadow-lg shadow-amber-500/10'
+                          : 'border-white/10 hover:border-white/20'
+                      }`}
+                    >
+                      {/* 이미지 영역 */}
+                      <div className="relative aspect-[16/9] bg-slate-800 overflow-hidden">
+                        {/* Before 이미지 */}
+                        <img
+                          src="/repair_wallpaper_before.png"
+                          alt="벽지 들뜸 보수 전"
+                          className={`absolute inset-0 w-full h-full object-cover object-top transition-opacity duration-500 z-[1] ${
+                            activeRepairCard === 'wallpaper' ? 'opacity-0' : 'opacity-100'
+                          }`}
+                        />
+                        {/* After 이미지 */}
+                        <img
+                          src="/repair_wallpaper_after.png"
+                          alt="벽지 들뜸 보수 후"
+                          className={`absolute inset-0 w-full h-full object-cover object-top transition-opacity duration-500 z-[1] ${
+                            activeRepairCard === 'wallpaper' ? 'opacity-100' : 'opacity-0'
+                          }`}
+                        />
+                        {/* Before/After 뱃지 */}
+                        <div className="absolute top-3 left-3 z-10">
+                          <span className={`inline-block px-3 py-1 rounded-full text-xs font-black shadow-lg transition-colors duration-300 ${
+                            activeRepairCard === 'wallpaper'
+                              ? 'bg-emerald-500 text-white'
+                              : 'bg-red-500 text-white'
+                          }`}>
+                            {activeRepairCard === 'wallpaper' ? 'AFTER ✓' : 'BEFORE'}
+                          </span>
+                        </div>
+                        {/* 터치 안내 */}
+                        <div className="absolute bottom-3 right-3 z-10">
+                          <span className="inline-block px-2.5 py-1 rounded-full bg-black/50 backdrop-blur-sm text-[10px] font-bold text-white/80">
+                            {activeRepairCard === 'wallpaper' ? '다시 터치하면 전' : '터치하면 후 →'}
+                          </span>
+                        </div>
+                      </div>
+                      {/* 텍스트 정보 */}
+                      <div className="p-4 bg-white/5">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <h4 className="text-base font-black text-white">벽지 들뜸 보수</h4>
+                            <p className="text-[11px] text-slate-400 font-medium mt-0.5">코너 벌어짐 · 이음새 들뜸 재접착</p>
+                          </div>
+                          <span className="text-[10px] font-bold text-amber-400 bg-amber-500/10 border border-amber-400/20 px-2.5 py-1 rounded-full">무상</span>
+                        </div>
+                      </div>
+                    </button>
+                  </div>
+                </div>
+
+                {/* 무상 강조 배너 */}
+                <div className="px-5 mb-6">
+                  <div className="bg-gradient-to-r from-amber-500/10 to-blue-500/10 border border-amber-400/20 rounded-2xl p-5 text-center">
+                    <span className="text-2xl mb-2 block">✨</span>
+                    <p className="text-base font-black text-white mb-1 break-keep">
+                      청소 비용 그대로,
+                    </p>
+                    <p className="text-lg font-black text-amber-400 mb-2 break-keep">
+                      보수 서비스는 무상입니다.
+                    </p>
+                    <p className="text-xs text-slate-400 font-medium break-keep">
+                      프리미엄 청소 선택 시 추가 비용 없이 보수 포함
+                    </p>
+                  </div>
+                </div>
+              </motion.div>
+            )}
             
             {/* ================= STEP 1: 주거 형태 및 평수 ================= */}
             {step === 1 && (
@@ -326,6 +657,40 @@ export default function Quote() {
                 </div>
                 
                 <div className="space-y-7 flex-1">
+                  <div>
+                    <label className="block text-slate-300 text-sm font-semibold mb-3">🧹 청소 종류 선택</label>
+                    <div className="grid grid-cols-1 gap-3 mb-6">
+                      {[
+                        { id: '프리미엄', label: '프리미엄 입주청소', sub: '인테리어 공사완료후 분진이 많은 현장', price: '평당 2.0만' },
+                        { id: '거주', label: '거주청소', sub: '거주중 상태청소', price: '평당 1.8만' },
+                        { id: '이사', label: '이사청소', sub: '이사나가고 빈집 청소', price: '평당 1.5만' }
+                      ].map(item => (
+                        <button
+                          key={item.id}
+                          type="button"
+                          onClick={() => setCleaningType(item.id as '프리미엄' | '이사' | '거주')}
+                          className={`p-4 rounded-xl text-left transition-all active:scale-[0.98] border flex items-center justify-between ${
+                            cleaningType === item.id 
+                            ? 'bg-blue-600/20 border-blue-500 shadow-lg shadow-blue-500/10' 
+                            : 'bg-white/5 border-white/10 hover:bg-white/10'
+                          }`}
+                        >
+                          <div className="flex flex-col">
+                            <span className={`text-[15px] font-bold ${cleaningType === item.id ? 'text-blue-100' : 'text-slate-300'}`}>
+                              {item.label}
+                            </span>
+                            <span className={`text-[11px] mt-0.5 ${cleaningType === item.id ? 'text-blue-300/80' : 'text-slate-500'}`}>
+                              {item.sub}
+                            </span>
+                          </div>
+                          <span className={`text-xs font-bold px-2 py-1 rounded ${cleaningType === item.id ? 'bg-blue-500 text-white' : 'bg-white/10 text-slate-400'}`}>
+                            {item.price}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
                   <div>
                     <label className="block text-slate-300 text-sm font-semibold mb-3">💡 주거 형태</label>
                     <div className="grid grid-cols-3 gap-2.5">
@@ -398,35 +763,7 @@ export default function Quote() {
                         </span>
                       </button>
 
-                      {cleaningType === '일반' && (
-                        <button
-                          onClick={() => setIsOccupiedCleaning(!isOccupiedCleaning)}
-                          className={`w-full p-4 rounded-xl text-sm font-bold transition-all active:scale-[0.98] flex items-center justify-between border ${
-                            isOccupiedCleaning 
-                            ? 'bg-blue-600/20 shadow-sm shadow-blue-500/20 border-blue-500' 
-                            : 'bg-white/5 text-slate-300 border-white/10 hover:bg-white/10'
-                          }`}
-                        >
-                          <div className="flex items-center gap-3">
-                            <div className={`w-5 h-5 rounded flex items-center justify-center border transition-colors ${
-                              isOccupiedCleaning ? 'bg-blue-500 border-blue-500' : 'bg-transparent border-slate-500'
-                            }`}>
-                              {isOccupiedCleaning && <span className="material-symbols-outlined text-white text-[14px] font-bold">check</span>}
-                            </div>
-                            <div className="flex flex-col text-left -mt-0.5">
-                              <span className={`${isOccupiedCleaning ? 'text-blue-100' : 'text-slate-300'} text-[14px]`}>
-                                거주청소 (현재 거주 중)
-                              </span>
-                              <span className={`${isOccupiedCleaning ? 'text-blue-300' : 'text-slate-500'} text-[11px] font-normal mt-0.5`}>
-                                (짐이 있는 상태)
-                              </span>
-                            </div>
-                          </div>
-                          <span className={isOccupiedCleaning ? 'text-blue-300 font-bold' : 'text-slate-400'}>
-                            평당 1.8만
-                          </span>
-                        </button>
-                      )}
+                      {/* 거주 청소는 상단 청소 종류 선택으로 이관되어 여기서는 노출하지 않습니다. */}
                     </div>
                   </div>
 
@@ -448,9 +785,9 @@ export default function Quote() {
                       <div className="flex flex-col items-end">
                         <span className="text-slate-400 text-[10px] mb-0.5">단가</span>
                         <span className="text-blue-300 text-xs font-bold bg-blue-500/20 px-2 py-1 rounded whitespace-nowrap flex-shrink-0">
-                          {cleaningType === '일반' 
-                            ? (isOccupiedCleaning ? '평당 1.8만원' : '평당 1.5만원') 
-                            : '평당 2만원'
+                          {cleaningType === '이사' 
+                            ? '평당 1.5만원' 
+                            : (cleaningType === '거주' ? '평당 1.8만원' : '평당 2.0만원')
                           }
                         </span>
                       </div>
@@ -948,7 +1285,7 @@ export default function Quote() {
                   >
                     <span className="material-symbols-outlined text-4xl">check_circle</span>
                   </motion.div>
-                  <h2 className="text-2xl font-bold text-white mb-2">예상 견적서 발급 완료!</h2>
+                  <h2 className="text-2xl font-bold text-white mb-2">사업자 견적서 발급 완료!</h2>
                   <p className="text-slate-400 text-sm">입력해주신 정보 기반의 산출 금액입니다.</p>
                 </div>
 
@@ -977,74 +1314,78 @@ export default function Quote() {
                      </div>
                      
                      <div className="space-y-3 pb-4 border-b border-dashed border-white/10 mb-4">
-                       <div className="flex justify-between items-center">
-                          <span className="text-slate-400 text-sm">{isOccupiedCleaning && cleaningType === '일반' ? '거주 청소비 (기본비용 포함)' : '기본 청소비'}</span>
-                          <span className="text-slate-200 font-medium">
-                            {((typeof size === 'number' ? size : 0) * (cleaningType === '일반' ? (isOccupiedCleaning ? 18000 : 15000) : 20000)).toLocaleString()}원
-                          </span>
-                       </div>
-                       {isBetweenCleaning && (
-                         <div className="flex justify-between items-center">
-                            <span className="text-slate-400 text-sm">당일 이사 (사이청소)</span>
-                            <span className="text-slate-200 font-medium">+100,000원</span>
-                         </div>
-                       )}
-                       {elevator === '없음' && isHighFloorWithoutElevator && (
-                         <div className="flex justify-between items-center">
-                            <span className="text-slate-400 text-sm">엘리베이터 없음 (3층 이상)</span>
-                            <span className="text-slate-200 font-medium">+30,000원</span>
-                         </div>
-                       )}
-                       {Object.keys(selectedOptions).length > 0 && (
-                         <div className="flex flex-col gap-1">
-                           <div className="flex justify-between items-center mt-1">
-                              <span className="text-slate-400 text-sm text-balance">추가 선택 옵션</span>
-                           </div>
-                           <div className="pl-2.5 border-l-2 border-blue-900/40 space-y-1.5 mt-1 pb-1">
-                             {Object.entries(selectedOptions).map(([optId, count]) => {
-                               const option = optionsList.find(o => o.id === optId);
-                               const currentSize = typeof size === 'number' ? size : 0;
-                               const price = option ? (optId === 'phytoncide' ? option.price * currentSize * count : option.price * count) : 0;
-                               
-                               return option ? (
-                                 <div key={optId} className="flex justify-between text-[13px] text-slate-400">
-                                   <span>· {option.label} {count > 1 ? `x ${count}` : ''}</span>
-                                   <span className="text-slate-300">{option.price > 0 ? `+${price.toLocaleString()}원` : '확인'}</span>
-                                 </div>
-                               ) : null;
-                             })}
-                           </div>
-                         </div>
-                       )}
-                       
-                       {/* 비비용성 정보 요약 */}
-                       <div className="mt-3 bg-slate-800/50 rounded-lg p-3 border border-white/5">
-                         <span className="text-xs text-slate-500 font-bold mb-2 block">입력된 현장 정보</span>
-                         <div className="flex flex-wrap gap-1.5">
-                           <span className="text-[11px] bg-white/5 text-slate-300 px-2 py-1 rounded border border-white/10">바닥: {floorType}</span>
-                           <span className="text-[11px] bg-white/5 text-slate-300 px-2 py-1 rounded border border-white/10">물청소: {waterCleaning}</span>
-                           <span className="text-[11px] bg-white/5 text-slate-300 px-2 py-1 rounded border border-white/10">주차: {parking}</span>
-                           <span className="text-[11px] bg-white/5 text-slate-300 px-2 py-1 rounded border border-white/10">엘리베이터: {elevator}</span>
-                         </div>
-                       </div>
+                        <div className="flex justify-between items-center">
+                           <span className="text-slate-400 text-sm">
+                             {cleaningType === '거주' ? '거주 청소비' : '기본 청소비'}
+                           </span>
+                           <span className="text-slate-200 font-medium">
+                             {((typeof size === 'number' ? size : 0) * 
+                               (cleaningType === '이사' ? 15000 : (cleaningType === '거주' ? 18000 : 20000))
+                             ).toLocaleString()}원
+                           </span>
+                        </div>
+                        {isBetweenCleaning && (
+                          <div className="flex justify-between items-center">
+                             <span className="text-slate-400 text-sm">당일 이사 (사이청소)</span>
+                             <span className="text-slate-200 font-medium">+100,000원</span>
+                          </div>
+                        )}
+                        {elevator === '없음' && isHighFloorWithoutElevator && (
+                          <div className="flex justify-between items-center">
+                             <span className="text-slate-400 text-sm">엘리베이터 없음 (3층 이상)</span>
+                             <span className="text-slate-200 font-medium">+30,000원</span>
+                          </div>
+                        )}
+                        {Object.keys(selectedOptions).length > 0 && (
+                          <div className="flex flex-col gap-1">
+                            <div className="flex justify-between items-center mt-1">
+                               <span className="text-slate-400 text-sm text-balance">추가 선택 옵션</span>
+                            </div>
+                            <div className="pl-2.5 border-l-2 border-blue-900/40 space-y-1.5 mt-1 pb-1">
+                              {Object.entries(selectedOptions).map(([optId, count]) => {
+                                const option = optionsList.find(o => o.id === optId);
+                                const currentSize = typeof size === 'number' ? size : 0;
+                                const price = option ? (optId === 'phytoncide' ? option.price * currentSize * count : option.price * count) : 0;
+                                
+                                return option ? (
+                                  <div key={optId} className="flex justify-between text-[13px] text-slate-400">
+                                    <span>· {option.label} {count > 1 ? `x ${count}` : ''}</span>
+                                    <span className="text-slate-300">{option.price > 0 ? `+${price.toLocaleString()}원` : '확인'}</span>
+                                  </div>
+                                ) : null;
+                              })}
+                            </div>
+                          </div>
+                        )}
+                        
+                        {/* 비비용성 정보 요약 */}
+                        <div className="mt-3 bg-slate-800/50 rounded-lg p-3 border border-white/5">
+                          <span className="text-xs text-slate-500 font-bold mb-2 block">입력된 현장 정보</span>
+                          <div className="flex flex-wrap gap-1.5">
+                            <span className="text-[11px] bg-white/5 text-slate-300 px-2 py-1 rounded border border-white/10">바닥: {floorType}</span>
+                            <span className="text-[11px] bg-white/5 text-slate-300 px-2 py-1 rounded border border-white/10">물청소: {waterCleaning}</span>
+                            <span className="text-[11px] bg-white/5 text-slate-300 px-2 py-1 rounded border border-white/10">주차: {parking}</span>
+                            <span className="text-[11px] bg-white/5 text-slate-300 px-2 py-1 rounded border border-white/10">엘리베이터: {elevator}</span>
+                          </div>
+                        </div>
 
-                       <div className="flex justify-between items-center pt-3 border-t border-white/10 mt-2">
-                          <span className="text-slate-400 text-sm font-bold">총 공급가액</span>
-                          <span className="text-slate-200 font-bold">{estimatedPrice.toLocaleString()}원</span>
-                       </div>
-                       <div className="flex justify-between items-center mt-2">
-                          <span className="text-rose-400 text-sm font-medium">부가세 (10%)</span>
-                          <span className="text-rose-400 font-medium">+{vatPrice.toLocaleString()}원</span>
-                       </div>
+                        <div className="flex justify-between items-center pt-3 border-t border-white/10 mt-2">
+                           <span className="text-slate-400 text-sm font-bold">총 공급가액</span>
+                           <span className="text-slate-200 font-bold">{estimatedPrice.toLocaleString()}원</span>
+                        </div>
+                        <div className="flex justify-between items-center mt-2">
+                           <span className="text-rose-400 text-sm font-medium">부가세 (10%)</span>
+                           <span className="text-rose-400 font-medium">+{vatPrice.toLocaleString()}원</span>
+                        </div>
                      </div>
 
                      <div className="flex justify-between items-end pt-2">
                         <span className="text-blue-300 text-base font-bold mb-1">최종 예상 결제액</span>
                         <div className="text-right">
-                          <span className="text-[32px] font-black text-white leading-none shadow-blue-500/50 drop-shadow-md">
-                            {totalPriceIncVat.toLocaleString()}
-                          </span>
-                          <span className="text-blue-200 text-base ml-1 font-bold">원</span>
+                           <span className="text-[32px] font-black text-white leading-none shadow-blue-500/50 drop-shadow-md">
+                             {totalPriceIncVat.toLocaleString()}
+                           </span>
+                           <span className="text-blue-200 text-base ml-1 font-bold">원</span>
                         </div>
                      </div>
                    </div>
@@ -1104,9 +1445,13 @@ export default function Quote() {
               
               <button
                 onClick={handleNext}
-                className="w-full bg-blue-600 active:bg-blue-700 text-white font-bold py-4 rounded-xl text-lg shadow-[0_8px_16px_rgba(37,99,235,0.25)] transition-all active:scale-[0.98]"
+                className={`w-full font-bold py-4 rounded-xl text-lg transition-all active:scale-[0.98] ${
+                  step === 0
+                    ? 'bg-gradient-to-r from-amber-500 to-amber-600 active:from-amber-600 active:to-amber-700 text-slate-900 shadow-[0_8px_16px_rgba(245,158,11,0.3)]'
+                    : 'bg-blue-600 active:bg-blue-700 text-white shadow-[0_8px_16px_rgba(37,99,235,0.25)]'
+                }`}
               >
-                {step === 4 ? '다음' : '다음 단계로'}
+                {step === 0 ? '견적 시작하기 →' : step === 4 ? '다음' : '다음 단계로'}
               </button>
             </div>
           </motion.div>
@@ -1174,4 +1519,3 @@ export default function Quote() {
     </div>
   );
 }
-

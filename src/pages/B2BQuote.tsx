@@ -390,7 +390,7 @@ export default function Quote() {
       
       {/* 헤더 */}
       <header className="sticky top-0 z-50 bg-slate-900/95 backdrop-blur-md border-b border-white/10">
-        <div className="flex items-center justify-between px-4 py-3 max-w-4xl mx-auto w-full">
+        <div className="flex items-center justify-between px-4 py-3 max-w-6xl mx-auto w-full">
           <button 
             onClick={handlePrev} 
             className="flex items-center justify-center p-1.5 -ml-1.5 text-slate-300 active:bg-white/10 rounded-full transition-colors"
@@ -418,7 +418,7 @@ export default function Quote() {
         </div>
       </header>
 
-      <main className={`flex-1 w-full max-w-4xl mx-auto ${step === 0 ? 'p-0 pb-24' : 'p-5 pb-28 lg:p-8 lg:pb-32'} flex flex-col relative overflow-hidden`}>
+      <main className={`flex-1 w-full mx-auto ${step === 0 ? 'max-w-6xl p-0 pb-24' : 'max-w-2xl p-5 pb-28 lg:p-8 lg:pb-32'} flex flex-col relative overflow-hidden`}>
         
         {/* Progress Bar (step 0에서는 숨김) */}
         {step > 0 && (
@@ -456,20 +456,20 @@ export default function Quote() {
                 className="flex flex-col"
               >
                 {/* Hero Banner */}
-                <div className="relative px-5 pt-8 pb-10 text-center overflow-hidden">
+                <div className="relative px-5 pt-10 pb-12 lg:pt-16 lg:pb-16 text-center overflow-hidden">
                   <div className="absolute inset-0 bg-gradient-to-b from-amber-500/10 via-transparent to-transparent pointer-events-none"></div>
                   <div className="relative z-10">
                     <div className="inline-flex items-center gap-1.5 px-4 py-1.5 mb-5 rounded-full bg-amber-500/15 border border-amber-400/30">
                       <span className="text-amber-400 text-sm">🔧</span>
                       <span className="text-xs font-bold text-amber-300 tracking-wide">청소타워만의 차별화</span>
                     </div>
-                    <h2 className="text-2xl font-black text-white mb-3 leading-tight tracking-tight break-keep">
+                    <h2 className="text-2xl lg:text-4xl font-black text-white mb-3 lg:mb-5 leading-tight tracking-tight break-keep">
                       청소만 하는 곳이 아닙니다.<br/>
                       <span className="bg-gradient-to-r from-amber-400 to-yellow-300 bg-clip-text text-transparent">
                         하자까지 잡아드립니다.
                       </span>
                     </h2>
-                    <p className="text-sm text-slate-400 font-medium break-keep leading-relaxed max-w-xs mx-auto">
+                    <p className="text-sm lg:text-base text-slate-400 font-medium break-keep leading-relaxed max-w-md mx-auto">
                       사장님, 소비자 컴플레인 걱정 마세요.<br/>
                       청소타워가 <strong className="text-white">사전에 차단</strong>해드립니다.
                     </p>
@@ -477,8 +477,8 @@ export default function Quote() {
                 </div>
 
                 {/* 타사 vs 청소타워 비교 */}
-                <div className="px-5 mb-6">
-                  <div className="grid grid-cols-2 gap-3">
+                <div className="px-5 lg:px-8 mb-6">
+                  <div className="grid grid-cols-2 gap-3 lg:gap-5">
                     {/* 타사 */}
                     <div className="bg-red-950/50 border border-red-500/20 rounded-2xl p-4">
                       <div className="flex items-center gap-1.5 mb-3">
@@ -513,12 +513,12 @@ export default function Quote() {
                 </div>
 
                 {/* 실리콘 · 마루콕 전/후 사진 카드 */}
-                <div className="px-5 mb-6">
-                  <h3 className="text-sm font-bold text-slate-300 mb-3 flex items-center gap-2">
+                <div className="px-5 lg:px-8 mb-6">
+                  <h3 className="text-sm lg:text-base font-bold text-slate-300 mb-4 flex items-center gap-2">
                     <span className="w-5 h-0.5 bg-amber-500 rounded-full"></span>
                     프리미엄 무상 보수 항목 — 사진을 터치해보세요
                   </h3>
-                  <div className="space-y-4">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
 
                     {/* 마루콕 시공 */}
                     <button
@@ -744,7 +744,7 @@ export default function Quote() {
                 </div>
 
                 {/* 무상 강조 배너 */}
-                <div className="px-5 mb-6">
+                <div className="px-5 lg:px-8 mb-6">
                   <div className="bg-gradient-to-r from-amber-500/10 to-blue-500/10 border border-amber-400/20 rounded-2xl p-5 text-center">
                     <span className="text-2xl mb-2 block">✨</span>
                     <p className="text-base font-black text-white mb-1 break-keep">
@@ -1550,7 +1550,7 @@ export default function Quote() {
             className="fixed bottom-0 left-0 w-full bg-slate-900 border-t border-white/10 px-4 py-4 z-40"
             style={{ paddingBottom: 'env(safe-area-inset-bottom, 16px)' }}
           >
-            <div className="max-w-4xl mx-auto relative flex flex-col gap-3">
+            <div className="max-w-2xl mx-auto relative flex flex-col gap-3">
               {/* 공중에 띄워진 에러 메세지 */}
               <AnimatePresence>
                 {errorMsg && (

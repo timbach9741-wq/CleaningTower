@@ -390,7 +390,7 @@ export default function Quote() {
       
       {/* 헤더 */}
       <header className="sticky top-0 z-50 bg-slate-900/95 backdrop-blur-md border-b border-white/10">
-        <div className="flex items-center justify-between px-4 py-3 max-w-lg mx-auto w-full">
+        <div className="flex items-center justify-between px-4 py-3 max-w-4xl mx-auto w-full">
           <button 
             onClick={handlePrev} 
             className="flex items-center justify-center p-1.5 -ml-1.5 text-slate-300 active:bg-white/10 rounded-full transition-colors"
@@ -418,7 +418,7 @@ export default function Quote() {
         </div>
       </header>
 
-      <main className={`flex-1 w-full max-w-lg mx-auto ${step === 0 ? 'p-0 pb-24' : 'p-5 pb-28'} flex flex-col relative overflow-hidden`}>
+      <main className={`flex-1 w-full max-w-4xl mx-auto ${step === 0 ? 'p-0 pb-24' : 'p-5 pb-28 lg:p-8 lg:pb-32'} flex flex-col relative overflow-hidden`}>
         
         {/* Progress Bar (step 0에서는 숨김) */}
         {step > 0 && (
@@ -1550,7 +1550,7 @@ export default function Quote() {
             className="fixed bottom-0 left-0 w-full bg-slate-900 border-t border-white/10 px-4 py-4 z-40"
             style={{ paddingBottom: 'env(safe-area-inset-bottom, 16px)' }}
           >
-            <div className="max-w-lg mx-auto relative flex flex-col gap-3">
+            <div className="max-w-4xl mx-auto relative flex flex-col gap-3">
               {/* 공중에 띄워진 에러 메세지 */}
               <AnimatePresence>
                 {errorMsg && (
@@ -1585,7 +1585,7 @@ export default function Quote() {
       {/* 개인정보 제3자 제공 동의 모달 */}
       {showPrivacyModal && (
         <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="bg-slate-800 border border-slate-700 text-white rounded-2xl w-full max-w-lg max-h-[80vh] overflow-y-auto shadow-2xl p-6 relative flex flex-col justify-between">
+          <div className="bg-slate-800 border border-slate-700 text-white rounded-2xl w-full max-w-4xl max-h-[80vh] overflow-y-auto shadow-2xl p-6 relative flex flex-col justify-between">
             <div>
               <div className="flex justify-between items-center border-b border-white/10 pb-3 mb-4">
                 <h3 className="text-lg font-bold text-white">개인정보 제3자 제공 동의 및 중개 안내</h3>

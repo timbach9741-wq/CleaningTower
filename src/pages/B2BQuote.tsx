@@ -456,20 +456,22 @@ export default function Quote() {
                 className="flex flex-col"
               >
                 {/* Hero Banner */}
-                <div className="relative px-5 pt-10 pb-12 lg:pt-16 lg:pb-16 text-center overflow-hidden">
-                  <div className="absolute inset-0 bg-gradient-to-b from-amber-500/10 via-transparent to-transparent pointer-events-none"></div>
+                <div className="relative px-5 pt-10 pb-12 lg:pt-24 lg:pb-20 text-center overflow-hidden">
+                  <div className="absolute inset-0 bg-gradient-to-b from-amber-500/15 via-amber-500/5 to-transparent pointer-events-none"></div>
+                  {/* 데스크톱 글로우 장식 */}
+                  <div className="hidden lg:block absolute top-[10%] left-1/2 -translate-x-1/2 w-[600px] h-[300px] rounded-full bg-amber-500/8 blur-[100px] pointer-events-none" />
                   <div className="relative z-10">
-                    <div className="inline-flex items-center gap-1.5 px-4 py-1.5 mb-5 rounded-full bg-amber-500/15 border border-amber-400/30">
-                      <span className="text-amber-400 text-sm">🔧</span>
-                      <span className="text-xs font-bold text-amber-300 tracking-wide">청소타워만의 차별화</span>
+                    <div className="inline-flex items-center gap-2 px-5 py-2 lg:px-6 lg:py-2.5 mb-6 lg:mb-8 rounded-full bg-amber-500/15 border border-amber-400/30">
+                      <span className="text-amber-400 text-sm lg:text-lg">🔧</span>
+                      <span className="text-xs lg:text-sm font-bold text-amber-300 tracking-wide">청소타워만의 차별화</span>
                     </div>
-                    <h2 className="text-2xl lg:text-4xl font-black text-white mb-3 lg:mb-5 leading-tight tracking-tight break-keep">
+                    <h2 className="text-2xl lg:text-[3.2rem] lg:leading-[1.2] font-black text-white mb-3 lg:mb-6 leading-tight tracking-tight break-keep">
                       청소만 하는 곳이 아닙니다.<br/>
                       <span className="bg-gradient-to-r from-amber-400 to-yellow-300 bg-clip-text text-transparent">
                         하자까지 잡아드립니다.
                       </span>
                     </h2>
-                    <p className="text-sm lg:text-base text-slate-400 font-medium break-keep leading-relaxed max-w-md mx-auto">
+                    <p className="text-sm lg:text-lg text-slate-400 font-medium break-keep leading-relaxed max-w-md lg:max-w-lg mx-auto">
                       사장님, 소비자 컴플레인 걱정 마세요.<br/>
                       청소타워가 <strong className="text-white">사전에 차단</strong>해드립니다.
                     </p>
@@ -477,34 +479,36 @@ export default function Quote() {
                 </div>
 
                 {/* 타사 vs 청소타워 비교 */}
-                <div className="px-5 lg:px-8 mb-6">
-                  <div className="grid grid-cols-2 gap-3 lg:gap-5">
+                <div className="px-5 lg:px-8 mb-8 lg:mb-12">
+                  <div className="grid grid-cols-2 gap-3 lg:gap-6">
                     {/* 타사 */}
-                    <div className="bg-red-950/50 border border-red-500/20 rounded-2xl p-4">
-                      <div className="flex items-center gap-1.5 mb-3">
-                        <span className="text-red-400 text-sm">⚠️</span>
-                        <span className="text-[11px] font-bold text-red-300">타사 업체</span>
+                    <div className="bg-red-950/50 border border-red-500/20 rounded-2xl lg:rounded-3xl p-4 lg:p-8">
+                      <div className="flex items-center gap-1.5 lg:gap-2.5 mb-3 lg:mb-5">
+                        <span className="text-red-400 text-sm lg:text-xl">⚠️</span>
+                        <span className="text-[11px] lg:text-base font-bold text-red-300">타사 업체</span>
                       </div>
-                      <ul className="space-y-2">
+                      <ul className="space-y-2 lg:space-y-3.5">
                         {['그냥 청소만 합니다', '보수는 별도 업체 부르세요', '하자 발견해도 내 일 아닙니다', '입주 후? 연락 안 됩니다'].map((t, i) => (
-                          <li key={i} className="flex items-start gap-1.5">
-                            <span className="text-red-400/80 text-xs mt-0.5 shrink-0">✗</span>
-                            <span className="text-red-200/80 text-[11px] font-medium break-keep leading-snug">{t}</span>
+                          <li key={i} className="flex items-start gap-1.5 lg:gap-2.5">
+                            <span className="text-red-400/80 text-xs lg:text-base mt-0.5 shrink-0">✗</span>
+                            <span className="text-red-200/80 text-[11px] lg:text-[15px] font-medium break-keep leading-snug">{t}</span>
                           </li>
                         ))}
                       </ul>
                     </div>
                     {/* 청소타워 */}
-                    <div className="bg-emerald-950/50 border border-emerald-500/20 rounded-2xl p-4">
-                      <div className="flex items-center gap-1.5 mb-3">
-                        <span className="text-emerald-400 text-sm">✅</span>
-                        <span className="text-[11px] font-bold text-emerald-300">청소타워</span>
+                    <div className="bg-emerald-950/50 border border-emerald-500/20 rounded-2xl lg:rounded-3xl p-4 lg:p-8 relative overflow-hidden">
+                      {/* 글로우 */}
+                      <div className="hidden lg:block absolute -top-10 -right-10 w-40 h-40 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
+                      <div className="flex items-center gap-1.5 lg:gap-2.5 mb-3 lg:mb-5 relative z-10">
+                        <span className="text-emerald-400 text-sm lg:text-xl">✅</span>
+                        <span className="text-[11px] lg:text-base font-bold text-emerald-300">청소타워</span>
                       </div>
-                      <ul className="space-y-2">
+                      <ul className="space-y-2 lg:space-y-3.5 relative z-10">
                         {['청소하면서 하자까지 잡습니다', '실리콘·마루·벽지·장판 원스톱', '소비자가 말하기 전에 먼저 합니다', '사장님 평판을 지켜드립니다'].map((t, i) => (
-                          <li key={i} className="flex items-start gap-1.5">
-                            <span className="text-emerald-400 text-xs mt-0.5 shrink-0">✓</span>
-                            <span className="text-emerald-200/80 text-[11px] font-medium break-keep leading-snug">{t}</span>
+                          <li key={i} className="flex items-start gap-1.5 lg:gap-2.5">
+                            <span className="text-emerald-400 text-xs lg:text-base mt-0.5 shrink-0">✓</span>
+                            <span className="text-emerald-200/80 text-[11px] lg:text-[15px] font-medium break-keep leading-snug">{t}</span>
                           </li>
                         ))}
                       </ul>
@@ -744,16 +748,17 @@ export default function Quote() {
                 </div>
 
                 {/* 무상 강조 배너 */}
-                <div className="px-5 lg:px-8 mb-6">
-                  <div className="bg-gradient-to-r from-amber-500/10 to-blue-500/10 border border-amber-400/20 rounded-2xl p-5 text-center">
-                    <span className="text-2xl mb-2 block">✨</span>
-                    <p className="text-base font-black text-white mb-1 break-keep">
+                <div className="px-5 lg:px-8 mb-6 lg:mb-10">
+                  <div className="bg-gradient-to-r from-amber-500/10 to-blue-500/10 border border-amber-400/20 rounded-2xl lg:rounded-3xl p-5 lg:p-10 text-center relative overflow-hidden">
+                    <div className="hidden lg:block absolute top-0 left-1/2 -translate-x-1/2 w-[400px] h-[200px] bg-amber-400/5 rounded-full blur-[80px] pointer-events-none" />
+                    <span className="text-2xl lg:text-4xl mb-2 lg:mb-4 block relative z-10">✨</span>
+                    <p className="text-base lg:text-xl font-black text-white mb-1 lg:mb-2 break-keep relative z-10">
                       청소 비용 그대로,
                     </p>
-                    <p className="text-lg font-black text-amber-400 mb-2 break-keep">
+                    <p className="text-lg lg:text-2xl font-black text-amber-400 mb-2 lg:mb-3 break-keep relative z-10">
                       보수 서비스는 무상입니다.
                     </p>
-                    <p className="text-xs text-slate-400 font-medium break-keep">
+                    <p className="text-xs lg:text-sm text-slate-400 font-medium break-keep relative z-10">
                       프리미엄 청소 선택 시 추가 비용 없이 보수 포함
                     </p>
                   </div>

@@ -725,8 +725,8 @@ export default function Quote() {
                           className="absolute inset-0 z-[1] transition-all duration-700 ease-in-out"
                           style={{
                             backgroundImage: 'url(/repair_wallpaper.png)',
-                            backgroundSize: '200% 120%',
-                            backgroundPosition: activeRepairCard === 'wallpaper' ? '100% 30%' : '0% 30%',
+                            backgroundSize: '200% 160%',
+                            backgroundPosition: activeRepairCard === 'wallpaper' ? '100% 20%' : '0% 20%',
                             backgroundRepeat: 'no-repeat',
                           }}
                         />

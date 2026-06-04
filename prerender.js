@@ -222,7 +222,7 @@ async function prerender() {
             canonical.setAttribute('rel', 'canonical');
             document.head.appendChild(canonical);
           }
-          canonical.setAttribute('href', `https://cheongsotower.kr${currentRoute}`);
+          canonical.setAttribute('href', `https://cheongsotower.kr${currentRoute === '/' ? '/' : currentRoute + '/'}`);
 
           // Helper: meta 태그 업데이트 또는 생성
           const updateOrCreateMeta = (attrName, attrValue, contentValue) => {
@@ -242,12 +242,12 @@ async function prerender() {
           updateOrCreateMeta('name', 'keywords', metaInfo.keywords);
 
           // 5. Open Graph url, title, description 변경
-          updateOrCreateMeta('property', 'og:url', `https://cheongsotower.kr${currentRoute === '/' ? '/' : currentRoute}`);
+          updateOrCreateMeta('property', 'og:url', `https://cheongsotower.kr${currentRoute === '/' ? '/' : currentRoute + '/'}`);
           updateOrCreateMeta('property', 'og:title', metaInfo.title);
           updateOrCreateMeta('property', 'og:description', metaInfo.description);
 
           // 6. Twitter url, title, description 변경
-          updateOrCreateMeta('property', 'twitter:url', `https://cheongsotower.kr${currentRoute === '/' ? '/' : currentRoute}`);
+          updateOrCreateMeta('property', 'twitter:url', `https://cheongsotower.kr${currentRoute === '/' ? '/' : currentRoute + '/'}`);
           updateOrCreateMeta('property', 'twitter:title', metaInfo.title);
           updateOrCreateMeta('property', 'twitter:description', metaInfo.description);
           

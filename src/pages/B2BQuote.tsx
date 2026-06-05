@@ -535,34 +535,25 @@ export default function Quote() {
                   </div>
                 </div>
 
-                {/* Scroll Down Indicator */}
-                <div className="flex flex-col items-center justify-center mt-2 lg:mt-4 mb-8">
-                  <motion.div 
-                    animate={{ y: [0, 8, 0] }}
-                    transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
-                    className="flex flex-col items-center gap-1 cursor-pointer"
-                    onClick={() => {
-                      document.getElementById('why-us-section')?.scrollIntoView({ behavior: 'smooth' });
-                    }}
-                  >
-                    <span className="text-[10px] font-bold text-slate-400 tracking-widest uppercase">scroll</span>
-                    <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                    </svg>
-                  </motion.div>
-                </div>
-
                 {/* 타사 vs 청소타워 비교 */}
-                <div id="why-us-section" className="px-5 lg:px-8 mb-10 lg:mb-16 scroll-mt-20">
+                <div id="why-us-section" className="px-5 lg:px-8 mb-10 lg:mb-16 mt-8 scroll-mt-20">
                   {/* 섹션 타이틀 */}
-                  <div className="text-center mb-6 lg:mb-10">
-                    <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white border border-slate-200/80 text-[11px] lg:text-sm font-extrabold text-slate-700 tracking-wider uppercase shadow-sm">
-                      <span className="relative flex h-2 w-2">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
+                  <div className="text-center mb-8 lg:mb-12">
+                    <motion.div 
+                      initial={{ opacity: 0, y: 10 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      viewport={{ once: true }}
+                      className="inline-flex flex-col items-center gap-1.5"
+                    >
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 text-[10px] lg:text-xs font-extrabold text-blue-600 tracking-wider">
+                        <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse"></span>
+                        COMPARE
                       </span>
-                      왜 청소타워인가?
-                    </span>
+                      <h3 className="text-lg lg:text-2xl font-black text-slate-800 tracking-tight mt-1">
+                        왜 청소타워인가?
+                      </h3>
+                      <div className="w-8 h-1 bg-gradient-to-r from-blue-600 to-indigo-500 rounded-full mt-1.5"></div>
+                    </motion.div>
                   </div>
 
                   <div className="relative grid grid-cols-2 gap-4 lg:gap-0 max-w-4xl mx-auto">

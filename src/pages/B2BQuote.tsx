@@ -466,80 +466,150 @@ export default function Quote() {
                 className="flex flex-col"
               >
                 {/* Hero Banner */}
-                <div className="relative px-5 pt-10 pb-12 lg:pt-24 lg:pb-20 text-center overflow-hidden">
-                  <div className="absolute inset-0 bg-gradient-to-b from-amber-50 via-amber-50/50 to-transparent pointer-events-none"></div>
-                  {/* 데스크톱 글로우 장식 */}
-                  <div className="hidden lg:block absolute top-[10%] left-1/2 -translate-x-1/2 w-[600px] h-[300px] rounded-full bg-amber-200/30 blur-[100px] pointer-events-none" />
+                <div className="relative px-5 pt-12 pb-14 lg:pt-28 lg:pb-24 text-center overflow-hidden">
+                  {/* Clean Premium Background Gradients */}
+                  <div className="absolute inset-0 bg-gradient-to-b from-blue-50/60 via-indigo-50/20 to-transparent pointer-events-none"></div>
+                  
+                  {/* Floating Glowing Orbs */}
+                  <motion.div 
+                    className="absolute -top-10 -left-10 w-44 h-44 rounded-full bg-sky-200/30 blur-3xl pointer-events-none"
+                    animate={{
+                      x: [0, 15, 0],
+                      y: [0, -15, 0],
+                    }}
+                    transition={{
+                      duration: 8,
+                      repeat: Infinity,
+                      ease: "easeInOut"
+                    }}
+                  />
+                  <motion.div 
+                    className="absolute top-24 -right-10 w-56 h-56 rounded-full bg-indigo-200/30 blur-3xl pointer-events-none"
+                    animate={{
+                      x: [0, -20, 0],
+                      y: [0, 20, 0],
+                    }}
+                    transition={{
+                      duration: 10,
+                      repeat: Infinity,
+                      ease: "easeInOut"
+                    }}
+                  />
+                  
+                  {/* Desktop Glow Ornament */}
+                  <div className="hidden lg:block absolute top-[10%] left-1/2 -translate-x-1/2 w-[800px] h-[350px] rounded-full bg-gradient-to-r from-sky-200/20 to-indigo-200/20 blur-[120px] pointer-events-none" />
+                  
                   <div className="relative z-10">
-                    <div className="inline-flex items-center gap-2 px-4 py-1.5 lg:px-7 lg:py-3 mb-6 lg:mb-8 rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 shadow-lg shadow-blue-500/25">
-                      <span className="text-white text-xs lg:text-xl">🔧</span>
-                      <span className="text-[11px] lg:text-base font-bold text-white tracking-wide">청소타워만의 차별화</span>
-                    </div>
-                    <h2 className="text-2xl lg:text-[3.2rem] lg:leading-[1.2] font-black text-slate-900 mb-3 lg:mb-6 leading-tight tracking-tight break-keep">
+                    {/* Premium Sparkle Badge */}
+                    <motion.div 
+                      className="inline-flex items-center gap-2 px-4 py-1.5 lg:px-6 lg:py-2.5 mb-6 lg:mb-8 rounded-full bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 shadow-md shadow-blue-500/20 border border-white/20"
+                      whileHover={{ scale: 1.05 }}
+                      animate={{
+                        boxShadow: ["0 4px 6px -1px rgba(59, 130, 246, 0.2)", "0 10px 15px -3px rgba(59, 130, 246, 0.3)", "0 4px 6px -1px rgba(59, 130, 246, 0.2)"]
+                      }}
+                      transition={{
+                        duration: 3,
+                        repeat: Infinity,
+                        ease: "easeInOut"
+                      }}
+                    >
+                      <svg className="w-3.5 h-3.5 lg:w-4 lg:h-4 text-amber-300 fill-current" viewBox="0 0 24 24">
+                        <path d="M12 2l2.4 7.2L22 10l-6 5.4 2 7.6-6-4.8-6 4.8 2-7.6-6-5.4 7.6-.8z" />
+                      </svg>
+                      <span className="text-[11px] lg:text-sm font-extrabold text-white tracking-wider">청소타워만의 차별화</span>
+                    </motion.div>
+
+                    {/* Main Title with high-density tracking */}
+                    <h2 className="text-2xl lg:text-[3.2rem] lg:leading-[1.2] font-black text-slate-900 mb-4 lg:mb-7 leading-tight tracking-tight lg:tracking-tighter break-keep">
                       청소만 하는 곳이 아닙니다.<br/>
-                      <span className="bg-gradient-to-r from-amber-600 to-amber-500 bg-clip-text text-transparent">
+                      <span className="bg-gradient-to-r from-rose-500 via-orange-500 to-amber-500 bg-clip-text text-transparent">
                         하자까지 잡아드립니다.
                       </span>
                     </h2>
-                    <p className="text-sm lg:text-lg text-slate-500 font-medium break-keep leading-relaxed max-w-md lg:max-w-lg mx-auto">
+
+                    {/* Subtitle with enhanced contrast and readability */}
+                    <p className="text-sm lg:text-lg text-slate-600 font-medium break-keep leading-relaxed max-w-md lg:max-w-lg mx-auto">
                       사장님, 소비자 컴플레인 걱정 마세요.<br/>
-                      청소타워가 <strong className="text-slate-900">사전에 차단</strong>해드립니다.
+                      청소타워가 <strong className="text-slate-900 font-bold">사전에 차단</strong>해드립니다.
                     </p>
                   </div>
                 </div>
 
+                {/* Scroll Down Indicator */}
+                <div className="flex flex-col items-center justify-center mt-2 lg:mt-4 mb-8">
+                  <motion.div 
+                    animate={{ y: [0, 8, 0] }}
+                    transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
+                    className="flex flex-col items-center gap-1 cursor-pointer"
+                    onClick={() => {
+                      document.getElementById('why-us-section')?.scrollIntoView({ behavior: 'smooth' });
+                    }}
+                  >
+                    <span className="text-[10px] font-bold text-slate-400 tracking-widest uppercase">scroll</span>
+                    <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </motion.div>
+                </div>
+
                 {/* 타사 vs 청소타워 비교 */}
-                <div className="px-5 lg:px-8 mb-8 lg:mb-12">
+                <div id="why-us-section" className="px-5 lg:px-8 mb-10 lg:mb-16 scroll-mt-20">
                   {/* 섹션 타이틀 */}
-                  <div className="text-center mb-5 lg:mb-8">
-                    <span className="inline-block px-4 py-1.5 lg:px-5 lg:py-2 rounded-full bg-slate-50 border border-slate-200/60 text-[11px] lg:text-sm font-bold text-slate-600 tracking-wider uppercase">왜 청소타워인가?</span>
+                  <div className="text-center mb-6 lg:mb-10">
+                    <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white border border-slate-200/80 text-[11px] lg:text-sm font-extrabold text-slate-700 tracking-wider uppercase shadow-sm">
+                      <span className="relative flex h-2 w-2">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
+                      </span>
+                      왜 청소타워인가?
+                    </span>
                   </div>
 
-                  <div className="relative grid grid-cols-2 gap-3 lg:gap-0">
+                  <div className="relative grid grid-cols-2 gap-4 lg:gap-0 max-w-4xl mx-auto">
                     {/* VS 뱃지 - 데스크톱 */}
-                    <div className="hidden lg:flex absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-20 w-14 h-14 rounded-full bg-white border-2 border-slate-300 shadow-lg items-center justify-center shadow-xl">
-                      <span className="text-sm font-black text-slate-500">VS</span>
+                    <div className="hidden lg:flex absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-20 w-14 h-14 rounded-full bg-white border border-slate-200 shadow-md items-center justify-center">
+                      <span className="text-sm font-black text-slate-400">VS</span>
                     </div>
 
                     {/* 타사 */}
-                    <div className="bg-gradient-to-br from-red-50 to-red-50/60 border border-red-200 rounded-2xl lg:rounded-3xl lg:rounded-r-none p-4 lg:p-10">
-                      <div className="flex items-center gap-2 lg:gap-3 mb-4 lg:mb-7">
-                        <div className="w-8 h-8 lg:w-12 lg:h-12 rounded-full bg-red-100 flex items-center justify-center">
-                          <span className="text-red-500 text-sm lg:text-2xl">✗</span>
+                    <div className="bg-gradient-to-br from-red-50/50 to-red-50/20 border border-red-100 rounded-2xl lg:rounded-3xl lg:rounded-r-none p-4 lg:p-10 transition-all duration-300 hover:shadow-lg hover:shadow-red-500/5 hover:-translate-y-0.5">
+                      <div className="flex items-center gap-2 lg:gap-3 mb-4 lg:mb-8">
+                        <div className="w-8 h-8 lg:w-12 lg:h-12 rounded-full bg-red-100/70 flex items-center justify-center shrink-0">
+                          <span className="text-red-500 text-sm lg:text-xl font-bold">✗</span>
                         </div>
                         <span className="text-xs lg:text-xl font-black text-red-600">타사 업체</span>
                       </div>
-                      <ul className="space-y-3 lg:space-y-5">
+                      <ul className="space-y-3 lg:space-y-6">
                         {['그냥 청소만 합니다', '보수는 별도 업체 부르세요', '하자 발견해도 내 일 아닙니다', '입주 후? 연락 안 됩니다'].map((t, i) => (
-                          <li key={i} className="flex items-center gap-2 lg:gap-3">
-                            <span className="w-5 h-5 lg:w-6 lg:h-6 rounded-full bg-red-100 flex items-center justify-center shrink-0">
-                              <span className="text-red-500 text-[10px] lg:text-xs">✗</span>
+                          <li key={i} className="flex items-center gap-2 lg:gap-3.5">
+                            <span className="w-4.5 h-4.5 lg:w-6 lg:h-6 rounded-full bg-red-50 flex items-center justify-center shrink-0">
+                              <span className="text-red-400 text-[10px] lg:text-xs">✗</span>
                             </span>
-                            <span className="text-red-700 text-[11px] lg:text-lg font-semibold break-keep">{t}</span>
+                            <span className="text-red-700/80 text-[11px] lg:text-[17px] font-semibold break-keep leading-tight">{t}</span>
                           </li>
                         ))}
                       </ul>
                     </div>
 
                     {/* 청소타워 */}
-                    <div className="bg-gradient-to-br from-emerald-50 to-emerald-50/60 border border-emerald-200 rounded-2xl lg:rounded-3xl lg:rounded-l-none p-4 lg:p-10 relative overflow-hidden">
+                    <div className="bg-gradient-to-br from-emerald-50/60 to-emerald-50/30 border border-emerald-200/80 rounded-2xl lg:rounded-3xl lg:rounded-l-none p-4 lg:p-10 relative overflow-hidden transition-all duration-300 hover:shadow-xl hover:shadow-emerald-500/5 hover:-translate-y-0.5">
                       {/* 글로우 */}
-                      <div className="hidden lg:block absolute -top-20 -right-20 w-60 h-60 bg-emerald-200/30 rounded-full blur-[60px] pointer-events-none" />
-                      <div className="hidden lg:block absolute bottom-0 left-0 w-40 h-40 bg-emerald-100/40 rounded-full blur-[40px] pointer-events-none" />
+                      <div className="hidden lg:block absolute -top-20 -right-20 w-60 h-60 bg-emerald-200/20 rounded-full blur-[60px] pointer-events-none" />
+                      <div className="hidden lg:block absolute bottom-0 left-0 w-40 h-40 bg-emerald-100/30 rounded-full blur-[40px] pointer-events-none" />
 
-                      <div className="flex items-center gap-2 lg:gap-3 mb-4 lg:mb-7 relative z-10">
-                        <div className="w-8 h-8 lg:w-12 lg:h-12 rounded-full bg-emerald-100 flex items-center justify-center">
-                          <span className="text-emerald-600 text-sm lg:text-2xl">✓</span>
+                      <div className="flex items-center gap-2 lg:gap-3 mb-4 lg:mb-8 relative z-10">
+                        <div className="w-8 h-8 lg:w-12 lg:h-12 rounded-full bg-emerald-100 flex items-center justify-center shrink-0">
+                          <span className="text-emerald-600 text-sm lg:text-xl font-bold">✓</span>
                         </div>
-                        <span className="text-xs lg:text-xl font-black text-emerald-700">청소타워</span>
+                        <span className="text-xs lg:text-xl font-black text-emerald-800">청소타워</span>
                       </div>
-                      <ul className="space-y-3 lg:space-y-5 relative z-10">
+                      <ul className="space-y-3 lg:space-y-6 relative z-10">
                         {['청소하면서 하자까지 잡습니다', '실리콘·마루·벽지·장판 원스톱', '소비자가 말하기 전에 먼저 합니다', '사장님 평판을 지켜드립니다'].map((t, i) => (
-                          <li key={i} className="flex items-center gap-2 lg:gap-3">
-                            <span className="w-5 h-5 lg:w-6 lg:h-6 rounded-full bg-emerald-100 flex items-center justify-center shrink-0">
+                          <li key={i} className="flex items-center gap-2 lg:gap-3.5">
+                            <span className="w-4.5 h-4.5 lg:w-6 lg:h-6 rounded-full bg-emerald-100/50 flex items-center justify-center shrink-0">
                               <span className="text-emerald-600 text-[10px] lg:text-xs font-bold">✓</span>
                             </span>
-                            <span className="text-emerald-800 text-[11px] lg:text-lg font-semibold break-keep">{t}</span>
+                            <span className="text-emerald-900 text-[11px] lg:text-[17px] font-semibold break-keep leading-tight">{t}</span>
                           </li>
                         ))}
                       </ul>

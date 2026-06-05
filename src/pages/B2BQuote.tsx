@@ -531,20 +531,26 @@ export default function Quote() {
                       </span>
                     </h2>
 
-                    {/* Subtitle with enhanced contrast and readability */}
-                    <div className="text-xs lg:text-[17px] text-slate-600 font-bold break-keep leading-relaxed max-w-md lg:max-w-xl mx-auto space-y-1.5">
-                      <p>
-                        소비자가 보면 <strong className="text-red-500 font-extrabold">하자</strong>, 청소타워가 먼저 보면 <strong className="text-emerald-600 font-extrabold">공사중</strong>
-                      </p>
-                      <p className="text-slate-900 font-extrabold text-[13px] lg:text-[18px]">
-                        인테리어 잔금 걱정 No No 💸
-                      </p>
-                      <p>
-                        저희는 항상 <strong className="text-blue-600 font-extrabold">업체 입장</strong>에서 생각합니다.
-                      </p>
-                      <p className="text-slate-400 text-[11px] lg:text-sm font-semibold pt-1">
-                        저희는 사장님들의 마무리를 책임지는 청소타워입니다.
-                      </p>
+                    {/* Subtitle with premium bullet list style */}
+                    <div className="flex flex-col items-center mt-5 mb-2">
+                      <ul className="inline-block text-left text-xs lg:text-[17px] text-slate-600 font-bold break-keep leading-relaxed space-y-2 max-w-md lg:max-w-xl mx-auto">
+                        <li className="flex items-start gap-2">
+                          <span className="text-blue-500 mt-1 shrink-0 font-extrabold">•</span>
+                          <span>소비자가 보면 <strong className="text-red-500 font-extrabold">하자</strong>, 청소타워가 먼저 보면 <strong className="text-emerald-600 font-extrabold">공사중</strong></span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="text-blue-500 mt-1 shrink-0 font-extrabold">•</span>
+                          <span className="text-slate-900 font-extrabold">인테리어 잔금 걱정 No No 💸</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="text-blue-500 mt-1 shrink-0 font-extrabold">•</span>
+                          <span>저희는 항상 <strong className="text-blue-600 font-extrabold">업체 입장</strong>에서 생각합니다.</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="text-blue-500 mt-1 shrink-0 font-extrabold">•</span>
+                          <span className="text-slate-400 font-semibold text-[11px] lg:text-[15px]">저희는 사장님들의 마무리를 책임지는 청소타워입니다.</span>
+                        </li>
+                      </ul>
                     </div>
                   </div>
                 </div>

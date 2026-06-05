@@ -111,11 +111,7 @@ export default function Quote() {
   // 입력 상태
   const [houseType, setHouseType] = useState('아파트');
   const [houseSubType, setHouseSubType] = useState('');
-  const [cleaningType, setCleaningType] = useState<'프리미엄' | '이사' | '거주'>(() => {
-    if (type === 'general' || type === '이사') return '이사';
-    if (type === 'residence' || type === '거주') return '거주';
-    return '프리미엄';
-  });
+  const [cleaningType] = useState<'프리미엄'>('프리미엄');
   const [size, setSize] = useState<number | ''>(24);
   
   const [businessName, setBusinessName] = useState('');
@@ -169,14 +165,7 @@ export default function Quote() {
 
   // 견적 산출 로직
   const getEstimatedPrice = () => {
-    let basePricePerPyeong = 15000;
-    if (cleaningType === '프리미엄') {
-      basePricePerPyeong = 20000;
-    } else if (cleaningType === '거주') {
-      basePricePerPyeong = 18000;
-    } else if (cleaningType === '이사') {
-      basePricePerPyeong = 15000;
-    }
+    const basePricePerPyeong = 20000;
 
     const currentSize = typeof size === 'number' ? size : 0;
     let total = currentSize * basePricePerPyeong;
@@ -281,7 +270,7 @@ export default function Quote() {
     }).filter(Boolean) as string[];
     
     if (isBetweenCleaning) optionLabels.push('당일 이사 (사이청소)');
-    if (cleaningType === '거주') optionLabels.push('거주 청소 (짐 있음)');
+
     if (elevator === '없음' && isHighFloorWithoutElevator) optionLabels.push('엘리베이터 없음 (3층 이상)');
 
     const memoParts = [];
@@ -364,7 +353,7 @@ export default function Quote() {
         setStep(data.step || 0);
         setHouseType(data.houseType || '아파트');
         setHouseSubType(data.houseSubType || '');
-        setCleaningType(data.cleaningType || '프리미엄');
+        // cleaningType은 프리미엄 고정
         setSize(data.size || 24);
         setBusinessName(data.businessName || '');
         setAddress(data.address || '');
@@ -422,7 +411,7 @@ export default function Quote() {
             </span>
           </button>
           <span className="font-bold text-base text-slate-900 tracking-tight text-center flex-1">
-            {step === 0 ? '청소타워 서비스 안내' : `사업자 전용 앱 (${cleaningType})`}
+            {step === 0 ? '청소타워 서비스 안내' : '사업자 전용 프리미엄 견적'}
           </span>
           {isB2BLoggedIn && (
             <button
@@ -822,36 +811,13 @@ export default function Quote() {
                 
                 <div className="space-y-7 flex-1">
                   <div>
-                    <label className="block text-slate-700 text-sm font-semibold mb-3">🧹 청소 종류 선택</label>
-                    <div className="grid grid-cols-1 gap-3 mb-6">
-                      {[
-                        { id: '프리미엄', label: '프리미엄 입주청소', sub: '인테리어 공사완료후 분진이 많은 현장', price: '평당 2.0만' },
-                        { id: '거주', label: '거주청소', sub: '거주중 상태청소', price: '평당 1.8만' },
-                        { id: '이사', label: '이사청소', sub: '이사나가고 빈집 청소', price: '평당 1.5만' }
-                      ].map(item => (
-                        <button
-                          key={item.id}
-                          type="button"
-                          onClick={() => setCleaningType(item.id as '프리미엄' | '이사' | '거주')}
-                          className={`p-4 rounded-xl text-left transition-all active:scale-[0.98] border flex items-center justify-between ${
-                            cleaningType === item.id 
-                            ? 'bg-blue-50 border-blue-500 shadow-lg shadow-blue-200/30' 
-                            : 'bg-white border-slate-200 hover:bg-slate-50'
-                          }`}
-                        >
-                          <div className="flex flex-col">
-                            <span className={`text-[15px] font-bold ${cleaningType === item.id ? 'text-blue-100' : 'text-slate-600'}`}>
-                              {item.label}
-                            </span>
-                            <span className={`text-[11px] mt-0.5 ${cleaningType === item.id ? 'text-blue-300/80' : 'text-slate-500'}`}>
-                              {item.sub}
-                            </span>
-                          </div>
-                          <span className={`text-xs font-bold px-2 py-1 rounded ${cleaningType === item.id ? 'bg-blue-500 text-white' : 'bg-slate-100 text-slate-500'}`}>
-                            {item.price}
-                          </span>
-                        </button>
-                      ))}
+                    <label className="block text-slate-700 text-sm font-semibold mb-3">🧹 청소 종류</label>
+                    <div className="p-4 rounded-xl bg-blue-50 border-2 border-blue-500 shadow-lg shadow-blue-200/30 flex items-center justify-between mb-6">
+                      <div className="flex flex-col">
+                        <span className="text-[15px] font-bold text-blue-700">프리미엄 입주청소</span>
+                        <span className="text-[11px] mt-0.5 text-blue-500/80">인테리어 공사완료 후 분진이 많은 현장 · 무상 보수 포함</span>
+                      </div>
+                      <span className="text-xs font-bold px-3 py-1.5 rounded-lg bg-blue-600 text-white shadow-sm">평당 2.0만</span>
                     </div>
                   </div>
 
@@ -949,10 +915,7 @@ export default function Quote() {
                       <div className="flex flex-col items-end">
                         <span className="text-slate-500 text-[10px] mb-0.5">단가</span>
                         <span className="text-blue-300 text-xs font-bold bg-blue-500/20 px-2 py-1 rounded whitespace-nowrap flex-shrink-0">
-                          {cleaningType === '이사' 
-                            ? '평당 1.5만원' 
-                            : (cleaningType === '거주' ? '평당 1.8만원' : '평당 2.0만원')
-                          }
+                          평당 2.0만원
                         </span>
                       </div>
                     </div>
@@ -1479,13 +1442,9 @@ export default function Quote() {
                      
                      <div className="space-y-3 pb-4 border-b border-dashed border-slate-200 mb-4">
                         <div className="flex justify-between items-center">
-                           <span className="text-slate-500 text-sm">
-                             {cleaningType === '거주' ? '거주 청소비' : '기본 청소비'}
-                           </span>
+                           <span className="text-slate-500 text-sm">프리미엄 입주청소비</span>
                            <span className="text-slate-200 font-medium">
-                             {((typeof size === 'number' ? size : 0) * 
-                               (cleaningType === '이사' ? 15000 : (cleaningType === '거주' ? 18000 : 20000))
-                             ).toLocaleString()}원
+                             {((typeof size === 'number' ? size : 0) * 20000).toLocaleString()}원
                            </span>
                         </div>
                         {isBetweenCleaning && (

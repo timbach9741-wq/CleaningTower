@@ -1498,15 +1498,27 @@ export default function Quote() {
                       </button>
                     )}
                   </div>
-                  <a
-                    href="http://pf.kakao.com/_xxxxxx/chat"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="w-full bg-[#FEE500] hover:bg-[#FDD800] text-[#000000] font-bold py-4 rounded-xl text-lg shadow-sm transition-all active:scale-[0.98] flex items-center justify-center gap-2"
-                  >
-                    <svg viewBox="0 0 24 24" className="w-6 h-6 fill-current"><path d="M12 3c-5.52 0-10 3.51-10 7.84 0 2.8 1.83 5.24 4.6 6.55-.26.96-.94 3.44-.97 3.56-.03.11.02.22.11.27.09.05.21.05.3 0 .12-.06 3.65-2.48 4.2-2.87.56.09 1.15.13 1.76.13 5.52 0 10-3.51 10-7.84S17.52 3 12 3z"/></svg>
-                    카카오톡으로 문의하기
-                  </a>
+                  <div className="grid grid-cols-2 gap-3">
+                    <a
+                      href="tel:031-499-9509"
+                      className="w-full bg-white/10 hover:bg-white/20 text-white font-bold py-4 rounded-xl text-sm shadow-sm transition-all active:scale-[0.98] flex items-center justify-center gap-2 border border-white/15"
+                    >
+                      <span className="material-symbols-outlined text-lg">call</span>
+                      전화 상담
+                    </a>
+                    <a
+                      href="http://pf.kakao.com/_xxxxxx/chat"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-full bg-[#FEE500] hover:bg-[#FDD800] text-[#000000] font-bold py-4 rounded-xl text-sm shadow-sm transition-all active:scale-[0.98] flex items-center justify-center gap-2"
+                    >
+                      <svg viewBox="0 0 24 24" className="w-6 h-6 fill-current"><path d="M12 3c-5.52 0-10 3.51-10 7.84 0 2.8 1.83 5.24 4.6 6.55-.26.96-.94 3.44-.97 3.56-.03.11.02.22.11.27.09.05.21.05.3 0 .12-.06 3.65-2.48 4.2-2.87.56.09 1.15.13 1.76.13 5.52 0 10-3.51 10-7.84S17.52 3 12 3z"/></svg>
+                      카카오톡 문의
+                    </a>
+                  </div>
+                  <p className="text-center text-xs text-slate-500 mt-1">
+                    사무실 <a href="tel:031-499-9509" className="text-slate-400 hover:text-blue-400 transition-colors">031-499-9509</a> (평일 09:00~18:00)
+                  </p>
                 </div>
               </motion.div>
             )}
@@ -1545,10 +1557,17 @@ export default function Quote() {
               
               <div className="flex gap-2">
                 <a
+                  href="tel:031-499-9509"
+                  className="w-14 bg-white/10 hover:bg-white/20 text-white flex items-center justify-center rounded-xl shadow-sm transition-all active:scale-[0.95] border border-white/15"
+                  aria-label="전화 상담"
+                >
+                  <span className="material-symbols-outlined text-[22px]">call</span>
+                </a>
+                <a
                   href="http://pf.kakao.com/_xxxxxx/chat"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-16 bg-[#FEE500] hover:bg-[#FDD800] text-[#000000] flex items-center justify-center rounded-xl shadow-sm transition-all active:scale-[0.95]"
+                  className="w-14 bg-[#FEE500] hover:bg-[#FDD800] text-[#000000] flex items-center justify-center rounded-xl shadow-sm transition-all active:scale-[0.95]"
                   aria-label="카카오톡 문의하기"
                 >
                   <svg viewBox="0 0 24 24" className="w-7 h-7 fill-current"><path d="M12 3c-5.52 0-10 3.51-10 7.84 0 2.8 1.83 5.24 4.6 6.55-.26.96-.94 3.44-.97 3.56-.03.11.02.22.11.27.09.05.21.05.3 0 .12-.06 3.65-2.48 4.2-2.87.56.09 1.15.13 1.76.13 5.52 0 10-3.51 10-7.84S17.52 3 12 3z"/></svg>

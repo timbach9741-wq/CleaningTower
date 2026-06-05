@@ -548,7 +548,7 @@ export default function Quote() {
                         </li>
                         <li className="flex items-start gap-2 lg:gap-3">
                           <span className="text-blue-500 mt-1 lg:mt-1.5 shrink-0 font-black text-sm lg:text-xl">•</span>
-                          <span><strong className="text-blue-600 font-black">밀당고수 소지자들</strong> 청소타워 박멸한다</span>
+                          <span>저희는 사장님들의 마무리를 책임지는 청소타워입니다.</span>
                         </li>
                       </ul>
                     </div>
@@ -804,17 +804,17 @@ export default function Quote() {
                         />
                         {/* Before/After 뱃지 */}
                         <div className="absolute top-3 left-3 z-10">
-                          <span className={`inline-block px-3 py-1 rounded-full text-xs font-black shadow-lg transition-colors duration-300 ${
+                          <span className={`inline-block px-3 py-1 rounded-full text-xs font-black shadow-md transition-all duration-300 ${
                             activeRepairCard === 'jangpan'
-                              ? 'bg-emerald-500 text-white'
-                              : 'bg-red-500 text-white'
+                              ? 'bg-emerald-600 text-white ring-2 ring-emerald-300 shadow-emerald-500/30'
+                              : 'bg-slate-500/90 text-slate-100'
                           }`}>
                             {activeRepairCard === 'jangpan' ? 'AFTER ✓' : 'BEFORE'}
                           </span>
                         </div>
                         {/* 터치 안내 */}
                         <div className="absolute bottom-3 right-3 z-10">
-                          <span className="inline-block px-2.5 py-1 rounded-full bg-black/50 backdrop-blur-sm text-[10px] font-bold text-slate-600">
+                          <span className="inline-block px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-sm text-[10px] font-extrabold text-white">
                             {activeRepairCard === 'jangpan' ? '다시 터치하면 전' : '터치하면 후 →'}
                           </span>
                         </div>
@@ -854,17 +854,17 @@ export default function Quote() {
                         />
                         {/* Before/After 뱃지 */}
                         <div className="absolute top-3 left-3 z-10">
-                          <span className={`inline-block px-3 py-1 rounded-full text-xs font-black shadow-lg transition-colors duration-300 ${
+                          <span className={`inline-block px-3 py-1 rounded-full text-xs font-black shadow-md transition-all duration-300 ${
                             activeRepairCard === 'wallpaper'
-                              ? 'bg-emerald-500 text-white'
-                              : 'bg-red-500 text-white'
+                              ? 'bg-emerald-600 text-white ring-2 ring-emerald-300 shadow-emerald-500/30'
+                              : 'bg-slate-500/90 text-slate-100'
                           }`}>
                             {activeRepairCard === 'wallpaper' ? 'AFTER ✓' : 'BEFORE'}
                           </span>
                         </div>
                         {/* 터치 안내 */}
                         <div className="absolute bottom-3 right-3 z-10">
-                          <span className="inline-block px-2.5 py-1 rounded-full bg-black/50 backdrop-blur-sm text-[10px] font-bold text-slate-600">
+                          <span className="inline-block px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-sm text-[10px] font-extrabold text-white">
                             {activeRepairCard === 'wallpaper' ? '다시 터치하면 전' : '터치하면 후 →'}
                           </span>
                         </div>

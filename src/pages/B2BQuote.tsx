@@ -536,11 +536,11 @@ export default function Quote() {
                       <ul className="inline-block text-left text-sm lg:text-[22px] text-slate-600 font-extrabold break-keep leading-relaxed space-y-2 lg:space-y-3 max-w-xs sm:max-w-md lg:max-w-2xl mx-auto">
                         <li className="flex items-start gap-2 lg:gap-3">
                           <span className="text-blue-500 mt-1 lg:mt-1.5 shrink-0 font-black text-sm lg:text-xl">•</span>
-                          <span>소비자가 보면 <strong className="text-red-500 font-black">하자</strong>, 청소타워가 먼저 보면 <strong className="text-emerald-600 font-black">공사중</strong></span>
+                          <span>소비자 보면 <strong className="text-red-500 font-black">하자</strong>, 청소타워가 먼저 보면 <strong className="text-emerald-600 font-black">공사중</strong></span>
                         </li>
                         <li className="flex items-start gap-2 lg:gap-3">
                           <span className="text-blue-500 mt-1 lg:mt-1.5 shrink-0 font-black text-sm lg:text-xl">•</span>
-                          <span>인테리어 <strong className="text-red-500 font-black">공사잔금</strong> 사수하여 지켜내자</span>
+                          <span>인테리어 잔금 걱정 <strong className="text-red-500 font-black">No No</strong></span>
                         </li>
                         <li className="flex items-start gap-2 lg:gap-3">
                           <span className="text-blue-500 mt-1 lg:mt-1.5 shrink-0 font-black text-sm lg:text-xl">•</span>
@@ -548,7 +548,7 @@ export default function Quote() {
                         </li>
                         <li className="flex items-start gap-2 lg:gap-3">
                           <span className="text-blue-500 mt-1 lg:mt-1.5 shrink-0 font-black text-sm lg:text-xl">•</span>
-                          <span>저희는 사장님들의 마무리를 책임지는 청소타워입니다.</span>
+                          <span>저희는 사장님들에 마무리를 책임지는 청소타워 입니다</span>
                         </li>
                       </ul>
                     </div>

@@ -576,56 +576,66 @@ export default function Quote() {
                     </motion.div>
                   </div>
 
-                  <div className="relative grid grid-cols-2 gap-0 max-w-4xl mx-auto items-stretch px-2 lg:px-0">
-                    {/* VS Badge - Aligned perfectly in the middle */}
-                    <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-20 w-10 h-10 lg:w-16 lg:h-16 rounded-full bg-white border border-slate-200 shadow-lg flex items-center justify-center">
-                      <span className="text-xs lg:text-base font-black text-slate-400">VS</span>
+                  <div className="relative grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-0 max-w-4xl mx-auto items-stretch px-2 lg:px-0">
+                    {/* VS Badge - Desktop: Aligned perfectly in the middle */}
+                    <div className="hidden md:flex absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-20 w-16 h-16 rounded-full bg-white border border-slate-200 shadow-lg items-center justify-center">
+                      <span className="text-base font-black text-slate-400">VS</span>
                     </div>
 
                     {/* 타사 */}
-                    <div className="bg-slate-50/90 border border-slate-200 border-r-0 rounded-l-2xl lg:rounded-l-3xl p-3 lg:p-10 opacity-70 transition-all duration-300">
-                      <div className="flex items-center gap-1.5 lg:gap-3 mb-4 lg:mb-8">
-                        <div className="w-6 h-6 lg:w-10 lg:h-10 rounded-full bg-slate-200 flex items-center justify-center shrink-0">
-                          <span className="text-slate-500 text-xs lg:text-lg font-bold">✗</span>
+                    <div className="bg-slate-50/90 border border-slate-200 md:border-r-0 rounded-2xl md:rounded-r-none md:rounded-l-3xl p-4 md:p-10 opacity-70 transition-all duration-300">
+                      <div className="flex items-center gap-1.5 md:gap-3 mb-4 md:mb-8">
+                        <div className="w-6 h-6 md:w-10 md:h-10 rounded-full bg-slate-200 flex items-center justify-center shrink-0">
+                          <span className="text-slate-500 text-xs md:text-lg font-bold">✗</span>
                         </div>
-                        <span className="text-[11px] lg:text-lg font-bold text-slate-500">타사 업체</span>
+                        <span className="text-xs md:text-lg font-bold text-slate-500">타사 업체</span>
                       </div>
-                      <ul className="space-y-3 lg:space-y-6">
+                      <ul className="space-y-3 md:space-y-6">
                         {['그냥 청소만 합니다', '보수는 별도 업체 부르세요', '하자 발견해도 내 일 아닙니다', '입주 후? 연락 안 됩니다'].map((t, i) => (
-                          <li key={i} className="flex items-center gap-1.5 lg:gap-3.5">
-                            <span className="w-4.5 h-4.5 lg:w-6 lg:h-6 rounded-full bg-slate-200/50 flex items-center justify-center shrink-0">
-                              <span className="text-slate-400 text-[10px] lg:text-xs">✗</span>
+                          <li key={i} className="flex items-center gap-1.5 md:gap-3.5">
+                            <span className="w-4.5 h-4.5 md:w-6 md:h-6 rounded-full bg-slate-200/50 flex items-center justify-center shrink-0">
+                              <span className="text-slate-400 text-[10px] md:text-xs">✗</span>
                             </span>
-                            <span className="text-slate-400 text-[10px] lg:text-[17px] font-semibold break-keep leading-tight">{t}</span>
+                            <span className="text-slate-400 text-[11px] md:text-[17px] font-semibold break-keep leading-tight">{t}</span>
                           </li>
                         ))}
                       </ul>
                     </div>
 
+                    {/* Mobile VS Divider - Only visible on small screens */}
+                    <div className="flex md:hidden items-center justify-center py-2 relative">
+                      <div className="absolute inset-0 flex items-center">
+                        <div className="w-full border-t border-dashed border-slate-300"></div>
+                      </div>
+                      <div className="relative z-10 w-9 h-9 rounded-full bg-white border border-slate-200 shadow-md flex items-center justify-center text-xs font-black text-slate-400">
+                        VS
+                      </div>
+                    </div>
+
                     {/* 청소타워 */}
-                    <div className="bg-white border-2 border-blue-600 rounded-r-2xl lg:rounded-r-3xl p-3 lg:p-10 relative overflow-hidden transition-all duration-300 shadow-xl shadow-blue-500/10 scale-[1.02] lg:scale-[1.04] z-10">
+                    <div className="bg-white border-2 border-blue-600 rounded-2xl md:rounded-l-none md:rounded-r-3xl p-4 md:p-10 relative overflow-hidden transition-all duration-300 shadow-xl shadow-blue-500/10 scale-[1.01] md:scale-[1.04] z-10">
                       {/* Premium B2B Badge */}
-                      <div className="absolute -top-1 left-1/2 -translate-x-1/2 bg-blue-600 text-white text-[8px] lg:text-[11px] font-black px-2 py-0.5 lg:px-3 lg:py-1 rounded-full shadow-md z-30 tracking-wider whitespace-nowrap">
+                      <div className="absolute -top-1 left-1/2 -translate-x-1/2 bg-blue-600 text-white text-[8px] md:text-[11px] font-black px-2 py-0.5 md:px-3 md:py-1 rounded-full shadow-md z-30 tracking-wider whitespace-nowrap">
                         ★ 사장님 추천 1위
                       </div>
 
                       {/* Glow elements */}
-                      <div className="hidden lg:block absolute -top-20 -right-20 w-60 h-60 bg-blue-100/20 rounded-full blur-[60px] pointer-events-none" />
-                      <div className="hidden lg:block absolute bottom-0 left-0 w-40 h-40 bg-sky-100/20 rounded-full blur-[40px] pointer-events-none" />
+                      <div className="hidden md:block absolute -top-20 -right-20 w-60 h-60 bg-blue-100/20 rounded-full blur-[60px] pointer-events-none" />
+                      <div className="hidden md:block absolute bottom-0 left-0 w-40 h-40 bg-sky-100/20 rounded-full blur-[40px] pointer-events-none" />
 
-                      <div className="flex items-center gap-1.5 lg:gap-3 mb-4 lg:mb-8 relative z-10">
-                        <div className="w-6 h-6 lg:w-10 lg:h-10 rounded-full bg-blue-100 flex items-center justify-center shrink-0">
-                          <span className="text-blue-600 text-xs lg:text-lg font-bold">✓</span>
+                      <div className="flex items-center gap-1.5 md:gap-3 mb-4 md:mb-8 relative z-10">
+                        <div className="w-6 h-6 md:w-10 md:h-10 rounded-full bg-blue-100 flex items-center justify-center shrink-0">
+                          <span className="text-blue-600 text-xs md:text-lg font-bold">✓</span>
                         </div>
-                        <span className="text-[11px] lg:text-lg font-black text-blue-900">청소타워</span>
+                        <span className="text-xs md:text-lg font-black text-blue-900">청소타워</span>
                       </div>
-                      <ul className="space-y-3 lg:space-y-6 relative z-10">
+                      <ul className="space-y-3 md:space-y-6 relative z-10">
                         {['청소하면서 하자까지 잡습니다', '실리콘·마루·벽지·장판 원스톱', '소비자가 말하기 전에 먼저 합니다', '사장님 평판을 지켜드립니다'].map((t, i) => (
-                          <li key={i} className="flex items-center gap-1.5 lg:gap-3.5">
-                            <span className="w-4.5 h-4.5 lg:w-6 lg:h-6 rounded-full bg-blue-50 flex items-center justify-center shrink-0">
-                              <span className="text-blue-600 text-[10px] lg:text-xs font-bold">✓</span>
+                          <li key={i} className="flex items-center gap-1.5 md:gap-3.5">
+                            <span className="w-4.5 h-4.5 md:w-6 md:h-6 rounded-full bg-blue-50 flex items-center justify-center shrink-0">
+                              <span className="text-blue-600 text-[10px] md:text-xs font-bold">✓</span>
                             </span>
-                            <span className="text-blue-950 text-[10px] lg:text-[17px] font-extrabold break-keep leading-tight">{t}</span>
+                            <span className="text-blue-950 text-[11px] md:text-[17px] font-extrabold break-keep leading-tight">{t}</span>
                           </li>
                         ))}
                       </ul>

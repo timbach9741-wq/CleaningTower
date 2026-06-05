@@ -576,51 +576,56 @@ export default function Quote() {
                     </motion.div>
                   </div>
 
-                  <div className="relative grid grid-cols-2 gap-4 lg:gap-0 max-w-4xl mx-auto">
-                    {/* VS 뱃지 - 데스크톱 */}
-                    <div className="hidden lg:flex absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-20 w-14 h-14 rounded-full bg-white border border-slate-200 shadow-md items-center justify-center">
-                      <span className="text-sm font-black text-slate-400">VS</span>
+                  <div className="relative grid grid-cols-2 gap-0 max-w-4xl mx-auto items-stretch px-2 lg:px-0">
+                    {/* VS Badge - Aligned perfectly in the middle */}
+                    <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-20 w-10 h-10 lg:w-16 lg:h-16 rounded-full bg-white border border-slate-200 shadow-lg flex items-center justify-center">
+                      <span className="text-xs lg:text-base font-black text-slate-400">VS</span>
                     </div>
 
                     {/* 타사 */}
-                    <div className="bg-gradient-to-br from-red-50/50 to-red-50/20 border border-red-100 rounded-2xl lg:rounded-3xl lg:rounded-r-none p-4 lg:p-10 transition-all duration-300 hover:shadow-lg hover:shadow-red-500/5 hover:-translate-y-0.5">
-                      <div className="flex items-center gap-2 lg:gap-3 mb-4 lg:mb-8">
-                        <div className="w-8 h-8 lg:w-12 lg:h-12 rounded-full bg-red-100/70 flex items-center justify-center shrink-0">
-                          <span className="text-red-500 text-sm lg:text-xl font-bold">✗</span>
+                    <div className="bg-slate-50/90 border border-slate-200 border-r-0 rounded-l-2xl lg:rounded-l-3xl p-3 lg:p-10 opacity-70 transition-all duration-300">
+                      <div className="flex items-center gap-1.5 lg:gap-3 mb-4 lg:mb-8">
+                        <div className="w-6 h-6 lg:w-10 lg:h-10 rounded-full bg-slate-200 flex items-center justify-center shrink-0">
+                          <span className="text-slate-500 text-xs lg:text-lg font-bold">✗</span>
                         </div>
-                        <span className="text-xs lg:text-xl font-black text-red-600">타사 업체</span>
+                        <span className="text-[11px] lg:text-lg font-bold text-slate-500">타사 업체</span>
                       </div>
                       <ul className="space-y-3 lg:space-y-6">
                         {['그냥 청소만 합니다', '보수는 별도 업체 부르세요', '하자 발견해도 내 일 아닙니다', '입주 후? 연락 안 됩니다'].map((t, i) => (
-                          <li key={i} className="flex items-center gap-2 lg:gap-3.5">
-                            <span className="w-4.5 h-4.5 lg:w-6 lg:h-6 rounded-full bg-red-50 flex items-center justify-center shrink-0">
-                              <span className="text-red-400 text-[10px] lg:text-xs">✗</span>
+                          <li key={i} className="flex items-center gap-1.5 lg:gap-3.5">
+                            <span className="w-4.5 h-4.5 lg:w-6 lg:h-6 rounded-full bg-slate-200/50 flex items-center justify-center shrink-0">
+                              <span className="text-slate-400 text-[10px] lg:text-xs">✗</span>
                             </span>
-                            <span className="text-red-700/80 text-[11px] lg:text-[17px] font-semibold break-keep leading-tight">{t}</span>
+                            <span className="text-slate-400 text-[10px] lg:text-[17px] font-semibold break-keep leading-tight">{t}</span>
                           </li>
                         ))}
                       </ul>
                     </div>
 
                     {/* 청소타워 */}
-                    <div className="bg-gradient-to-br from-emerald-50/60 to-emerald-50/30 border border-emerald-200/80 rounded-2xl lg:rounded-3xl lg:rounded-l-none p-4 lg:p-10 relative overflow-hidden transition-all duration-300 hover:shadow-xl hover:shadow-emerald-500/5 hover:-translate-y-0.5">
-                      {/* 글로우 */}
-                      <div className="hidden lg:block absolute -top-20 -right-20 w-60 h-60 bg-emerald-200/20 rounded-full blur-[60px] pointer-events-none" />
-                      <div className="hidden lg:block absolute bottom-0 left-0 w-40 h-40 bg-emerald-100/30 rounded-full blur-[40px] pointer-events-none" />
+                    <div className="bg-white border-2 border-blue-600 rounded-r-2xl lg:rounded-r-3xl p-3 lg:p-10 relative overflow-hidden transition-all duration-300 shadow-xl shadow-blue-500/10 scale-[1.02] lg:scale-[1.04] z-10">
+                      {/* Premium B2B Badge */}
+                      <div className="absolute -top-1 left-1/2 -translate-x-1/2 bg-blue-600 text-white text-[8px] lg:text-[11px] font-black px-2 py-0.5 lg:px-3 lg:py-1 rounded-full shadow-md z-30 tracking-wider whitespace-nowrap">
+                        ★ 사장님 추천 1위
+                      </div>
 
-                      <div className="flex items-center gap-2 lg:gap-3 mb-4 lg:mb-8 relative z-10">
-                        <div className="w-8 h-8 lg:w-12 lg:h-12 rounded-full bg-emerald-100 flex items-center justify-center shrink-0">
-                          <span className="text-emerald-600 text-sm lg:text-xl font-bold">✓</span>
+                      {/* Glow elements */}
+                      <div className="hidden lg:block absolute -top-20 -right-20 w-60 h-60 bg-blue-100/20 rounded-full blur-[60px] pointer-events-none" />
+                      <div className="hidden lg:block absolute bottom-0 left-0 w-40 h-40 bg-sky-100/20 rounded-full blur-[40px] pointer-events-none" />
+
+                      <div className="flex items-center gap-1.5 lg:gap-3 mb-4 lg:mb-8 relative z-10">
+                        <div className="w-6 h-6 lg:w-10 lg:h-10 rounded-full bg-blue-100 flex items-center justify-center shrink-0">
+                          <span className="text-blue-600 text-xs lg:text-lg font-bold">✓</span>
                         </div>
-                        <span className="text-xs lg:text-xl font-black text-emerald-800">청소타워</span>
+                        <span className="text-[11px] lg:text-lg font-black text-blue-900">청소타워</span>
                       </div>
                       <ul className="space-y-3 lg:space-y-6 relative z-10">
                         {['청소하면서 하자까지 잡습니다', '실리콘·마루·벽지·장판 원스톱', '소비자가 말하기 전에 먼저 합니다', '사장님 평판을 지켜드립니다'].map((t, i) => (
-                          <li key={i} className="flex items-center gap-2 lg:gap-3.5">
-                            <span className="w-4.5 h-4.5 lg:w-6 lg:h-6 rounded-full bg-emerald-100/50 flex items-center justify-center shrink-0">
-                              <span className="text-emerald-600 text-[10px] lg:text-xs font-bold">✓</span>
+                          <li key={i} className="flex items-center gap-1.5 lg:gap-3.5">
+                            <span className="w-4.5 h-4.5 lg:w-6 lg:h-6 rounded-full bg-blue-50 flex items-center justify-center shrink-0">
+                              <span className="text-blue-600 text-[10px] lg:text-xs font-bold">✓</span>
                             </span>
-                            <span className="text-emerald-900 text-[11px] lg:text-[17px] font-semibold break-keep leading-tight">{t}</span>
+                            <span className="text-blue-950 text-[10px] lg:text-[17px] font-extrabold break-keep leading-tight">{t}</span>
                           </li>
                         ))}
                       </ul>

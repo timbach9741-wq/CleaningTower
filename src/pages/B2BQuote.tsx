@@ -894,9 +894,7 @@ export default function Quote() {
                     <p className="text-lg lg:text-2xl font-black text-red-600 mb-2 lg:mb-3 break-keep relative z-10">
                       밀당고수 소지자들 청소타워 박멸한다
                     </p>
-                    <p className="text-xs lg:text-sm text-slate-500 font-medium break-keep relative z-10">
-                      프리미엄 청소 선택 시 추가 비용 없이 보수 포함
-                    </p>
+
                   </div>
                 </div>
               </motion.div>

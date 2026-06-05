@@ -483,7 +483,7 @@ export default function Quote() {
                     </h2>
                     <p className="text-sm lg:text-lg text-slate-500 font-medium break-keep leading-relaxed max-w-md lg:max-w-lg mx-auto">
                       사장님, 소비자 컴플레인 걱정 마세요.<br/>
-                      청소타워가 <strong className="text-white">사전에 차단</strong>해드립니다.
+                      청소타워가 <strong className="text-slate-900">사전에 차단</strong>해드립니다.
                     </p>
                   </div>
                 </div>

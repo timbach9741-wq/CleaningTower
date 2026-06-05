@@ -707,7 +707,7 @@ export default function Quote() {
                         </div>
                         {/* 터치 안내 */}
                         <div className="absolute bottom-3 right-3 z-10">
-                          <span className="inline-block px-2.5 py-1 rounded-full bg-black/50 backdrop-blur-sm text-[10px] font-bold text-slate-600">
+                          <span className="inline-block px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-sm text-[10px] font-extrabold text-white">
                             {activeRepairCard === 'marucok' ? '다시 터치하면 전' : '터치하면 후 →'}
                           </span>
                         </div>
@@ -764,7 +764,7 @@ export default function Quote() {
                         </div>
                         {/* 터치 안내 */}
                         <div className="absolute bottom-3 right-3 z-10">
-                          <span className="inline-block px-2.5 py-1 rounded-full bg-black/50 backdrop-blur-sm text-[10px] font-bold text-slate-600">
+                          <span className="inline-block px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-sm text-[10px] font-extrabold text-white">
                             {activeRepairCard === 'silicone' ? '다시 터치하면 전' : '터치하면 후 →'}
                           </span>
                         </div>

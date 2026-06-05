@@ -500,12 +500,12 @@ export default function Quote() {
                   <div className="hidden lg:block absolute top-[10%] left-1/2 -translate-x-1/2 w-[800px] h-[350px] rounded-full bg-gradient-to-r from-sky-200/20 to-indigo-200/20 blur-[120px] pointer-events-none" />
                   
                   <div className="relative z-10">
-                    {/* Premium Sparkle Badge */}
+                    {/* Premium Sparkle/Lightning Badge */}
                     <motion.div 
-                      className="inline-flex items-center gap-2 px-4 py-1.5 lg:px-6 lg:py-2.5 mb-6 lg:mb-8 rounded-full bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 shadow-md shadow-blue-500/20 border border-white/20"
+                      className="inline-flex items-center gap-2.5 px-6 py-2.5 lg:px-9 lg:py-3.5 mb-7 lg:mb-10 rounded-full bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 shadow-md shadow-blue-500/25 border border-white/20"
                       whileHover={{ scale: 1.05 }}
                       animate={{
-                        boxShadow: ["0 4px 6px -1px rgba(59, 130, 246, 0.2)", "0 10px 15px -3px rgba(59, 130, 246, 0.3)", "0 4px 6px -1px rgba(59, 130, 246, 0.2)"]
+                        boxShadow: ["0 4px 6px -1px rgba(59, 130, 246, 0.2)", "0 10px 15px -3px rgba(59, 130, 246, 0.35)", "0 4px 6px -1px rgba(59, 130, 246, 0.2)"]
                       }}
                       transition={{
                         duration: 3,
@@ -513,10 +513,14 @@ export default function Quote() {
                         ease: "easeInOut"
                       }}
                     >
-                      <svg className="w-3.5 h-3.5 lg:w-4 lg:h-4 text-amber-300 fill-current" viewBox="0 0 24 24">
-                        <path d="M12 2l2.4 7.2L22 10l-6 5.4 2 7.6-6-4.8-6 4.8 2-7.6-6-5.4 7.6-.8z" />
+                      <svg 
+                        className="w-4 h-4 lg:w-6 lg:h-6 text-yellow-300 fill-current shrink-0" 
+                        viewBox="0 0 24 24"
+                        style={{ filter: 'drop-shadow(0 0 4px rgba(253, 224, 71, 0.8))' }}
+                      >
+                        <path d="M13 2L3 14h9v8l10-12h-9V2z" />
                       </svg>
-                      <span className="text-[11px] lg:text-sm font-extrabold text-white tracking-wider">청소타워만의 차별화</span>
+                      <span className="text-xs lg:text-lg font-extrabold text-white tracking-wider">청소타워만의 차별화</span>
                     </motion.div>
 
                     {/* Main Title with high-density tracking */}

@@ -644,11 +644,27 @@ export default function Quote() {
                 </div>
 
                 {/* 실리콘 · 마루콕 전/후 사진 카드 */}
-                <div className="px-5 lg:px-8 mb-6">
-                  <h3 className="text-sm lg:text-base font-bold text-slate-700 mb-4 flex items-center gap-2">
-                    <span className="w-5 h-0.5 bg-amber-500 rounded-full"></span>
-                    프리미엄 무상 보수 항목 — 사진을 터치해보세요
-                  </h3>
+                <div className="px-5 lg:px-8 mb-6 mt-8">
+                  <div className="text-center mb-6">
+                    <motion.div 
+                      initial={{ opacity: 0, y: 10 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      viewport={{ once: true }}
+                      className="inline-flex flex-col items-center gap-1.5"
+                    >
+                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded bg-amber-50 text-[10px] lg:text-[11px] font-black text-amber-600 tracking-wider border border-amber-100">
+                        FREE BENEFITS
+                      </span>
+                      <h3 className="text-[17px] lg:text-2xl font-black text-slate-900 tracking-tight mt-1 flex items-center gap-2">
+                        <span className="w-4 h-0.5 bg-amber-500 rounded-full hidden sm:inline-block"></span>
+                        프리미엄 무상 보수 항목
+                        <span className="w-4 h-0.5 bg-amber-500 rounded-full hidden sm:inline-block"></span>
+                      </h3>
+                      <p className="text-slate-500 text-xs lg:text-[15px] font-semibold">
+                        사진을 터치해서 전/후 시공 효과를 비교해보세요
+                      </p>
+                    </motion.div>
+                  </div>
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
 
                     {/* 마루콕 시공 */}

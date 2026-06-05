@@ -466,7 +466,7 @@ export default function Quote() {
                 className="flex flex-col"
               >
                 {/* Hero Banner */}
-                <div className="relative px-5 pt-12 pb-14 lg:pt-28 lg:pb-24 text-center overflow-hidden">
+                <div className="relative px-5 pt-8 pb-6 lg:pt-16 lg:pb-12 text-center overflow-hidden">
                   {/* Clean Premium Background Gradients */}
                   <div className="absolute inset-0 bg-gradient-to-b from-blue-50/60 via-indigo-50/20 to-transparent pointer-events-none"></div>
                   
@@ -502,7 +502,7 @@ export default function Quote() {
                   <div className="relative z-10">
                     {/* Premium Sparkle/Lightning Badge */}
                     <motion.div 
-                      className="inline-flex items-center gap-2.5 px-6 py-2.5 lg:px-9 lg:py-3.5 mb-7 lg:mb-10 rounded-full bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 shadow-md shadow-blue-500/25 border border-white/20"
+                      className="inline-flex items-center gap-2.5 px-6 py-2 lg:px-9 lg:py-3 mb-4 lg:mb-5 rounded-full bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 shadow-md shadow-blue-500/25 border border-white/20"
                       whileHover={{ scale: 1.05 }}
                       animate={{
                         boxShadow: ["0 4px 6px -1px rgba(59, 130, 246, 0.2)", "0 10px 15px -3px rgba(59, 130, 246, 0.35)", "0 4px 6px -1px rgba(59, 130, 246, 0.2)"]
@@ -524,7 +524,7 @@ export default function Quote() {
                     </motion.div>
 
                     {/* Main Title with high-density tracking */}
-                    <h2 className="text-2xl lg:text-[3.2rem] lg:leading-[1.2] font-black text-slate-900 mb-4 lg:mb-7 leading-tight tracking-tight lg:tracking-tighter break-keep">
+                    <h2 className="text-2xl lg:text-[3.2rem] lg:leading-[1.2] font-black text-slate-900 mb-3 lg:mb-4 leading-tight tracking-tight lg:tracking-tighter break-keep">
                       청소만 하는 곳이 아닙니다.<br/>
                       <span className="bg-gradient-to-r from-rose-500 via-orange-500 to-amber-500 bg-clip-text text-transparent">
                         하자까지 잡아드립니다.
@@ -532,8 +532,8 @@ export default function Quote() {
                     </h2>
 
                     {/* Subtitle with premium bullet list style */}
-                    <div className="flex flex-col items-center mt-6 mb-4 px-4 lg:px-0">
-                      <ul className="inline-block text-left text-sm lg:text-[22px] text-slate-600 font-extrabold break-keep leading-relaxed space-y-3 lg:space-y-4.5 max-w-xs sm:max-w-md lg:max-w-2xl mx-auto">
+                    <div className="flex flex-col items-center mt-4 mb-2 px-4 lg:px-0">
+                      <ul className="inline-block text-left text-sm lg:text-[22px] text-slate-600 font-extrabold break-keep leading-relaxed space-y-2 lg:space-y-3 max-w-xs sm:max-w-md lg:max-w-2xl mx-auto">
                         <li className="flex items-start gap-2 lg:gap-3">
                           <span className="text-blue-500 mt-1 lg:mt-1.5 shrink-0 font-black text-sm lg:text-xl">•</span>
                           <span>소비자가 보면 <strong className="text-red-500 font-black">하자</strong>, 청소타워가 먼저 보면 <strong className="text-emerald-600 font-black">공사중</strong></span>
@@ -556,9 +556,9 @@ export default function Quote() {
                 </div>
 
                 {/* 타사 vs 청소타워 비교 */}
-                <div id="why-us-section" className="px-5 lg:px-8 mb-10 lg:mb-16 mt-8 scroll-mt-20">
+                <div id="why-us-section" className="px-5 lg:px-8 mb-6 lg:mb-10 mt-4 scroll-mt-20">
                   {/* 섹션 타이틀 */}
-                  <div className="text-center mb-8 lg:mb-12">
+                  <div className="text-center mb-4 lg:mb-6">
                     <motion.div 
                       initial={{ opacity: 0, y: 10 }}
                       whileInView={{ opacity: 1, y: 0 }}

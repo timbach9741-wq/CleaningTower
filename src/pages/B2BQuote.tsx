@@ -540,7 +540,7 @@ export default function Quote() {
                         </li>
                         <li className="flex items-start gap-2 lg:gap-3">
                           <span className="text-blue-500 mt-1 lg:mt-1.5 shrink-0 font-black text-sm lg:text-xl">•</span>
-                          <span className="text-slate-900 font-black">인테리어 잔금 걱정 No No 💸</span>
+                          <span className="text-slate-900 font-black">인테리어 잔금 걱정 <span className="text-red-500 font-black">No No</span></span>
                         </li>
                         <li className="flex items-start gap-2 lg:gap-3">
                           <span className="text-blue-500 mt-1 lg:mt-1.5 shrink-0 font-black text-sm lg:text-xl">•</span>

@@ -880,15 +880,15 @@ export default function Quote() {
                             {isBetweenCleaning && <span className="material-symbols-outlined text-white text-[14px] font-bold">check</span>}
                           </div>
                           <div className="flex flex-col text-left -mt-0.5">
-                            <span className={`${isBetweenCleaning ? 'text-blue-100' : 'text-slate-600'} text-[14px]`}>
+                            <span className={`${isBetweenCleaning ? 'text-blue-700' : 'text-slate-600'} text-[14px]`}>
                               당일 이사 후 바로 청소
                             </span>
-                            <span className={`${isBetweenCleaning ? 'text-blue-300' : 'text-slate-500'} text-[11px] font-normal mt-0.5`}>
+                            <span className={`${isBetweenCleaning ? 'text-blue-500' : 'text-slate-500'} text-[11px] font-normal mt-0.5`}>
                               (사이청소 10시 투입)
                             </span>
                           </div>
                         </div>
-                        <span className={isBetweenCleaning ? 'text-blue-300 font-bold' : 'text-slate-500'}>
+                        <span className={isBetweenCleaning ? 'text-blue-600 font-bold' : 'text-slate-500'}>
                           +100,000원
                         </span>
                       </button>
@@ -899,22 +899,22 @@ export default function Quote() {
 
                   <div>
                     <label className="block text-slate-700 text-sm font-semibold mb-3">📏 공급 면적 (평)</label>
-                    <div className="flex items-center justify-between bg-slate-50 border border-white/15 rounded-xl p-4 focus-within:border-blue-500 focus-within:bg-blue-500/5 transition-all">
+                    <div className="flex items-center justify-between bg-slate-50 border border-slate-200 rounded-xl p-4 focus-within:border-blue-500 focus-within:bg-blue-50 transition-all">
                       <div className="flex flex-1 items-center gap-2 mr-3">
                         <input 
                           type="number" 
                           value={size}
                           onChange={handleSizeChange}
                           placeholder="예: 24"
-                          className="flex-1 bg-transparent text-left text-3xl font-bold text-white outline-none
+                          className="flex-1 bg-transparent text-left text-3xl font-bold text-slate-900 outline-none
                                      [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none
-                                     placeholder-slate-600 w-full"
+                                     placeholder-slate-400 w-full"
                         />
                         <span className="text-slate-500 text-lg font-medium whitespace-nowrap">평</span>
                       </div>
                       <div className="flex flex-col items-end">
                         <span className="text-slate-500 text-[10px] mb-0.5">단가</span>
-                        <span className="text-blue-300 text-xs font-bold bg-blue-500/20 px-2 py-1 rounded whitespace-nowrap flex-shrink-0">
+                        <span className="text-blue-700 text-xs font-bold bg-blue-100 px-2 py-1 rounded whitespace-nowrap flex-shrink-0">
                           평당 2.0만원
                         </span>
                       </div>
@@ -923,7 +923,7 @@ export default function Quote() {
                 </div>
 
                 {/* 중간 견적 안내 박스 */}
-                <div className="mt-8 bg-gradient-to-r from-slate-800 to-slate-800/60 p-4 rounded-xl flex flex-col border border-white/5 shadow-lg gap-3">
+                <div className="mt-8 bg-gradient-to-r from-slate-800 to-slate-900 p-4 rounded-xl flex flex-col border border-slate-700 shadow-lg gap-3">
                    <div className="flex justify-between items-center text-sm">
                      <span className="text-slate-500 font-medium">원래 금액 (공급가액)</span>
                      <span className="text-slate-200 font-medium">{estimatedPrice.toLocaleString()}원</span>
@@ -933,12 +933,12 @@ export default function Quote() {
                      <span className="text-rose-400 font-medium">+{vatPrice.toLocaleString()}원</span>
                    </div>
                    <div className="flex justify-between items-end pt-1">
-                     <span className="text-blue-300 font-bold text-[15px] mb-1">총 결제 예정 금액</span>
+                     <span className="text-blue-400 font-bold text-[15px] mb-1">총 결제 예정 금액</span>
                      <div className="text-right">
                        <span className="text-white font-black text-2xl drop-shadow-md">
                          {totalPriceIncVat.toLocaleString()}
                        </span>
-                       <span className="text-blue-200 text-sm ml-1 font-bold">원</span>
+                       <span className="text-blue-300 text-sm ml-1 font-bold">원</span>
                      </div>
                    </div>
                 </div>
@@ -967,7 +967,7 @@ export default function Quote() {
                 <div className="space-y-8 flex-1 overflow-y-auto pr-1 pb-4">
                   {optionCategories.map((cat, catIdx) => (
                     <div key={catIdx} className="space-y-4">
-                      <h3 className="text-xl font-bold text-white border-b border-slate-200 pb-2">
+                      <h3 className="text-xl font-bold text-slate-800 border-b border-slate-200 pb-2">
                         {cat.category}
                       </h3>
                       <div className="space-y-3">
@@ -992,7 +992,7 @@ export default function Quote() {
                             >
                               <div className="flex items-center justify-between">
                                 <div className="flex flex-col gap-1 flex-1">
-                                  <span className={`text-sm ${count > 0 ? 'text-blue-100 font-bold' : 'text-slate-600'} break-keep`}>
+                                  <span className={`text-sm ${count > 0 ? 'text-blue-700 font-bold' : 'text-slate-600'} break-keep`}>
                                     {opt.label}
                                   </span>
                                   {priceDisplay && (
@@ -1010,7 +1010,7 @@ export default function Quote() {
                                   </div>
                                 ) : (
                                   <div 
-                                    className={`flex items-center gap-3 rounded-lg p-1 border transition-colors shrink-0 ${count > 0 ? 'bg-slate-900/50 border-blue-500/20' : 'bg-white/50 border-white/5'}`}
+                                    className={`flex items-center gap-3 rounded-lg p-1 border transition-colors shrink-0 ${count > 0 ? 'bg-blue-50 border-blue-200' : 'bg-slate-100 border-slate-200'}`}
                                     onClick={(e) => e.stopPropagation()}
                                   >
                                     <button 
@@ -1020,10 +1020,10 @@ export default function Quote() {
                                     >
                                       <span className="material-symbols-outlined text-lg">remove</span>
                                     </button>
-                                    <span className={`w-4 text-center font-bold ${count > 0 ? 'text-blue-100' : 'text-slate-600'}`}>{count}</span>
+                                    <span className={`w-4 text-center font-bold ${count > 0 ? 'text-blue-700' : 'text-slate-600'}`}>{count}</span>
                                     <button 
                                       onClick={() => updateOptionCount(opt.id, 1)}
-                                      className="w-8 h-8 rounded bg-blue-500/20 flex items-center justify-center text-blue-300 active:bg-blue-500/40 hover:bg-blue-500/30"
+                                      className="w-8 h-8 rounded bg-blue-100 flex items-center justify-center text-blue-600 active:bg-blue-200 hover:bg-blue-200"
                                     >
                                       <span className="material-symbols-outlined text-lg">add</span>
                                     </button>
@@ -1043,8 +1043,8 @@ export default function Quote() {
 
                               {count > 0 && !isNotice && (
                                 <div className="mt-3 pt-3 border-t border-blue-500/30 flex items-center justify-between">
-                                  <span className="text-xs text-blue-200">항목 추가 금액</span>
-                                  <span className="text-sm text-blue-300 font-bold">
+                                  <span className="text-xs text-blue-500">항목 추가 금액</span>
+                                  <span className="text-sm text-blue-700 font-bold">
                                     {opt.id === 'phytoncide'
                                       ? `+${(opt.price * (typeof size === 'number' ? size : 0) * count).toLocaleString()}원` 
                                       : `+${(opt.price * count).toLocaleString()}원`}
@@ -1101,9 +1101,9 @@ export default function Quote() {
                       <div className="space-y-3">
                         <div 
                           onClick={() => setIsOpenPostcode(true)}
-                          className="w-full bg-slate-50 border border-white/15 hover:border-blue-500/50 rounded-xl px-4 py-4 text-base transition-all flex items-center justify-between cursor-pointer active:scale-[0.99] active:bg-slate-100"
+                          className="w-full bg-slate-50 border border-slate-200 hover:border-blue-500/50 rounded-xl px-4 py-4 text-base transition-all flex items-center justify-between cursor-pointer active:scale-[0.99] active:bg-slate-100"
                         >
-                          <span className={address ? "text-white" : "text-slate-500"}>
+                          <span className={address ? "text-slate-900 font-medium" : "text-slate-500"}>
                             {address || "터치하여 도로명/지번 주소 검색"}
                           </span>
                           <span className={`${address ? 'text-blue-600' : 'text-slate-500'} material-symbols-outlined text-xl`}>search</span>
@@ -1165,7 +1165,7 @@ export default function Quote() {
                           className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                         />
                         <div className={`w-full bg-slate-50 border ${cleaningDate ? 'border-blue-500 bg-blue-500/10 shadow-[0_0_15px_rgba(59,130,246,0.15)]' : 'border-white/15 group-hover:border-blue-500/50 group-active:bg-slate-100'} rounded-xl px-4 py-4 text-base transition-all flex items-center justify-between pointer-events-none`}>
-                          <span className={cleaningDate ? 'text-blue-100 font-bold tracking-wide' : 'text-slate-500'}>
+                          <span className={cleaningDate ? 'text-blue-700 font-bold tracking-wide' : 'text-slate-500'}>
                             {cleaningDate ? cleaningDate.replace(/-/g, '. ') : '터치하여 날짜 선택'}
                           </span>
                           <span className={`material-symbols-outlined ${cleaningDate ? 'text-blue-600' : 'text-slate-500 group-hover:text-blue-600/70'} transition-colors`}>
@@ -1255,7 +1255,7 @@ export default function Quote() {
                             key={type}
                             onClick={() => setFloorType(type)}
                             className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${
-                              floorType === type ? 'bg-blue-500 text-white shadow-sm' : 'text-slate-500 hover:text-slate-200'
+                              floorType === type ? 'bg-blue-500 text-white shadow-sm' : 'text-slate-500 hover:text-slate-700'
                             }`}
                           >
                             {type}
@@ -1272,7 +1272,7 @@ export default function Quote() {
                             key={type}
                             onClick={() => setWaterCleaning(type)}
                             className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${
-                              waterCleaning === type ? 'bg-blue-500 text-white shadow-sm' : 'text-slate-500 hover:text-slate-200'
+                              waterCleaning === type ? 'bg-blue-500 text-white shadow-sm' : 'text-slate-500 hover:text-slate-700'
                             }`}
                           >
                             {type}
@@ -1290,7 +1290,7 @@ export default function Quote() {
                           key={type}
                           onClick={() => setParking(type)}
                           className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${
-                            parking === type ? 'bg-blue-500 text-white shadow-sm' : 'text-slate-500 hover:text-slate-200'
+                            parking === type ? 'bg-blue-500 text-white shadow-sm' : 'text-slate-500 hover:text-slate-700'
                           }`}
                         >
                           {type}
@@ -1310,7 +1310,7 @@ export default function Quote() {
                             if (type === '있음') setIsHighFloorWithoutElevator(false);
                           }}
                           className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${
-                            elevator === type ? 'bg-blue-500 text-white shadow-sm' : 'text-slate-500 hover:text-slate-200'
+                            elevator === type ? 'bg-blue-500 text-white shadow-sm' : 'text-slate-500 hover:text-slate-700'
                           }`}
                         >
                           {type}
@@ -1327,8 +1327,8 @@ export default function Quote() {
                             className="w-4 h-4 rounded border-slate-600 text-blue-500 focus:ring-blue-500 focus:ring-offset-slate-900 bg-white"
                           />
                           <div className="flex flex-col">
-                            <span className="text-sm text-rose-200 font-bold">3층 이상입니다 (계단 작업)</span>
-                            <span className="text-xs text-rose-300/70 mt-0.5">※ 장비 운반으로 인해 3만원이 추가됩니다.</span>
+                            <span className="text-sm text-rose-600 font-bold">3층 이상입니다 (계단 작업)</span>
+                            <span className="text-xs text-rose-500 mt-0.5">※ 장비 운반으로 인해 3만원이 추가됩니다.</span>
                           </div>
                         </label>
                       </div>
@@ -1425,7 +1425,7 @@ export default function Quote() {
                      <div className="flex justify-between items-center border-b border-slate-200 pb-4 mb-4">
                         <span className="text-slate-500 text-sm">희망 일정</span>
                         <div className="flex flex-col items-end">
-                           <span className="text-white font-bold text-[15px]">
+                           <span className="text-slate-900 font-bold text-[15px]">
                              {cleaningDate ? `${cleaningDate.replace(/-/g, '.')} (${['일', '월', '화', '수', '목', '금', '토'][new Date(cleaningDate).getDay()]})` : '일정 미정'}
                            </span>
                            <span className="text-slate-500 text-xs mt-1">{cleaningTime || '시간 협의'}</span>
@@ -1435,7 +1435,7 @@ export default function Quote() {
                      <div className="flex justify-between items-center border-b border-slate-200 pb-4 mb-4">
                         <span className="text-slate-500 text-sm">시공 종류</span>
                         <div className="flex flex-col items-end">
-                           <span className="text-white font-bold text-[15px]">{cleaningType} 청소</span>
+                           <span className="text-slate-900 font-bold text-[15px]">{cleaningType} 청소</span>
                            <span className="text-slate-500 text-xs mt-1">{houseSubType ? `${houseType} (${houseSubType})` : houseType} · {size}평</span>
                         </div>
                      </div>
@@ -1443,20 +1443,20 @@ export default function Quote() {
                      <div className="space-y-3 pb-4 border-b border-dashed border-slate-200 mb-4">
                         <div className="flex justify-between items-center">
                            <span className="text-slate-500 text-sm">프리미엄 입주청소비</span>
-                           <span className="text-slate-200 font-medium">
+                           <span className="text-slate-700 font-medium">
                              {((typeof size === 'number' ? size : 0) * 20000).toLocaleString()}원
                            </span>
                         </div>
                         {isBetweenCleaning && (
                           <div className="flex justify-between items-center">
                              <span className="text-slate-500 text-sm">당일 이사 (사이청소)</span>
-                             <span className="text-slate-200 font-medium">+100,000원</span>
+                             <span className="text-slate-700 font-medium">+100,000원</span>
                           </div>
                         )}
                         {elevator === '없음' && isHighFloorWithoutElevator && (
                           <div className="flex justify-between items-center">
                              <span className="text-slate-500 text-sm">엘리베이터 없음 (3층 이상)</span>
-                             <span className="text-slate-200 font-medium">+30,000원</span>
+                             <span className="text-slate-700 font-medium">+30,000원</span>
                           </div>
                         )}
                         {Object.keys(selectedOptions).length > 0 && (
@@ -1494,7 +1494,7 @@ export default function Quote() {
 
                         <div className="flex justify-between items-center pt-3 border-t border-slate-200 mt-2">
                            <span className="text-slate-500 text-sm font-bold">총 공급가액</span>
-                           <span className="text-slate-200 font-bold">{estimatedPrice.toLocaleString()}원</span>
+                           <span className="text-slate-700 font-bold">{estimatedPrice.toLocaleString()}원</span>
                         </div>
                         <div className="flex justify-between items-center mt-2">
                            <span className="text-rose-400 text-sm font-medium">부가세 (10%)</span>
@@ -1503,12 +1503,12 @@ export default function Quote() {
                      </div>
 
                      <div className="flex justify-between items-end pt-2">
-                        <span className="text-blue-300 text-base font-bold mb-1">최종 예상 결제액</span>
+                        <span className="text-blue-600 text-base font-bold mb-1">최종 예상 결제액</span>
                         <div className="text-right">
-                           <span className="text-[32px] font-black text-white leading-none shadow-blue-500/50 drop-shadow-md">
+                           <span className="text-[32px] font-black text-slate-900 leading-none">
                              {totalPriceIncVat.toLocaleString()}
                            </span>
-                           <span className="text-blue-200 text-base ml-1 font-bold">원</span>
+                           <span className="text-blue-600 text-base ml-1 font-bold">원</span>
                         </div>
                      </div>
                    </div>
@@ -1584,31 +1584,31 @@ export default function Quote() {
       {/* 개인정보 제3자 제공 동의 모달 */}
       {showPrivacyModal && (
         <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="bg-white border border-slate-200 text-white rounded-2xl w-full max-w-4xl max-h-[80vh] overflow-y-auto shadow-2xl p-6 relative flex flex-col justify-between">
+          <div className="bg-white border border-slate-200 rounded-2xl w-full max-w-4xl max-h-[80vh] overflow-y-auto shadow-2xl p-6 relative flex flex-col justify-between">
             <div>
               <div className="flex justify-between items-center border-b border-slate-200 pb-3 mb-4">
                 <h3 className="text-lg font-bold text-slate-900">개인정보 제3자 제공 동의 및 중개 안내</h3>
-                <button onClick={() => setShowPrivacyModal(false)} className="text-slate-500 hover:text-slate-200 text-xl leading-none">✕</button>
+                <button onClick={() => setShowPrivacyModal(false)} className="text-slate-500 hover:text-slate-700 text-xl leading-none">✕</button>
               </div>
               
               <div className="space-y-4 text-xs text-slate-600 leading-relaxed overflow-y-auto pr-1 max-h-[50vh] break-keep text-left">
                 <div>
-                  <h4 className="font-bold text-white text-sm mb-1.5">1. 개인정보를 제공받는 자</h4>
+                  <h4 className="font-bold text-slate-800 text-sm mb-1.5">1. 개인정보를 제공받는 자</h4>
                   <p>청소타워에 등록된 서비스 수행 파트너사 (소비자가 직접 선택한 업체 혹은 견적 요청 지역 내 활동하는 추천 배정 파트너사)</p>
                 </div>
 
                 <div>
-                  <h4 className="font-bold text-white text-sm mb-1.5">2. 제공받는 자의 개인정보 이용 목적</h4>
+                  <h4 className="font-bold text-slate-800 text-sm mb-1.5">2. 제공받는 자의 개인정보 이용 목적</h4>
                   <p>청소 견적 상세 안내, 시공 가능 일정 협의, 청소 시공 서비스의 수행 및 사후 관리(A/S) 등 목적</p>
                 </div>
 
                 <div>
-                  <h4 className="font-bold text-white text-sm mb-1.5">3. 제공하는 개인정보의 항목</h4>
+                  <h4 className="font-bold text-slate-800 text-sm mb-1.5">3. 제공하는 개인정보의 항목</h4>
                   <p>신청자명, 연락처, 시공 주소(도로명/지번 및 상세주소), 주거 형태, 면적(평수), 선택 옵션, 비밀번호(공동/현관) 및 고객 추가 요청사항</p>
                 </div>
 
                 <div>
-                  <h4 className="font-bold text-white text-sm mb-1.5">4. 개인정보의 보유 및 이용 기간</h4>
+                  <h4 className="font-bold text-slate-800 text-sm mb-1.5">4. 개인정보의 보유 및 이용 기간</h4>
                   <p className="font-semibold text-amber-600">청소 서비스 제공 완료 및 요금 정산 완료 시까지 (단, 관계 법령에 의거하여 보존할 필요가 있는 경우 관련 법령이 정한 기간 동안 보관)</p>
                 </div>
 
@@ -1663,9 +1663,9 @@ export default function Quote() {
               <div className="text-center mb-6">
                 <div className="inline-flex items-center gap-2 px-3 py-1 mb-3 rounded-full bg-blue-500/15 border border-blue-400/30">
                   <span className="text-blue-600 text-xs">🔐</span>
-                  <span className="text-[11px] font-bold text-blue-300">업체 인증 필요</span>
+                  <span className="text-[11px] font-bold text-blue-600">업체 인증 필요</span>
                 </div>
-                <h3 className="text-xl font-black text-white mb-1">예약 접수를 위해 로그인해주세요</h3>
+                <h3 className="text-xl font-black text-slate-900 mb-1">예약 접수를 위해 로그인해주세요</h3>
                 <p className="text-xs text-slate-500 font-medium">작성하신 견적 내용은 그대로 유지됩니다</p>
               </div>
 
@@ -1690,7 +1690,7 @@ export default function Quote() {
                 {b2bLoginError && (
                   <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-red-500/10 border border-red-500/20">
                     <span className="text-red-400 text-xs">⚠️</span>
-                    <span className="text-red-300 text-xs font-medium">{b2bLoginError}</span>
+                    <span className="text-red-500 text-xs font-medium">{b2bLoginError}</span>
                   </div>
                 )}
 
@@ -1706,7 +1706,7 @@ export default function Quote() {
               <div className="mt-5 text-center">
                 <button
                   onClick={saveAndGoSignup}
-                  className="text-sm text-slate-500 font-bold hover:text-white transition-colors"
+                  className="text-sm text-slate-500 font-bold hover:text-slate-700 transition-colors"
                 >
                   처음이신가요? <span className="text-blue-600 underline underline-offset-4">1분 가입</span>
                 </button>

@@ -885,16 +885,15 @@ export default function Quote() {
 
                 {/* 무상 강조 배너 */}
                 <div className="px-5 lg:px-8 mb-6 lg:mb-10">
-                  <div className="bg-gradient-to-r from-amber-50 to-blue-50 border border-amber-200 rounded-2xl lg:rounded-3xl p-5 lg:p-10 text-center relative overflow-hidden">
+                  <div className="bg-gradient-to-r from-amber-50 to-blue-50 border border-amber-200 rounded-2xl lg:rounded-3xl py-6 lg:py-8 px-5 lg:px-8 text-center relative overflow-hidden">
                     <div className="hidden lg:block absolute top-0 left-1/2 -translate-x-1/2 w-[400px] h-[200px] bg-amber-200/30 rounded-full blur-[80px] pointer-events-none" />
-                    <span className="text-2xl lg:text-4xl mb-2 lg:mb-4 block relative z-10">✨</span>
-                    <p className="text-lg lg:text-2xl font-black text-red-600 mb-2 lg:mb-3 break-keep relative z-10">
+                    <span className="text-2xl lg:text-4xl mb-1.5 lg:mb-3 block relative z-10">✨</span>
+                    <p className="text-[17px] lg:text-[23px] font-black text-red-600 mb-1 lg:mb-2 break-keep relative z-10 leading-snug">
                       인테리어 공사잔금 사수하여 지켜내자
                     </p>
-                    <p className="text-lg lg:text-2xl font-black text-red-600 mb-2 lg:mb-3 break-keep relative z-10">
+                    <p className="text-[17px] lg:text-[23px] font-black text-red-600 break-keep relative z-10 leading-snug">
                       밀당고수 소지자들 청소타워 박멸한다
                     </p>
-
                   </div>
                 </div>
               </motion.div>

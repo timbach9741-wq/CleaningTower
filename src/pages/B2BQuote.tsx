@@ -697,10 +697,10 @@ export default function Quote() {
                         />
                         {/* Before/After 뱃지 */}
                         <div className="absolute top-3 left-3 z-10">
-                          <span className={`inline-block px-3 py-1 rounded-full text-xs font-black shadow-lg transition-colors duration-300 ${
+                          <span className={`inline-block px-3 py-1 rounded-full text-xs font-black shadow-md transition-all duration-300 ${
                             activeRepairCard === 'marucok'
-                              ? 'bg-emerald-500 text-white'
-                              : 'bg-red-500 text-white'
+                              ? 'bg-emerald-600 text-white ring-2 ring-emerald-300 shadow-emerald-500/30'
+                              : 'bg-slate-500/90 text-slate-100'
                           }`}>
                             {activeRepairCard === 'marucok' ? 'AFTER ✓' : 'BEFORE'}
                           </span>
@@ -754,10 +754,10 @@ export default function Quote() {
                         />
                         {/* Before/After 뱃지 */}
                         <div className="absolute top-3 left-3 z-10">
-                          <span className={`inline-block px-3 py-1 rounded-full text-xs font-black shadow-lg transition-colors duration-300 ${
+                          <span className={`inline-block px-3 py-1 rounded-full text-xs font-black shadow-md transition-all duration-300 ${
                             activeRepairCard === 'silicone'
-                              ? 'bg-emerald-500 text-white'
-                              : 'bg-red-500 text-white'
+                              ? 'bg-emerald-600 text-white ring-2 ring-emerald-300 shadow-emerald-500/30'
+                              : 'bg-slate-500/90 text-slate-100'
                           }`}>
                             {activeRepairCard === 'silicone' ? 'AFTER ✓' : 'BEFORE'}
                           </span>

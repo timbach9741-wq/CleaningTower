@@ -548,7 +548,7 @@ export default function Quote() {
                         </li>
                         <li className="flex items-start gap-2 lg:gap-3">
                           <span className="text-blue-500 mt-1 lg:mt-1.5 shrink-0 font-black text-sm lg:text-xl">•</span>
-                          <span><strong className="text-blue-600 font-black">밀당고수 소지자들</strong> 청소타워 박멸한다</span>
+                          <span>저희는 사장님들의 마무리를 책임지는 청소타워입니다.</span>
                         </li>
                       </ul>
                     </div>

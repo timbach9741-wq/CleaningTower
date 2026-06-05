@@ -889,10 +889,10 @@ export default function Quote() {
                     <div className="hidden lg:block absolute top-0 left-1/2 -translate-x-1/2 w-[400px] h-[200px] bg-amber-200/30 rounded-full blur-[80px] pointer-events-none" />
                     <span className="text-2xl lg:text-4xl mb-1.5 lg:mb-3 block relative z-10">✨</span>
                     <p className="text-[17px] lg:text-[23px] font-black text-red-600 mb-1 lg:mb-2 break-keep relative z-10 leading-snug">
-                      인테리어 공사잔금 사수하여 지켜내자
+                      ✓ 인테리어 공사잔금 사수하여 지켜내자
                     </p>
                     <p className="text-[17px] lg:text-[23px] font-black text-red-600 break-keep relative z-10 leading-snug">
-                      밀당고수 소지자들 청소타워 박멸한다
+                      ✓ 밀당고수 소지자들 청소타워 박멸한다
                     </p>
                   </div>
                 </div>

@@ -1,1 +1,1 @@
-design: B2B quote page premium dark theme full renewal
+fix: B2B 히어로 '사전에 차단' 텍스트 안 보이는 문제 수정

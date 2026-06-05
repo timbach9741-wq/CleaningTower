@@ -39,6 +39,7 @@ const ROUTES_TO_PRERENDER = [
   '/cleaning/sick-building',
   '/cleaning/appliance',
   '/cleaning/regular',
+  '/b2b/quote',
   ...PSEO_SLUGS.map(slug => `/${slug}`)
 ];
 
@@ -83,6 +84,11 @@ const ROUTE_META = {
     title: '정기 청소 서비스 | 청소타워',
     description: '사무실, 병원, 상가 등 정기적인 관리가 필요한 상업 공간을 쾌적하고 위생적으로 유지해 드리는 맞춤형 정기 관리 서비스입니다.',
     keywords: '정기청소, 사무실정기청소, 상가정기청소, 병원청소, 정기 관리 서비스'
+  },
+  '/b2b/quote': {
+    title: '청소타워 업체전용',
+    description: '청소타워 사장님들을 위한 프리미엄 견적 산출 및 오더 접수 시스템입니다. 현장 상태 체크와 상세 옵션 조율로 더욱 완벽하게 하자까지 잡아드립니다.',
+    keywords: '청소타워, 업체전용, 인테리어 청소, 사장님 전용, 하자체크'
   }
 };
 
@@ -250,15 +256,17 @@ async function prerender() {
             // 4. Keywords 변경
             updateOrCreateMeta('name', 'keywords', metaInfo.keywords);
   
-            // 5. Open Graph url, title, description 변경
+            // 5. Open Graph url, title, description, image 변경
             updateOrCreateMeta('property', 'og:url', `https://cheongsotower.kr${currentRoute === '/' ? '/' : currentRoute + '/'}`);
             updateOrCreateMeta('property', 'og:title', metaInfo.title);
             updateOrCreateMeta('property', 'og:description', metaInfo.description);
+            updateOrCreateMeta('property', 'og:image', metaInfo.image || 'https://house-clean-hub.web.app/icon-512x512.png');
   
-            // 6. Twitter url, title, description 변경
+            // 6. Twitter url, title, description, image 변경
             updateOrCreateMeta('property', 'twitter:url', `https://cheongsotower.kr${currentRoute === '/' ? '/' : currentRoute + '/'}`);
             updateOrCreateMeta('property', 'twitter:title', metaInfo.title);
             updateOrCreateMeta('property', 'twitter:description', metaInfo.description);
+            updateOrCreateMeta('property', 'twitter:image', metaInfo.image || 'https://house-clean-hub.web.app/icon-512x512.png');
             
           }, route, metaInfo);
   

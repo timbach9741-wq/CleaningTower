@@ -105,6 +105,102 @@ export default function Quote() {
     }
   };
 
+  // PWA 설치 관련 상태
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [isInstallable, setIsInstallable] = useState(false);
+  const [isInstalled, setIsInstalled] = useState(false);
+  const [showInstallBanner, setShowInstallBanner] = useState(true);
+
+  // Manifest 동적 변경 및 PWA 설치 이벤트 바인딩
+  useEffect(() => {
+    // document.title을 '청소타워 업체전용'으로 동적 변경
+    const originalTitle = document.title;
+    document.title = "청소타워 업체전용";
+
+    // Manifest 동적 교체
+    const link = document.querySelector('link[rel="manifest"]');
+    const originalHref = link ? link.getAttribute('href') : '/manifest.json';
+    if (link) {
+      link.setAttribute('href', '/manifest-b2b.json');
+    }
+
+    const handleBeforeInstallPrompt = (e: any) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+      setIsInstallable(true);
+    };
+
+    const handleAppInstalled = () => {
+      setIsInstalled(true);
+      setIsInstallable(false);
+      setDeferredPrompt(null);
+    };
+
+    // 전역 변수에 이미 캡처된 이벤트가 있는지 확인
+    const globalPrompt = (window as any).deferredPrompt;
+    if (globalPrompt) {
+      setDeferredPrompt(globalPrompt);
+      setIsInstallable(true);
+    }
+
+    // 커스텀 이벤트 리스너 등록 (index.html에서 발생)
+    const handlePwaPromptReady = () => {
+      const gPrompt = (window as any).deferredPrompt;
+      if (gPrompt) {
+        setDeferredPrompt(gPrompt);
+        setIsInstallable(true);
+      }
+    };
+
+    window.addEventListener('pwa-prompt-ready', handlePwaPromptReady);
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    window.addEventListener('appinstalled', handleAppInstalled);
+
+    if (window.matchMedia('(display-mode: standalone)').matches) {
+      setIsInstalled(true);
+    }
+
+    return () => {
+      // document.title 복원
+      document.title = originalTitle;
+      // Manifest 원래대로 복구
+      if (link && originalHref) {
+        link.setAttribute('href', originalHref);
+      }
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+      window.removeEventListener('appinstalled', handleAppInstalled);
+      window.removeEventListener('pwa-prompt-ready', handlePwaPromptReady);
+    };
+  }, []);
+
+  const handleInstallApp = async () => {
+    // 1. 인앱 브라우저(카카오톡, 네이버) 체크
+    const isKakao = /KAKAOTALK/i.test(navigator.userAgent);
+    const isNaver = /NAVER/i.test(navigator.userAgent);
+    const isInAppBrowser = isKakao || isNaver;
+
+    if (isInAppBrowser) {
+      alert('카카오톡/네이버 브라우저에서는 바로 앱 설치가 지원되지 않습니다.\n\n우측 하단(또는 상단)의 [메뉴/점 3개] 버튼을 누른 뒤,\n[다른 브라우저로 열기] 또는 [Safari/Chrome으로 열기]를 선택하고\n해당 웹 페이지에서 다시 [앱 설치]를 진행해 주세요!');
+      return;
+    }
+
+    // 2. 안드로이드 크롬 등에서 정상적으로 beforeinstallprompt 이벤트가 잡힌 경우
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      if (outcome === 'accepted') {
+        setIsInstallable(false);
+        setIsInstalled(true);
+      }
+      setDeferredPrompt(null);
+      (window as any).deferredPrompt = null;
+      return;
+    }
+    
+    // 3. iOS 사파리 등 deferredPrompt가 지원되지 않는 경우
+    alert('설치 방법 안내:\n\n• iOS (Safari): 브라우저 하단의 [공유] 버튼(네모 안의 위쪽 화살표) 탭 -> [홈 화면에 추가] 탭\n• Android (Chrome): 브라우저 우측 상단 [더보기] 버튼(점 3개) 탭 -> [앱 설치] 또는 [홈 화면에 추가] 탭\n\n(이미 설치되었거나 지원되지 않는 브라우저일 수 있습니다)');
+  };
+
   // 스텝 상태 (0: 서비스 안내, 1: 주거/면적, 2: 세부사항, 3: 일정/주소, 4: 정보입력, 5: 견적완료)
   const [step, setStep] = useState(0);
 
@@ -428,6 +524,30 @@ export default function Quote() {
         </div>
       </header>
 
+      {/* PWA 설치 유도 배너 */}
+      {!isInstalled && showInstallBanner && (
+        <div className="bg-slate-900 text-white px-4 py-3 text-xs flex items-center justify-between sticky top-[49px] z-40 border-b border-slate-800 shadow-md">
+          <div className="flex items-center gap-2.5">
+            <span className="material-symbols-outlined text-blue-400 text-lg shrink-0">install_mobile</span>
+            <span className="font-semibold text-slate-200">청소타워 업체전용 앱을 설치해 편리하게 이용해 보세요!</span>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <button 
+              onClick={handleInstallApp}
+              className="bg-blue-600 hover:bg-blue-500 text-white font-extrabold px-3 py-1.5 rounded-lg active:scale-95 transition-all text-[11px]"
+            >
+              앱 설치
+            </button>
+            <button 
+              onClick={() => setShowInstallBanner(false)}
+              className="text-slate-400 hover:text-white p-1 flex items-center justify-center"
+            >
+              <span className="material-symbols-outlined text-base">close</span>
+            </button>
+          </div>
+        </div>
+      )}
+
       <main className={`flex-1 w-full mx-auto ${step === 0 ? 'max-w-6xl p-0 pb-24' : 'max-w-2xl p-5 pb-28 lg:p-8 lg:pb-32'} flex flex-col relative overflow-hidden`}>
         
         {/* Progress Bar (step 0에서는 숨김) */}
@@ -554,6 +674,29 @@ export default function Quote() {
                     </div>
                   </div>
                 </div>
+
+                {/* 모바일 앱 설치 카드 (Step 0) */}
+                {!isInstalled && (
+                  <div className="mx-5 my-4 p-5 rounded-2xl bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-100 shadow-sm flex flex-col md:flex-row md:items-center md:justify-between gap-4 max-w-4xl lg:mx-auto lg:w-full lg:mb-8">
+                    <div className="flex items-start gap-3">
+                      <div className="bg-blue-100 p-2.5 rounded-xl text-blue-600 shrink-0 mt-0.5 flex items-center justify-center">
+                        <span className="material-symbols-outlined text-2xl">install_mobile</span>
+                      </div>
+                      <div className="text-left">
+                        <h4 className="font-extrabold text-slate-800 text-sm md:text-base mb-1">휴대폰 바탕화면에 앱으로 설치하세요</h4>
+                        <p className="text-xs text-slate-500 leading-relaxed break-keep">
+                          매번 번거롭게 주소를 입력하거나 링크를 찾을 필요 없이, 바탕화면 아이콘 클릭 한 번으로 빠르게 청소타워 업체전용 견적을 이용하실 수 있습니다.
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={handleInstallApp}
+                      className="w-full md:w-auto bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-extrabold text-xs px-5 py-3 rounded-xl shadow-md active:scale-[0.98] transition-all whitespace-nowrap text-center"
+                    >
+                      바탕화면에 앱 추가하기
+                    </button>
+                  </div>
+                )}
 
                 {/* 타사 vs 청소타워 비교 */}
                 <div id="why-us-section" className="px-5 lg:px-8 mb-6 lg:mb-10 mt-4 scroll-mt-20">

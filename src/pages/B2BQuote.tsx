@@ -892,7 +892,7 @@ export default function Quote() {
                       <span className="text-blue-600 mr-1.5">✓</span>인테리어 공사잔금 사수하여 지켜내자
                     </p>
                     <p className="text-[17px] lg:text-[23px] font-black text-red-600 break-keep relative z-10 leading-snug">
-                      <span className="text-blue-600 mr-1.5">✓</span>밀당고수 소지자들 청소타워 박멸한다
+                      <span className="text-blue-600 mr-1.5">✓</span>밀당고수 소비자들 청소타워가 박멸한다
                     </p>
                   </div>
                 </div>

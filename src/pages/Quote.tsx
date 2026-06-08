@@ -1507,7 +1507,7 @@ export default function Quote() {
                       전화 상담
                     </a>
                     <a
-                      href="http://pf.kakao.com/_xxxxxx/chat"
+                      href="http://pf.kakao.com/_xnHTnX/chat"
                       target="_blank"
                       rel="noopener noreferrer"
                       className="w-full bg-[#FEE500] hover:bg-[#FDD800] text-[#000000] font-bold py-4 rounded-xl text-sm shadow-sm transition-all active:scale-[0.98] flex items-center justify-center gap-2"
@@ -1564,7 +1564,7 @@ export default function Quote() {
                   <span className="material-symbols-outlined text-[22px]">call</span>
                 </a>
                 <a
-                  href="http://pf.kakao.com/_xxxxxx/chat"
+                  href="http://pf.kakao.com/_xnHTnX/chat"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="w-14 bg-[#FEE500] hover:bg-[#FDD800] text-[#000000] flex items-center justify-center rounded-xl shadow-sm transition-all active:scale-[0.95]"

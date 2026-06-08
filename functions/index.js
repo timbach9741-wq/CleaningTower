@@ -5,6 +5,33 @@ const axios = require('axios');
 
 admin.initializeApp();
 
+// ────────────────────────────────────────────
+// ★ 솔라피 SDK 설정 및 초기화
+// ────────────────────────────────────────────
+let SOLAPI_API_KEY = process.env.SOLAPI_API_KEY;
+let SOLAPI_API_SECRET = process.env.SOLAPI_API_SECRET;
+let SOLAPI_PF_ID = process.env.SOLAPI_PF_ID;
+let SOLAPI_FROM_NUMBER = process.env.SOLAPI_FROM_NUMBER || '0314999509'; // 청소타워 대표번호
+
+// Firebase Functions Config fallback (v1 호환)
+try {
+  const config = functions.config();
+  if (config && config.solapi) {
+    SOLAPI_API_KEY = SOLAPI_API_KEY || config.solapi.key;
+    SOLAPI_API_SECRET = SOLAPI_API_SECRET || config.solapi.secret;
+    SOLAPI_PF_ID = SOLAPI_PF_ID || config.solapi.pf_id;
+    SOLAPI_FROM_NUMBER = config.solapi.from_number || SOLAPI_FROM_NUMBER;
+  }
+} catch (e) {
+  // Config가 없거나 로컬 개발 환경인 경우 예외 무시
+}
+
+let messageService = null;
+if (SOLAPI_API_KEY && SOLAPI_API_SECRET) {
+  const { SolapiMessageService } = require('solapi');
+  messageService = new SolapiMessageService(SOLAPI_API_KEY, SOLAPI_API_SECRET);
+}
+
 // ★ 관리자(대표) 연락처: 모든 의뢰가 이 번호로 알림 발송됩니다.
 const ADMIN_PHONE = '01012345678';
 
@@ -33,18 +60,71 @@ async function sendAdminNotification(message) {
 }
 
 /**
- * 🟡 추후 구현 예정: 카카오 알림톡(비즈메시지) API 연동 플레이스홀더
- * 고객에게 배정 완료, 예약 확정 등의 안내 메시지를 카카오톡으로 발송합니다.
- * (사업자 등록 이후 알리고(Aligo) 또는 솔라피(Solapi) API 연동 시 실제 코드로 대체)
+ * 고객에게 알림톡(또는 문자 fallback)을 발송하는 함수
+ * 왜 솔라피인가: 카카오 알림톡 발송 기능과 함께, 수신자가 카카오톡 미사용자이거나 수신 오류 시 SMS/LMS로 자동 대체되어 도달률이 가장 높음
+ * @param {string} phone 수신인 전화번호
+ * @param {string} templateCode 알림톡 템플릿 코드 (예: 'ASSIGN_COMPLETE', 'REVIEW_REQUEST')
+ * @param {string} text 알림 내용 (LMS/SMS 발송 및 알림톡 본문)
+ * @param {string} [buttonUrl] 버튼 클릭 시 이동할 URL (옵션)
  */
-async function sendCustomerKakaoNotification(phone, templateCode, templateData) {
+async function sendCustomerKakaoNotification(phone, templateCode, text, buttonUrl = '') {
   if (!phone || phone === '미입력') return false;
-  
-  // TODO: 실제 API 발송 로직 추가 (axios.post)
-  console.log(`[카카오 알림톡 발송 대기] 수신처: ${phone}, 템플릿: ${templateCode}`);
-  console.log(`[메시지 내용 시뮬레이션]\n${templateData}`);
-  
-  return true;
+
+  const cleanPhone = phone.replace(/[^0-9]/g, '');
+  if (cleanPhone.length < 10) {
+    console.log(`[알림톡 발송 보류] 잘못된 전화번호 형식: ${phone}`);
+    return false;
+  }
+
+  // API 키가 없으면 시뮬레이션 모드로 작동 (로컬 에뮬레이터 및 개발 테스트 용도)
+  if (!messageService) {
+    console.log(`\n📢 [MOCK 알림톡 대기] (API 키 설정 없음)`);
+    console.log(`📱 수신번호: ${cleanPhone}`);
+    console.log(`🏷️ 템플릿: ${templateCode}`);
+    console.log(`💬 내용:\n${text}`);
+    if (buttonUrl) {
+      console.log(`🔗 버튼 링크: ${buttonUrl}`);
+    }
+    console.log(`───────────────────────────────────────────\n`);
+    return true;
+  }
+
+  try {
+    const messagePayload = {
+      to: cleanPhone,
+      from: SOLAPI_FROM_NUMBER,
+      text: text, // 알림톡 실패 시 문자로 전송될 텍스트
+    };
+
+    // 카카오 알림톡 옵션 추가 (카카오 비즈니스 채널 프로필 ID가 있을 때만 활성화)
+    if (SOLAPI_PF_ID) {
+      const kakaoOptions = {
+        pfId: SOLAPI_PF_ID,
+        templateId: templateCode,
+      };
+
+      // 버튼 링크가 있는 경우 알림톡 버튼 설정 추가
+      if (buttonUrl) {
+        kakaoOptions.buttons = [
+          {
+            buttonType: 'WL', // Web Link
+            buttonName: '바로 확인하기',
+            linkMo: buttonUrl,
+            linkPc: buttonUrl
+          }
+        ];
+      }
+
+      messagePayload.kakaoOptions = kakaoOptions;
+    }
+
+    const response = await messageService.sendOne(messagePayload);
+    console.log(`[솔라피 알림톡 발송 성공] 수신처: ${cleanPhone}, 메시지 ID: ${response.messageId}`);
+    return true;
+  } catch (error) {
+    console.error(`[솔라피 알림톡 발송 실패] 수신처: ${cleanPhone}, 에러:`, error.response?.data || error.message);
+    return false;
+  }
 }
 
 /**
@@ -262,6 +342,13 @@ exports.notifyOnOrderStatusChange = functions.firestore
 
 💰 정산을 진행해주세요.`;
           await sendAdminNotification(msg);
+
+          // ★ 파트너가 작업 완료 시 고객에게 리뷰 요청 알림톡(LMS fallback) 발송
+          const customerPhone = after.contactInfo || after.phone || after.realPhone || '미입력';
+          const reviewLink = `https://cheongsotower.kr/review-write/${quoteId}`;
+          const reviewMessage = `[청소타워 - 서비스 완료 및 리뷰 작성 안내]\n\n${customerName} 고객님, 청소 서비스가 완료되었습니다! 만족스러우셨나요?\n\n소중한 의견을 남겨주시면 큰 힘이 됩니다. 아래 링크를 통해 간단한 만족도 평가와 솔직한 리뷰를 남겨주세요.\n\n▶ 리뷰 작성하기: ${reviewLink}\n\n감사합니다.`;
+          
+          await sendCustomerKakaoNotification(customerPhone, 'REVIEW_REQUEST', reviewMessage, reviewLink);
           break;
         }
 
@@ -317,7 +404,7 @@ exports.notifyPartnerOnSignup = functions.firestore
       await sendAdminNotification(adminSignupMsg);
 
       // 파트너에게 환영 푸시 메시지 발송
-      const msg = `${partnerName} 파트너님, 환영합니다! 🎉\n청소타워 파트너 가입이 완료되었습니다.\n승인이 완료되면 즉시 오더를 수신하실 수 있습니다.`;
+      const msg = `${partnerName} 파트너님, 환영합니다! 🎉\n청소타워 파트너 회원가입이 완료되었습니다.\n자동 승인 완료되어 즉시 오더를 수신하실 수 있습니다.`;
       
       const tokens = newPartner.fcmTokens || (newPartner.fcmToken ? [newPartner.fcmToken] : []);
       if (tokens.length > 0) {
@@ -325,6 +412,27 @@ exports.notifyPartnerOnSignup = functions.firestore
         console.log(`[Signup Notification] ${partnerName} 파트너님께 가입 환영 푸시 발송 성공`);
       } else {
         console.log(`[Signup Notification] ${partnerName} 파트너님 FCM 토큰 없어 푸시 보류`);
+      }
+
+      // ★ 파트너에게 신규 가입 완료 알림톡(LMS fallback) 발송
+      if (phone && phone !== '미입력') {
+        const welcomeMessage = `[청소타워] 파트너스 가입 완료 안내
+
+안녕하세요 ${partnerName} 대표님.
+청소타워 가입을 환영합니다.
+
+지금 프로모션 기간이라 일반 회원에서 프리미엄으로 업그레이드 해 드렸습니다.
+홈페이지에 작업 전, 후 사진 업데이트 부탁드리며, 해당지역 의뢰 시 앱으로 알림이 가도록 되어있습니다.
+휴대폰에 앱을 설치하시고 청소 가능일자를 꼭 표시해 주셔야 합니다.
+
+3개월 무료로 사용해 보시고 궁금한 사항 있으시면 언제든 연락 주세요~
+
+https://cheongsotower.kr
+
+자사 홈페이지에서도 파트너스 로그인을 통하여 사용하실 수도 있습니다.
+
+- 청소타워 임직원 일동 -`;
+        await sendCustomerKakaoNotification(phone, 'PARTNER_WELCOME', welcomeMessage);
       }
     } catch (error) {
       console.error(`[Signup Notification] ${partnerName} 파트너 알림 발송 중 오류:`, error);

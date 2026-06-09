@@ -1154,7 +1154,7 @@ export default function Quote() {
                     <div className="bg-rose-50 border border-rose-200 rounded-xl p-3.5 mb-4 flex items-start gap-2.5">
                       <span className="material-symbols-outlined text-rose-600 text-[18px] shrink-0 mt-0.5">error</span>
                       <p className="text-rose-800 text-xs font-bold leading-relaxed break-keep">
-                        ⚠️ <span className="font-black text-rose-950">중요:</span> 실평수(전용면적)가 아닌 계약서상 <b className="text-rose-950 underline underline-offset-2">공급 면적(분양 평수)</b>으로 반드시 입력해 주세요. (실평수 기입 시 현장 추가금이 발생할 수 있습니다.)
+                        ⚠️ <b>실평수 기입 시 현장 추가금이 발생할 수 있으니 반드시 <span className="text-rose-950 underline underline-offset-2">공급 면적(분양 평수)</span>으로 입력해 주세요.</b>
                       </p>
                     </div>
                     <div className="flex items-center justify-between bg-slate-50 border border-slate-200 rounded-xl p-4 focus-within:border-blue-500 focus-within:bg-blue-50 transition-all">

@@ -1812,7 +1812,7 @@ export default function Partner() {
                   정산 내역 확인 <span className="text-slate-400">→</span>
                 </button>
                 <button 
-                  onClick={() => window.open('https://open.kakao.com/o/sDailyHousing', '_blank')}
+                  onClick={() => window.open('http://pf.kakao.com/_xnHTnX/chat', '_blank')}
                   className="w-full text-left px-5 py-4 font-bold text-slate-700 flex justify-between items-center bg-white active:bg-slate-50"
                 >
                   본사 1:1 채팅 문의 <span className="text-slate-400">→</span>

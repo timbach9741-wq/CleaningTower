@@ -833,9 +833,12 @@ export default function Quote() {
 
                   <div>
                     <label className="block text-slate-300 text-sm font-semibold mb-2">📐 견적 면적 (평)</label>
-                    <span className="block text-blue-400 font-normal text-[11px] mb-3 leading-relaxed">
-                      ※ 실평수(전용면적)가 아닌 계약서상 <b>공급 면적(분양 평수)</b>으로 반드시 입력해 주세요. (실평수 기입 시 현장 추가금이 발생할 수 있습니다.)
-                    </span>
+                    <div className="bg-amber-500/10 border border-amber-500/25 rounded-xl p-3.5 mb-4 flex items-start gap-2.5">
+                      <span className="material-symbols-outlined text-amber-400 text-[18px] shrink-0 mt-0.5">warning</span>
+                      <p className="text-amber-300/90 text-xs font-semibold leading-relaxed break-keep">
+                        실평수(전용면적)가 아닌 계약서상 <b className="text-white underline underline-offset-2">공급 면적(분양 평수)</b>으로 반드시 입력해 주세요. (실평수 기입 시 현장 추가금이 발생할 수 있습니다.)
+                      </p>
+                    </div>
                     <div className="flex items-center justify-between bg-white/5 border border-white/15 rounded-xl p-4 focus-within:border-blue-500 focus-within:bg-blue-500/5 transition-all">
                       <div className="flex flex-1 items-center gap-2 mr-3">
                         <input 

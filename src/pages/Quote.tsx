@@ -902,9 +902,19 @@ export default function Quote() {
                         </span>
                       </div>
                     </div>
-                    {sizeUnit === 'm²' && typeof size === 'number' && size > 0 && (
-                      <div className="mt-2 text-right text-xs text-blue-300/80 font-bold">
-                        → 환산: <span className="text-blue-200 text-sm">{size}평</span> (반올림 적용)
+                    {sizeUnit === 'm²' && (
+                      <div className="mt-3 bg-blue-500/10 border border-blue-500/30 rounded-xl p-3.5 flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="material-symbols-outlined text-blue-400 text-lg">calculate</span>
+                          <span className="text-blue-200 text-sm font-bold">평수 환산</span>
+                        </div>
+                        <div className="text-right">
+                          {typeof size === 'number' && size > 0 ? (
+                            <span className="text-white text-xl font-black">{size}<span className="text-blue-300 text-sm ml-1">평</span></span>
+                          ) : (
+                            <span className="text-slate-500 text-sm font-bold">m² 입력 시 자동 계산</span>
+                          )}
+                        </div>
                       </div>
                     )}
                   </div>

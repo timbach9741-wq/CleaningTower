@@ -1070,7 +1070,7 @@ export default function Quote() {
                   </div>
 
                   <div>
-                    <label className="block text-slate-700 text-sm font-semibold mb-2">📐 공급면적 (평)</label>
+                    <label className="block text-slate-700 text-sm font-semibold mb-2">📐 공급 면적</label>
                     {/* m² → 평 변환기 */}
                     <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 mb-3 flex items-center gap-2">
                       <span className="material-symbols-outlined text-blue-600 text-lg shrink-0">calculate</span>

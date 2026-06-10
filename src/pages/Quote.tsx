@@ -106,6 +106,8 @@ export default function Quote() {
     return '프리미엄';
   });
   const [size, setSize] = useState<number | ''>(24);
+  const [sizeUnit, setSizeUnit] = useState<'평' | 'm²'>('평');
+  const [sizeInputRaw, setSizeInputRaw] = useState<string>('24');
   
   const [businessName, setBusinessName] = useState('');
   const [address, setAddress] = useState(() => location.state?.preselectedRegion || '');
@@ -166,7 +168,7 @@ export default function Quote() {
       basePricePerPyeong = 15000;
     }
 
-    const currentSize = typeof size === 'number' ? size : 0;
+    const currentSize = typeof size === 'number' ? Math.round(size) : 0;
     let total = currentSize * basePricePerPyeong;
 
     if (isBetweenCleaning) {
@@ -196,13 +198,36 @@ export default function Quote() {
 
   const handleSizeChange = (e: ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
+    setSizeInputRaw(val);
     if (val === '') {
       setSize('');
       return;
     }
     const num = Number(val);
     if (!isNaN(num) && num >= 0) {
-      setSize(num);
+      if (sizeUnit === 'm²') {
+        // m² → 평 변환 (1평 = 3.3058m²), 0.5 이상 반올림
+        const pyeong = Math.round(num / 3.3058);
+        setSize(pyeong);
+      } else {
+        setSize(Math.round(num));
+      }
+    }
+  };
+
+  const handleUnitToggle = () => {
+    const newUnit = sizeUnit === '평' ? 'm²' : '평';
+    setSizeUnit(newUnit);
+    // 단위 변경 시 입력값 변환
+    if (typeof size === 'number' && size > 0) {
+      if (newUnit === 'm²') {
+        // 평 → m² 표시값 변환
+        const m2 = Math.round(size * 3.3058 * 100) / 100;
+        setSizeInputRaw(String(m2));
+      } else {
+        // m² → 평 표시값 (이미 size는 평으로 저장됨)
+        setSizeInputRaw(String(size));
+      }
     }
   };
 
@@ -832,7 +857,7 @@ export default function Quote() {
                   </div>
 
                   <div>
-                    <label className="block text-slate-300 text-sm font-semibold mb-2">📐 견적 면적 (평)</label>
+                    <label className="block text-slate-300 text-sm font-semibold mb-2">📐 견적 면적</label>
                     <div className="bg-rose-500/10 border border-rose-500/25 rounded-xl p-3.5 mb-4 flex items-start gap-2.5">
                       <span className="material-symbols-outlined text-rose-500 text-[18px] shrink-0 mt-0.5">error</span>
                       <div className="flex-1 text-xs leading-relaxed break-keep">
@@ -848,17 +873,24 @@ export default function Quote() {
                       <div className="flex flex-1 items-center gap-2 mr-3">
                         <input 
                           type="number" 
-                          value={size}
+                          value={sizeInputRaw}
                           onChange={handleSizeChange}
-                          placeholder="예: 24"
+                          placeholder={sizeUnit === 'm²' ? '예: 79.21' : '예: 24'}
                           className="flex-1 bg-transparent text-left text-3xl font-bold text-white outline-none
                                      [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none
                                      placeholder-slate-600 w-full"
                         />
-                        <span className="text-slate-400 text-lg font-medium whitespace-nowrap">평</span>
+                        <span className="text-slate-400 text-lg font-medium whitespace-nowrap">{sizeUnit}</span>
                       </div>
-                      <div className="flex flex-col items-end">
-                        <span className="text-slate-400 text-[10px] mb-0.5">단가</span>
+                      <div className="flex flex-col items-end gap-1.5">
+                        <button
+                          type="button"
+                          onClick={handleUnitToggle}
+                          className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 active:scale-95 transition-all text-[11px] font-bold text-blue-300 border border-white/10"
+                        >
+                          <span className="material-symbols-outlined text-[14px]">swap_horiz</span>
+                          {sizeUnit === '평' ? 'm²' : '평'}
+                        </button>
                         <span className="text-blue-300 text-xs font-bold bg-blue-500/20 px-2 py-1 rounded whitespace-nowrap flex-shrink-0">
                           {cleaningType === '정기' || cleaningType === '가전' ? '상담 후 결정' :
                            cleaningType === '이사' ? '평당 1.5만원' : 
@@ -867,6 +899,11 @@ export default function Quote() {
                         </span>
                       </div>
                     </div>
+                    {sizeUnit === 'm²' && typeof size === 'number' && size > 0 && (
+                      <div className="mt-2 text-right text-xs text-blue-300/80 font-bold">
+                        → 환산: <span className="text-blue-200 text-sm">{size}평</span> (반올림 적용)
+                      </div>
+                    )}
                   </div>
                 </div>
 

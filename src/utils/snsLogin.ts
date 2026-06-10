@@ -43,12 +43,10 @@ export async function initKakao(jsKey: string): Promise<boolean> {
   }
 }
 
-export async function loginWithKakao(jsKey?: string): Promise<{ success: boolean; profile?: SnsProfile; triggerSimulator?: boolean }> {
-  // 실제 API 키가 없으면 로컬 테스트용 시뮬레이터로 우회
+export async function loginWithKakao(jsKey?: string): Promise<{ success: boolean; profile?: SnsProfile }> {
   const finalKey = jsKey || (import.meta as any).env?.VITE_KAKAO_JS_KEY;
   if (!finalKey || finalKey.includes('YOUR_')) {
-    console.log('[Kakao Login] API Key가 설정되지 않아 시뮬레이터 모드로 동작합니다.');
-    return { success: false, triggerSimulator: true };
+    throw new Error('카카오 API Key(VITE_KAKAO_JS_KEY)가 설정되지 않았습니다.');
   }
 
   try {
@@ -101,30 +99,23 @@ export async function loginWithKakao(jsKey?: string): Promise<{ success: boolean
     });
   } catch (error) {
     console.error('Kakao 로그인 오류:', error);
-    return { success: false, triggerSimulator: true };
+    throw error;
   }
 }
 
-export async function loginWithNaver(clientId?: string): Promise<{ success: boolean; profile?: SnsProfile; triggerSimulator?: boolean }> {
+export async function loginWithNaver(clientId?: string): Promise<{ success: boolean; profile?: SnsProfile }> {
   const finalClientId = clientId || (import.meta as any).env?.VITE_NAVER_CLIENT_ID;
   if (!finalClientId || finalClientId.includes('YOUR_')) {
-    console.log('[Naver Login] Client ID가 설정되지 않아 시뮬레이터 모드로 동작합니다.');
-    return { success: false, triggerSimulator: true };
+    throw new Error('네이버 Client ID(VITE_NAVER_CLIENT_ID)가 설정되지 않았습니다.');
   }
 
   try {
     await loadScript('https://static.nid.naver.com/js/naveridlogin_js_sdk_2.0.2.js');
     
-    // 네이버는 팝업 형태로 작동하거나 리다이렉트 흐름을 타므로,
-    // 클라이언트 사이드 단독 처리를 위해 팝업을 열어 검증하는 OAuth2 Authorization 흐름을 구현하거나, 
-    // SDK의 NaverLoginWithNaverId를 사용하여 처리할 수 있습니다.
-    // 여기서는 동적 팝업을 활용해 네이버 정보를 수집하는 커스텀 팝업 흐름을 지원합니다.
     return new Promise((resolve) => {
-      // 네이버 로그인은 일반적으로 redirect_uri 기반으로 작동하므로
-      // index.html 또는 별도 콜백에서 처리되나, popup: true 설정을 사용하면 간편합니다.
       const naver = (window as any).naver;
       if (!naver) {
-        resolve({ success: false, triggerSimulator: true });
+        resolve({ success: false });
         return;
       }
 
@@ -161,15 +152,12 @@ export async function loginWithNaver(clientId?: string): Promise<{ success: bool
             }
           });
         } else {
-          // 직접 로그인 팝업 호출
-          // SDK 내부 API를 이용해 authorize url로 직접 새 창을 열고, 
-          // 팝업 통신을 대기하거나 시뮬레이터로 폴백
-          resolve({ success: false, triggerSimulator: true });
+          resolve({ success: false });
         }
       });
     });
   } catch (error) {
     console.error('Naver 로그인 오류:', error);
-    return { success: false, triggerSimulator: true };
+    throw error;
   }
 }

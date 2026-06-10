@@ -585,94 +585,13 @@ export default function Quote() {
                 transition={{ duration: 0.4 }}
                 className="flex flex-col"
               >
-                {/* Hero Banner */}
-                <div className="relative px-5 pt-8 pb-6 lg:pt-16 lg:pb-12 text-center overflow-hidden">
-                  {/* Clean Premium Background Gradients */}
-                  <div className="absolute inset-0 bg-gradient-to-b from-blue-50/60 via-indigo-50/20 to-transparent pointer-events-none"></div>
-                  
-                  {/* Floating Glowing Orbs */}
-                  <motion.div 
-                    className="absolute -top-10 -left-10 w-44 h-44 rounded-full bg-sky-200/30 blur-3xl pointer-events-none"
-                    animate={{
-                      x: [0, 15, 0],
-                      y: [0, -15, 0],
-                    }}
-                    transition={{
-                      duration: 8,
-                      repeat: Infinity,
-                      ease: "easeInOut"
-                    }}
+                {/* Hero Banner - 마케팅 이미지 */}
+                <div className="w-full">
+                  <img 
+                    src="/b2b_hero_banner.png" 
+                    alt="청소타워 - 소비자가 보기 전에 하자를 먼저 잡아드립니다" 
+                    className="w-full h-auto"
                   />
-                  <motion.div 
-                    className="absolute top-24 -right-10 w-56 h-56 rounded-full bg-indigo-200/30 blur-3xl pointer-events-none"
-                    animate={{
-                      x: [0, -20, 0],
-                      y: [0, 20, 0],
-                    }}
-                    transition={{
-                      duration: 10,
-                      repeat: Infinity,
-                      ease: "easeInOut"
-                    }}
-                  />
-                  
-                  {/* Desktop Glow Ornament */}
-                  <div className="hidden lg:block absolute top-[10%] left-1/2 -translate-x-1/2 w-[800px] h-[350px] rounded-full bg-gradient-to-r from-sky-200/20 to-indigo-200/20 blur-[120px] pointer-events-none" />
-                  
-                  <div className="relative z-10">
-                    {/* Premium Sparkle/Lightning Badge */}
-                    <motion.div 
-                      className="inline-flex items-center gap-2.5 px-6 py-2 lg:px-9 lg:py-3 mb-4 lg:mb-5 rounded-full bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 shadow-md shadow-blue-500/25 border border-white/20"
-                      whileHover={{ scale: 1.05 }}
-                      animate={{
-                        boxShadow: ["0 4px 6px -1px rgba(59, 130, 246, 0.2)", "0 10px 15px -3px rgba(59, 130, 246, 0.35)", "0 4px 6px -1px rgba(59, 130, 246, 0.2)"]
-                      }}
-                      transition={{
-                        duration: 3,
-                        repeat: Infinity,
-                        ease: "easeInOut"
-                      }}
-                    >
-                      <svg 
-                        className="w-4 h-4 lg:w-6 lg:h-6 text-yellow-300 fill-current shrink-0" 
-                        viewBox="0 0 24 24"
-                        style={{ filter: 'drop-shadow(0 0 4px rgba(253, 224, 71, 0.8))' }}
-                      >
-                        <path d="M13 2L3 14h9v8l10-12h-9V2z" />
-                      </svg>
-                      <span className="text-xs lg:text-lg font-extrabold text-white tracking-wider">청소타워만의 차별화</span>
-                    </motion.div>
-
-                    {/* Main Title with high-density tracking */}
-                    <h2 className="text-2xl lg:text-[3.2rem] lg:leading-[1.2] font-black text-slate-900 mb-3 lg:mb-4 leading-tight tracking-tight lg:tracking-tighter break-keep">
-                      청소만 하는 곳이 아닙니다.<br/>
-                      <span className="bg-gradient-to-r from-rose-500 via-orange-500 to-amber-500 bg-clip-text text-transparent">
-                        하자까지 잡아드립니다.
-                      </span>
-                    </h2>
-
-                    {/* Subtitle with premium bullet list style */}
-                    <div className="flex flex-col items-center mt-4 mb-2 px-4 lg:px-0">
-                      <ul className="inline-block text-left text-sm lg:text-[22px] text-slate-600 font-extrabold break-keep leading-relaxed space-y-2 lg:space-y-3 max-w-xs sm:max-w-md lg:max-w-2xl mx-auto">
-                        <li className="flex items-start gap-2 lg:gap-3">
-                          <span className="text-blue-500 mt-1 lg:mt-1.5 shrink-0 font-black text-sm lg:text-xl">•</span>
-                          <span>소비자 보면 <strong className="text-red-500 font-black">하자</strong>, 청소타워가 먼저 보면 <strong className="text-emerald-600 font-black">공사중</strong></span>
-                        </li>
-                        <li className="flex items-start gap-2 lg:gap-3">
-                          <span className="text-blue-500 mt-1 lg:mt-1.5 shrink-0 font-black text-sm lg:text-xl">•</span>
-                          <span>인테리어 잔금 걱정 <strong className="text-red-500 font-black">No No</strong></span>
-                        </li>
-                        <li className="flex items-start gap-2 lg:gap-3">
-                          <span className="text-blue-500 mt-1 lg:mt-1.5 shrink-0 font-black text-sm lg:text-xl">•</span>
-                          <span>저희는 항상 <strong className="text-blue-600 font-black">업체 입장</strong>에서 생각합니다.</span>
-                        </li>
-                        <li className="flex items-start gap-2 lg:gap-3">
-                          <span className="text-blue-500 mt-1 lg:mt-1.5 shrink-0 font-black text-sm lg:text-xl">•</span>
-                          <span>저희는 사장님들에 마무리를 책임지는 청소타워 입니다</span>
-                        </li>
-                      </ul>
-                    </div>
-                  </div>
                 </div>
 
                 {/* 모바일 앱 설치 카드 (Step 0) */}

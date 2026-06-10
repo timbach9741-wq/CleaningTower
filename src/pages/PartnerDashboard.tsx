@@ -14,6 +14,8 @@ type RegionData = { [key: string]: string[] };
 const regionsData = REGION_DATA as RegionData;
 
 import RegionSelector from '../components/common/RegionSelector';
+import { loginWithKakao, loginWithNaver } from '../utils/snsLogin';
+import type { SnsProfile } from '../utils/snsLogin';
 
 const DEFAULT_IMAGES = [
   '/images/korean_cleaner_livingroom.webp',
@@ -158,6 +160,13 @@ export default function Partner() {
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [isInstallable, setIsInstallable] = useState(false);
   const [isInstalled, setIsInstalled] = useState(false);
+
+  // 소셜 로그인 관련 상태
+  const [showSnsSimulator, setShowSnsSimulator] = useState(false);
+  const [snsSimulatorProvider, setSnsSimulatorProvider] = useState<'kakao' | 'naver' | null>(null);
+  const [showSnsLinkModal, setShowSnsLinkModal] = useState(false);
+  const [snsProfileToLink, setSnsProfileToLink] = useState<SnsProfile | null>(null);
+  const [existingPartnerToLink, setExistingPartnerToLink] = useState<PartnerUser | null>(null);
 
   useEffect(() => {
     const handleBeforeInstallPrompt = (e: any) => {
@@ -663,6 +672,123 @@ export default function Partner() {
     }
   };
 
+  const handleSnsLoginSuccess = async (profile: SnsProfile) => {
+    if (!db) return;
+    setIsLoading(true);
+    try {
+      const fieldName = profile.provider === 'kakao' ? 'kakaoId' : 'naverId';
+      const q = query(collection(db, 'partners'), where(fieldName, '==', profile.id));
+      const querySnapshot = await getDocs(q);
+
+      if (!querySnapshot.empty) {
+        // 이미 연동된 계정이 있음 -> 즉시 로그인
+        const partnerDoc = querySnapshot.docs[0];
+        localStorage.setItem('partnerId', partnerDoc.id);
+        setPartnerId(partnerDoc.id);
+        setCurrentUser({ id: partnerDoc.id, ...partnerDoc.data() });
+        setShowLogin(false);
+        setShowLanding(false);
+        alert(`${profile.name} 파트너님, 반갑습니다!`);
+      } else {
+        // 연동된 계정이 없음 -> 휴대폰 번호 매핑 시도
+        if (profile.phone) {
+          const cleanPhone = profile.phone.replace(/[^0-9]/g, '');
+          const qPhone = query(collection(db, 'partners'), where('loginId', '==', cleanPhone));
+          const phoneSnapshot = await getDocs(qPhone);
+
+          if (!phoneSnapshot.empty) {
+            // 동일 번호 기존 계정 발견 -> 연동 제안 모달 노출
+            const existingDoc = phoneSnapshot.docs[0];
+            setExistingPartnerToLink({ id: existingDoc.id, ...existingDoc.data() });
+            setSnsProfileToLink(profile);
+            setShowSnsLinkModal(true);
+            return;
+          }
+        }
+        
+        // 연동 가능한 기존 계정도 없음 -> 신규 회원 가입 유도
+        alert('연동된 파트너 계정이 없습니다. 회원가입 페이지로 이동하여 신규 가입을 완료해주세요.');
+        navigate('/partners/register', {
+          state: {
+            plan: 'basic',
+            snsProfile: profile
+          }
+        });
+      }
+    } catch (error) {
+      console.error('Sns login handling error:', error);
+      alert('소셜 로그인 처리 중 오류가 발생했습니다.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleLinkSnsAccount = async () => {
+    if (!db || !snsProfileToLink || !existingPartnerToLink) return;
+    setIsLoading(true);
+    try {
+      const fieldName = snsProfileToLink.provider === 'kakao' ? 'kakaoId' : 'naverId';
+      await updateDoc(doc(db, 'partners', existingPartnerToLink.id), {
+        [fieldName]: snsProfileToLink.id
+      });
+
+      // 연동 성공 후 로그인 처리
+      localStorage.setItem('partnerId', existingPartnerToLink.id);
+      setPartnerId(existingPartnerToLink.id);
+      setCurrentUser({
+        ...existingPartnerToLink,
+        [fieldName]: snsProfileToLink.id
+      });
+      setShowSnsLinkModal(false);
+      setShowLogin(false);
+      setShowLanding(false);
+      setSnsProfileToLink(null);
+      setExistingPartnerToLink(null);
+      alert('소셜 계정 연동 및 로그인이 완료되었습니다!');
+    } catch (error) {
+      console.error('Failed to link SNS account:', error);
+      alert('계정 연동 중 오류가 발생했습니다.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleKakaoLoginClick = async () => {
+    setIsLoading(true);
+    try {
+      const res = await loginWithKakao();
+      if (res.success && res.profile) {
+        await handleSnsLoginSuccess(res.profile);
+      } else if (res.triggerSimulator) {
+        setSnsSimulatorProvider('kakao');
+        setShowSnsSimulator(true);
+      }
+    } catch (err) {
+      console.error(err);
+      alert('카카오 로그인 중 오류가 발생했습니다.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleNaverLoginClick = async () => {
+    setIsLoading(true);
+    try {
+      const res = await loginWithNaver();
+      if (res.success && res.profile) {
+        await handleSnsLoginSuccess(res.profile);
+      } else if (res.triggerSimulator) {
+        setSnsSimulatorProvider('naver');
+        setShowSnsSimulator(true);
+      }
+    } catch (err) {
+      console.error(err);
+      alert('네이버 로그인 중 오류가 발생했습니다.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleLogout = () => {
     localStorage.removeItem('partnerId');
     // ★ partnerId 상태를 null로 변경하여 기존 onSnapshot 리스너가 정리(cleanup)되도록 함
@@ -1110,6 +1236,32 @@ export default function Partner() {
                   className="w-full py-4 bg-slate-900 hover:bg-slate-800 text-white font-black rounded-xl shadow-xl active:scale-[0.98] transition-all disabled:bg-slate-300 flex justify-center"
                 >
                   {isLoading ? '인증중...' : '파트너 시스템 접속'}
+                </button>
+              </div>
+
+              <div className="relative my-6 flex items-center justify-center">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-slate-200"></div>
+                </div>
+                <span className="relative bg-slate-50 px-4 text-xs font-bold text-slate-400">또는 간편 로그인 / 가입</span>
+              </div>
+
+              <div className="space-y-3">
+                <button
+                  type="button"
+                  onClick={handleKakaoLoginClick}
+                  className="w-full py-3.5 bg-[#FEE500] hover:bg-[#FDD835] text-[#191919] font-black rounded-xl active:scale-[0.98] transition-all flex items-center justify-center gap-2 shadow-sm border border-[#FEE500]/50 text-sm cursor-pointer"
+                >
+                  <img src="https://developers.kakao.com/assets/img/about/logos/kakaolink/kakaolink_btn_medium.png" alt="카카오" className="w-5 h-5 shrink-0" />
+                  <span>카카오로 시작하기</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={handleNaverLoginClick}
+                  className="w-full py-3.5 bg-[#03C75A] hover:bg-[#02B34F] text-white font-black rounded-xl active:scale-[0.98] transition-all flex items-center justify-center gap-2 shadow-sm border border-[#03C75A]/50 text-sm cursor-pointer"
+                >
+                  <div className="w-5 h-5 rounded bg-white text-[#03C75A] flex items-center justify-center font-black text-xs shrink-0 select-none">N</div>
+                  <span>네이버로 시작하기</span>
                 </button>
               </div>
             </form>
@@ -2833,6 +2985,218 @@ export default function Partner() {
 
       {/* 파트너 안내 가이드 모달 */}
       <PartnerGuideModal isOpen={showGuideModal} onClose={() => setShowGuideModal(false)} />
+
+      {/* SNS 로그인 시뮬레이터 모달 */}
+      {showSnsSimulator && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl w-full max-w-md max-h-[90vh] overflow-y-auto shadow-2xl p-6 relative text-slate-800 flex flex-col">
+            <div className="flex justify-between items-center border-b border-slate-200 pb-3 mb-4">
+              <h3 className="text-lg font-black text-slate-900 flex items-center gap-2">
+                <span className="text-xl">{snsSimulatorProvider === 'kakao' ? '💛' : '💚'}</span>
+                <span>{snsSimulatorProvider === 'kakao' ? '카카오' : '네이버'} 로그인 시뮬레이터</span>
+              </h3>
+              <button 
+                onClick={() => setShowSnsSimulator(false)} 
+                className="text-slate-400 hover:text-slate-650 text-xl font-bold"
+              >
+                ✕
+              </button>
+            </div>
+
+            <p className="text-xs text-slate-500 mb-5 leading-relaxed">
+              현재 개발(로컬) 환경으로 실제 API 연동이 제한된 경우를 대비한 <strong>간편 로그인 테스트 도구</strong>입니다. 아래에서 시나리오별 더미 계정을 클릭하거나 직접 정보를 입력하여 가입/연동 테스트를 진행할 수 있습니다.
+            </p>
+
+            <div className="space-y-3 mb-6">
+              <div className="text-xs font-bold text-slate-400 mb-1">테스트 시나리오 선택</div>
+              
+              {/* 시나리오 1: 기존 회원 로그인 */}
+              <button
+                type="button"
+                onClick={async () => {
+                  if (db) {
+                    const cleanPhone = '01099998888';
+                    const q = query(collection(db, 'partners'), where('loginId', '==', cleanPhone));
+                    const snap = await getDocs(q);
+                    if (snap.empty) {
+                      const { addDoc } = await import('firebase/firestore');
+                      await addDoc(collection(db, 'partners'), {
+                        loginId: cleanPhone,
+                        phone: '010-9999-8888',
+                        managerName: '김테스트',
+                        companyName: '테스트청소',
+                        status: 'active',
+                        regions: ['서울 전역'],
+                        createdAt: new Date().toISOString()
+                      });
+                    }
+                  }
+                  
+                  const mockProfile: SnsProfile = {
+                    id: 'mock_kakao_user_1',
+                    provider: snsSimulatorProvider || 'kakao',
+                    name: '김테스트',
+                    phone: '010-9999-8888',
+                    email: 'test@example.com',
+                    image: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop'
+                  };
+                  if (db) {
+                    const cleanPhone = '01099998888';
+                    const q = query(collection(db, 'partners'), where('loginId', '==', cleanPhone));
+                    const snap = await getDocs(q);
+                    if (!snap.empty) {
+                      const docId = snap.docs[0].id;
+                      const fieldName = snsSimulatorProvider === 'kakao' ? 'kakaoId' : 'naverId';
+                      await updateDoc(doc(db, 'partners', docId), { [fieldName]: mockProfile.id });
+                    }
+                  }
+                  setShowSnsSimulator(false);
+                  await handleSnsLoginSuccess(mockProfile);
+                }}
+                className="w-full p-4 bg-slate-50 hover:bg-blue-50 border border-slate-200 hover:border-blue-400 rounded-xl text-left transition-all group cursor-pointer"
+              >
+                <div className="flex justify-between items-center mb-1">
+                  <span className="text-sm font-black text-slate-800 group-hover:text-blue-700">1. 기존 등록 및 연동 회원 로그인</span>
+                  <span className="text-[10px] bg-blue-100 text-blue-800 font-bold px-1.5 py-0.5 rounded">즉시 로그인</span>
+                </div>
+                <p className="text-[11px] text-slate-500 leading-normal">
+                  이름: <strong>김테스트</strong> | 연락처: <strong>010-9999-8888</strong><br/>
+                  소셜 연동이 이미 완료된 대표님 계정입니다. 클릭 즉시 대시보드로 로그인 처리됩니다.
+                </p>
+              </button>
+
+              {/* 시나리오 2: 기존 회원 미연동 -> 연동 제안 */}
+              <button
+                type="button"
+                onClick={async () => {
+                  if (db) {
+                    const cleanPhone = '01012345678';
+                    const q = query(collection(db, 'partners'), where('loginId', '==', cleanPhone));
+                    const snap = await getDocs(q);
+                    if (snap.empty) {
+                      const { addDoc } = await import('firebase/firestore');
+                      await addDoc(collection(db, 'partners'), {
+                        loginId: cleanPhone,
+                        phone: '010-1234-5678',
+                        managerName: '홍길동',
+                        companyName: '길동클린',
+                        status: 'active',
+                        regions: ['경기 남부'],
+                        createdAt: new Date().toISOString()
+                      });
+                    } else {
+                      const docId = snap.docs[0].id;
+                      const fieldName = snsSimulatorProvider === 'kakao' ? 'kakaoId' : 'naverId';
+                      await updateDoc(doc(db, 'partners', docId), { [fieldName]: null });
+                    }
+                  }
+                  
+                  const mockProfile: SnsProfile = {
+                    id: 'mock_sns_unlinked_user_2',
+                    provider: snsSimulatorProvider || 'kakao',
+                    name: '홍길동',
+                    phone: '010-1234-5678',
+                    email: 'gildong@example.com'
+                  };
+                  setShowSnsSimulator(false);
+                  await handleSnsLoginSuccess(mockProfile);
+                }}
+                className="w-full p-4 bg-slate-50 hover:bg-amber-50 border border-slate-200 hover:border-amber-400 rounded-xl text-left transition-all group cursor-pointer"
+              >
+                <div className="flex justify-between items-center mb-1">
+                  <span className="text-sm font-black text-slate-800 group-hover:text-amber-850">2. 기존 회원 계정 연동 테스트</span>
+                  <span className="text-[10px] bg-amber-100 text-amber-800 font-bold px-1.5 py-0.5 rounded">계정 연동 제안</span>
+                </div>
+                <p className="text-[11px] text-slate-500 leading-normal">
+                  이름: <strong>홍길동</strong> | 연락처: <strong>010-1234-5678</strong><br/>
+                  아이디 계정은 있으나 소셜 최초 연동 케이스입니다. "기존 계정과 연동하시겠습니까?" 팝업이 출력됩니다.
+                </p>
+              </button>
+
+              {/* 시나리오 3: 완전 신규 파트너 가입 */}
+              <button
+                type="button"
+                onClick={async () => {
+                  const randomSnsId = 'mock_new_user_' + Date.now();
+                  const mockProfile: SnsProfile = {
+                    id: randomSnsId,
+                    provider: snsSimulatorProvider || 'kakao',
+                    name: '이클린',
+                    phone: '010-7777-6666',
+                    email: 'eclean@example.com'
+                  };
+                  
+                  if (db) {
+                    const cleanPhone = '01077776666';
+                    const q = query(collection(db, 'partners'), where('loginId', '==', cleanPhone));
+                    const snap = await getDocs(q);
+                    for (const docSnap of snap.docs) {
+                      await deleteDoc(docSnap.ref);
+                    }
+                  }
+
+                  setShowSnsSimulator(false);
+                  await handleSnsLoginSuccess(mockProfile);
+                }}
+                className="w-full p-4 bg-slate-50 hover:bg-emerald-50 border border-slate-200 hover:border-emerald-400 rounded-xl text-left transition-all group cursor-pointer"
+              >
+                <div className="flex justify-between items-center mb-1">
+                  <span className="text-sm font-black text-slate-800 group-hover:text-emerald-800">3. 신규 가입 유도 테스트</span>
+                  <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-1.5 py-0.5 rounded">가입 폼 자동 포워딩</span>
+                </div>
+                <p className="text-[11px] text-slate-500 leading-normal">
+                  이름: <strong>이클린</strong> | 연락처: <strong>010-7777-6666</strong><br/>
+                  DB에 없는 신규 파트너로, 가입 페이지로 이동하며 이름/전화번호 필드가 소셜 정보로 사전 완성됩니다.
+                </p>
+              </button>
+            </div>
+            
+            <div className="text-center">
+              <button
+                onClick={() => setShowSnsSimulator(false)}
+                className="w-full py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-sm transition-colors"
+              >
+                시뮬레이터 닫기
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 소셜 계정 연동 제안 모달 */}
+      {showSnsLinkModal && snsProfileToLink && existingPartnerToLink && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl p-6 relative text-slate-800 text-center">
+            <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-4">
+              <span className="text-3xl">🔗</span>
+            </div>
+            <h3 className="text-xl font-black text-slate-900 mb-2">기존 파트너 계정 발견</h3>
+            <p className="text-sm text-slate-500 mb-6 break-keep leading-relaxed font-medium">
+              대표님이 입력하신 소셜 계정의 연락처(<strong>{snsProfileToLink.phone}</strong>)와 일치하는 기존 가입 정보(<strong>{existingPartnerToLink.companyName || existingPartnerToLink.managerName || existingPartnerToLink.name}</strong>)가 이미 등록되어 있습니다.<br/><br/>
+              현재 소셜 계정을 기존 계정과 연동하여 다음부터 간편하게 로그인하시겠습니까?
+            </p>
+
+            <div className="space-y-2.5">
+              <button
+                onClick={handleLinkSnsAccount}
+                className="w-full py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-sm shadow-md transition-colors"
+              >
+                예, 계정을 연동하고 로그인합니다
+              </button>
+              <button
+                onClick={() => {
+                  setShowSnsLinkModal(false);
+                  setSnsProfileToLink(null);
+                  setExistingPartnerToLink(null);
+                }}
+                className="w-full py-3.5 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold rounded-xl text-sm transition-colors"
+              >
+                아니오, 취소합니다
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

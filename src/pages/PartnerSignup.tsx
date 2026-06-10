@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Building2, User, Upload, ArrowRight, CheckCircle, ShieldCheck, Sparkles } from 'lucide-react';
 import { getDb } from '../firebase';
@@ -37,6 +37,24 @@ export default function PartnerSignup() {
     password: '휴대폰 뒤 4자리',
     createdAt: ''
   });
+
+  useEffect(() => {
+    const snsProfile = location.state?.snsProfile;
+    if (snsProfile) {
+      const cleanPhone = snsProfile.phone ? snsProfile.phone.replace(/[^0-9]/g, '') : '';
+      const passwordVal = cleanPhone.length >= 4 ? cleanPhone.slice(-4) : '휴대폰 뒤 4자리';
+      
+      setFormData(prev => ({
+        ...prev,
+        name: snsProfile.name || '',
+        managerName: snsProfile.name || '',
+        phone: snsProfile.phone || '',
+        loginId: cleanPhone,
+        password: passwordVal
+      }));
+    }
+  }, [location.state]);
+
   const [isAgreed, setIsAgreed] = useState(false);
   const [showTermsModal, setShowTermsModal] = useState(false);
 
@@ -73,7 +91,9 @@ export default function PartnerSignup() {
         isNotificationEnabled: true,
         notificationRegions: finalRegionArray,
         image: randomImage, // 신규 가입 시 랜덤 기본 이미지 배정
-        createdAt: new Date().toISOString()
+        createdAt: new Date().toISOString(),
+        ...(location.state?.snsProfile?.provider === 'kakao' ? { kakaoId: location.state.snsProfile.id } : {}),
+        ...(location.state?.snsProfile?.provider === 'naver' ? { naverId: location.state.snsProfile.id } : {})
       };
 
       const dbInstance = getDb();

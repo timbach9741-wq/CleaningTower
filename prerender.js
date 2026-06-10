@@ -39,7 +39,11 @@ const ROUTES_TO_PRERENDER = [
   '/cleaning/sick-building',
   '/cleaning/appliance',
   '/cleaning/regular',
+  '/quote/premium',
+  '/quote/move-in',
+  '/quote/residence',
   '/b2b/quote',
+  '/b2b/signup',
   ...PSEO_SLUGS.map(slug => `/${slug}`)
 ];
 
@@ -85,10 +89,30 @@ const ROUTE_META = {
     description: '사무실, 병원, 상가 등 정기적인 관리가 필요한 상업 공간을 쾌적하고 위생적으로 유지해 드리는 맞춤형 정기 관리 서비스입니다.',
     keywords: '정기청소, 사무실정기청소, 상가정기청소, 병원청소, 정기 관리 서비스'
   },
+  '/quote/premium': {
+    title: '프리미엄 입주청소 견적 | 청소타워',
+    description: '프리미엄 입주청소 견적을 간편하게 산출해 보세요. 평당 2만원 정찰제, 투명한 가격과 옵션 선택으로 맞춤 견적을 받아보실 수 있습니다.',
+    keywords: '입주청소 견적, 입주청소 비용, 입주청소 가격, 프리미엄 입주청소, 청소 견적'
+  },
+  '/quote/move-in': {
+    title: '이사청소 견적 | 청소타워',
+    description: '이사청소 견적을 간편하게 산출해 보세요. 평당 1.5만원 정찰제, 추가 옵션 선택으로 맞춤 견적을 받아보실 수 있습니다.',
+    keywords: '이사청소 견적, 이사청소 비용, 이사청소 가격, 이사청소 업체'
+  },
+  '/quote/residence': {
+    title: '거주청소 견적 | 청소타워',
+    description: '거주청소 견적을 간편하게 산출해 보세요. 평당 1.8만원 정찰제, 거주 중 상태에 맞는 맞춤 견적을 받아보실 수 있습니다.',
+    keywords: '거주청소 견적, 거주청소 비용, 거주청소 가격, 거주청소 업체'
+  },
   '/b2b/quote': {
     title: '청소타워 업체전용',
     description: '청소타워 사장님들을 위한 프리미엄 견적 산출 및 오더 접수 시스템입니다. 현장 상태 체크와 상세 옵션 조율로 더욱 완벽하게 하자까지 잡아드립니다.',
     keywords: '청소타워, 업체전용, 인테리어 청소, 사장님 전용, 하자체크'
+  },
+  '/b2b/signup': {
+    title: 'B2B 파트너 가입 | 청소타워',
+    description: '청소타워 B2B 파트너로 등록하고 안정적인 오더를 받아보세요. 인테리어 업체, 부동산 등 사업자 전용 가입 페이지입니다.',
+    keywords: '청소타워 B2B, 청소 파트너 가입, 인테리어 청소 업체, 사업자 등록'
   }
 };
 
@@ -260,13 +284,13 @@ async function prerender() {
             updateOrCreateMeta('property', 'og:url', `https://cheongsotower.kr${currentRoute === '/' ? '/' : currentRoute + '/'}`);
             updateOrCreateMeta('property', 'og:title', metaInfo.title);
             updateOrCreateMeta('property', 'og:description', metaInfo.description);
-            updateOrCreateMeta('property', 'og:image', metaInfo.image || 'https://house-clean-hub.web.app/icon-512x512.png');
+            updateOrCreateMeta('property', 'og:image', metaInfo.image || 'https://cheongsotower.kr/icon-512x512.png');
   
             // 6. Twitter url, title, description, image 변경
             updateOrCreateMeta('property', 'twitter:url', `https://cheongsotower.kr${currentRoute === '/' ? '/' : currentRoute + '/'}`);
             updateOrCreateMeta('property', 'twitter:title', metaInfo.title);
             updateOrCreateMeta('property', 'twitter:description', metaInfo.description);
-            updateOrCreateMeta('property', 'twitter:image', metaInfo.image || 'https://house-clean-hub.web.app/icon-512x512.png');
+            updateOrCreateMeta('property', 'twitter:image', metaInfo.image || 'https://cheongsotower.kr/icon-512x512.png');
             
           }, route, metaInfo);
   

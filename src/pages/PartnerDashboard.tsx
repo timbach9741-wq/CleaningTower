@@ -1276,31 +1276,8 @@ export default function Partner() {
                 </button>
               </div>
 
-              <div className="relative my-6 flex items-center justify-center">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-slate-200"></div>
-                </div>
-                <span className="relative bg-slate-50 px-4 text-xs font-bold text-slate-400">또는 간편 로그인 / 가입</span>
-              </div>
 
-              <div className="space-y-3">
-                <button
-                  type="button"
-                  onClick={handleKakaoLoginClick}
-                  className="w-full py-3.5 bg-[#FEE500] hover:bg-[#FDD835] text-[#191919] font-black rounded-xl active:scale-[0.98] transition-all flex items-center justify-center gap-2 shadow-sm border border-[#FEE500]/50 text-sm cursor-pointer"
-                >
-                  <img src="https://developers.kakao.com/assets/img/about/logos/kakaolink/kakaolink_btn_medium.png" alt="카카오" className="w-5 h-5 shrink-0" />
-                  <span>카카오로 시작하기</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={handleNaverLoginClick}
-                  className="w-full py-3.5 bg-[#03C75A] hover:bg-[#02B34F] text-white font-black rounded-xl active:scale-[0.98] transition-all flex items-center justify-center gap-2 shadow-sm border border-[#03C75A]/50 text-sm cursor-pointer"
-                >
-                  <div className="w-5 h-5 rounded bg-white text-[#03C75A] flex items-center justify-center font-black text-xs shrink-0 select-none">N</div>
-                  <span>네이버로 시작하기</span>
-                </button>
-              </div>
+
             </form>
             
             {/* 앱 설치 문제 안내 아코디언 카드 */}

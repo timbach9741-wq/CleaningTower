@@ -110,54 +110,42 @@ export async function loginWithNaver(clientId?: string): Promise<{ success: bool
   }
 
   try {
-    await loadScript('https://static.nid.naver.com/js/naveridlogin_js_sdk_2.0.2.js');
+    const callbackUrl = window.location.origin + '/partner-dashboard';
+    const state = Math.random().toString(36).substring(2, 15);
     
-    return new Promise((resolve) => {
-      const naver = (window as any).naver;
-      if (!naver) {
-        resolve({ success: false });
-        return;
-      }
-
-      // 네이버 로그인 버튼을 임시 생성하여 클릭시키는 방식으로 팝업 트리거
-      const divId = 'naver_id_login_temp';
-      let tempDiv = document.getElementById(divId);
-      if (!tempDiv) {
-        tempDiv = document.createElement('div');
-        tempDiv.id = divId;
-        tempDiv.style.display = 'none';
-        document.body.appendChild(tempDiv);
-      }
-
-      const naverLogin = new naver.LoginWithNaverId({
-        clientId: finalClientId,
-        callbackUrl: window.location.origin + '/partner-dashboard',
-        isPopup: true,
-        loginButton: { color: 'green', type: 3, height: 60 }
-      });
-      naverLogin.init();
-
-      // 로그인 처리
-      naverLogin.getLoginStatus(async (status: boolean) => {
-        if (status) {
-          resolve({
-            success: true,
-            profile: {
-              id: String(naverLogin.user.id),
-              provider: 'naver',
-              name: naverLogin.user.name || naverLogin.user.nickname || '네이버 사용자',
-              email: naverLogin.user.email,
-              phone: naverLogin.user.mobile || undefined,
-              image: naverLogin.user.profile_image
-            }
-          });
-        } else {
-          resolve({ success: false });
-        }
-      });
-    });
+    // state를 localStorage에 저장 (콜백에서 검증용)
+    localStorage.setItem('naver_oauth_state', state);
+    
+    // 네이버 OAuth 인증 페이지로 직접 이동
+    const authUrl = `https://nid.naver.com/oauth2.0/authorize?response_type=code&client_id=${finalClientId}&redirect_uri=${encodeURIComponent(callbackUrl)}&state=${state}`;
+    
+    // 팝업으로 열기 시도
+    const popup = window.open(authUrl, 'naverLogin', 'width=500,height=700,scrollbars=yes,resizable=yes');
+    
+    if (!popup || popup.closed) {
+      // 팝업 차단시 현재 페이지에서 리다이렉트
+      window.location.href = authUrl;
+    }
+    
+    // 팝업 방식은 콜백 페이지에서 처리하므로 여기서는 대기
+    return { success: false };
   } catch (error) {
     console.error('Naver 로그인 오류:', error);
     throw error;
   }
 }
+
+// 네이버 로그인 콜백 처리 (partner-dashboard 페이지에서 호출)
+export function handleNaverCallback(): { code: string; state: string } | null {
+  const urlParams = new URLSearchParams(window.location.search);
+  const code = urlParams.get('code');
+  const state = urlParams.get('state');
+  const savedState = localStorage.getItem('naver_oauth_state');
+  
+  if (code && state && state === savedState) {
+    localStorage.removeItem('naver_oauth_state');
+    return { code, state };
+  }
+  return null;
+}
+

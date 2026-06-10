@@ -209,6 +209,7 @@ export default function Quote() {
   const [houseSubType, setHouseSubType] = useState('');
   const [cleaningType] = useState<'프리미엄'>('프리미엄');
   const [size, setSize] = useState<number | ''>(24);
+  const [m2Input, setM2Input] = useState<string>('');
   
   const [businessName, setBusinessName] = useState('');
   const [address, setAddress] = useState('');
@@ -263,7 +264,7 @@ export default function Quote() {
   const getEstimatedPrice = () => {
     const basePricePerPyeong = 20000;
 
-    const currentSize = typeof size === 'number' ? size : 0;
+    const currentSize = typeof size === 'number' ? Math.round(size) : 0;
     let total = currentSize * basePricePerPyeong;
 
     if (isBetweenCleaning) {
@@ -300,7 +301,7 @@ export default function Quote() {
     }
     const num = Number(val);
     if (!isNaN(num) && num >= 0) {
-      setSize(num);
+      setSize(Math.round(num));
     }
   };
 
@@ -1070,6 +1071,33 @@ export default function Quote() {
 
                   <div>
                     <label className="block text-slate-700 text-sm font-semibold mb-2">📐 견적 면적 (평)</label>
+                    {/* m² → 평 변환기 */}
+                    <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 mb-3 flex items-center gap-2">
+                      <span className="material-symbols-outlined text-blue-600 text-lg shrink-0">calculate</span>
+                      <input
+                        type="number"
+                        value={m2Input}
+                        onChange={(e) => setM2Input(e.target.value)}
+                        placeholder="m² 입력"
+                        className="flex-1 bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-900 placeholder-slate-400 outline-none focus:border-blue-500 transition-all
+                                   [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                      />
+                      <span className="text-blue-600 text-sm font-bold shrink-0">m²</span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const val = Number(m2Input);
+                          if (!isNaN(val) && val > 0) {
+                            const pyeong = Math.round(val / 3.3058);
+                            setSize(pyeong);
+                          }
+                        }}
+                        className="px-3 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 active:scale-95 transition-all text-xs font-bold text-white whitespace-nowrap shrink-0"
+                      >
+                        변환
+                      </button>
+                    </div>
+
                     <div className="bg-rose-50 border border-rose-200 rounded-xl p-3.5 mb-4 flex items-start gap-2.5">
                       <span className="material-symbols-outlined text-rose-600 text-[18px] shrink-0 mt-0.5">error</span>
                       <div className="flex-1 text-xs leading-relaxed break-keep">

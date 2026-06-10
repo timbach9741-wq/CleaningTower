@@ -1,7 +1,9 @@
-# 청소타워 - 검색엔진 크롤링 허용 설정
+# 청소타워 - 검색엔진 크롤링 설정
 User-agent: *
 Allow: /
+Disallow: /admin
+Disallow: /partner-dashboard
+Disallow: /partner
 
 # 사이트맵 위치
 Sitemap: https://cheongsotower.kr/sitemap.xml
-

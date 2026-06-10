@@ -857,7 +857,17 @@ export default function Quote() {
                   </div>
 
                   <div>
-                    <label className="block text-slate-300 text-sm font-semibold mb-2">📐 견적 면적</label>
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="text-slate-300 text-sm font-semibold">📐 견적 면적</label>
+                      <button
+                        type="button"
+                        onClick={handleUnitToggle}
+                        className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 active:scale-95 transition-all text-[11px] font-bold text-blue-300 border border-white/10"
+                      >
+                        <span className="material-symbols-outlined text-[14px]">swap_horiz</span>
+                        {sizeUnit === '평' ? 'm²' : '평'}
+                      </button>
+                    </div>
                     <div className="bg-rose-500/10 border border-rose-500/25 rounded-xl p-3.5 mb-4 flex items-start gap-2.5">
                       <span className="material-symbols-outlined text-rose-500 text-[18px] shrink-0 mt-0.5">error</span>
                       <div className="flex-1 text-xs leading-relaxed break-keep">
@@ -882,15 +892,8 @@ export default function Quote() {
                         />
                         <span className="text-slate-400 text-lg font-medium whitespace-nowrap">{sizeUnit}</span>
                       </div>
-                      <div className="flex flex-col items-end gap-1.5">
-                        <button
-                          type="button"
-                          onClick={handleUnitToggle}
-                          className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 active:scale-95 transition-all text-[11px] font-bold text-blue-300 border border-white/10"
-                        >
-                          <span className="material-symbols-outlined text-[14px]">swap_horiz</span>
-                          {sizeUnit === '평' ? 'm²' : '평'}
-                        </button>
+                      <div className="flex flex-col items-end">
+                        <span className="text-slate-400 text-[10px] mb-0.5">단가</span>
                         <span className="text-blue-300 text-xs font-bold bg-blue-500/20 px-2 py-1 rounded whitespace-nowrap flex-shrink-0">
                           {cleaningType === '정기' || cleaningType === '가전' ? '상담 후 결정' :
                            cleaningType === '이사' ? '평당 1.5만원' : 

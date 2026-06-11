@@ -7,19 +7,36 @@ export default function FloatingCTA({ onOpenQuote }) {
 
   useEffect(() => {
     const handleScroll = () => {
+      // snap-scroll-mobile 컨테이너 또는 window에서 스크롤 위치 확인
+      const snapContainer = document.querySelector('.snap-scroll-mobile');
+      const scrollY = snapContainer ? snapContainer.scrollTop : window.scrollY;
+      
       // 히어로 섹션(약 400px)을 지나면 플로팅 버튼이 나타나도록 설정
-      if (window.scrollY > 400) {
+      if (scrollY > 400) {
         setIsVisible(true);
       } else {
         setIsVisible(false);
       }
     };
 
+    // window 스크롤 감지 (데스크톱)
     window.addEventListener('scroll', handleScroll);
+    
+    // snap-scroll-mobile 컨테이너 스크롤 감지 (모바일)
+    const snapContainer = document.querySelector('.snap-scroll-mobile');
+    if (snapContainer) {
+      snapContainer.addEventListener('scroll', handleScroll);
+    }
+    
     // 초기 마운트 시에도 한 번 체크
     handleScroll();
 
-    return () => window.removeEventListener('scroll', handleScroll);
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      if (snapContainer) {
+        snapContainer.removeEventListener('scroll', handleScroll);
+      }
+    };
   }, []);
 
   return (
@@ -37,3 +54,4 @@ export default function FloatingCTA({ onOpenQuote }) {
     </div>
   );
 }
+

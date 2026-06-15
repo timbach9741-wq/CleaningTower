@@ -35,9 +35,20 @@ if (SOLAPI_API_KEY && SOLAPI_API_SECRET) {
 // ★ 관리자(대표) 연락처: 모든 의뢰가 이 번호로 알림 발송됩니다.
 const ADMIN_PHONE = '01012345678';
 
-// ★ 텔레그램 봇 정보
-const TELEGRAM_BOT_TOKEN = '8936248195:AAElU5VfwGa3rWNFLLnknMq13ilpZ4uPMJ4';
-const TELEGRAM_CHAT_ID = '5324471356';
+// ★ 텔레그램 봇 정보 (환경변수에서 로드 — 하드코딩 금지)
+let TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || '';
+let TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID || '';
+
+// Firebase Functions Config fallback (v1 호환)
+try {
+  const config = functions.config();
+  if (config && config.telegram) {
+    TELEGRAM_BOT_TOKEN = TELEGRAM_BOT_TOKEN || config.telegram.bot_token;
+    TELEGRAM_CHAT_ID = TELEGRAM_CHAT_ID || config.telegram.chat_id;
+  }
+} catch (e) {
+  // Config가 없는 경우 환경변수만 사용
+}
 
 /**
  * 텔레그램으로 관리자에게 알림을 전송하는 함수

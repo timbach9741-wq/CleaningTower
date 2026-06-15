@@ -2,9 +2,65 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
+
+    // 관리자 판별 (Firebase Auth Custom Claims 기반)
+    function isAdmin() {
+      return request.auth != null && request.auth.token.admin == true;
+    }
+
+    // 인증된 사용자 판별
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // ===== 파트너 컬렉션 =====
+    match /partners/{partnerId} {
+      allow read: if isAdmin() || (isAuthenticated() && request.auth.uid == partnerId);
+      allow create: if isAuthenticated();
+      allow update: if isAdmin() || (isAuthenticated() && request.auth.uid == partnerId);
+      allow delete: if isAdmin();
+    }
+
+    // ===== 견적/주문 컬렉션 =====
+    match /quotes/{quoteId} {
+      allow read: if isAdmin() ||
+        (isAuthenticated() && resource.data.assignedTo == request.auth.uid);
+      allow create: if true; // 고객이 견적 요청 (비로그인 허용)
+      allow update: if isAdmin() ||
+        (isAuthenticated() && resource.data.assignedTo == request.auth.uid);
+      allow delete: if isAdmin();
+    }
+
+    match /orders/{orderId} {
+      allow read: if isAdmin() ||
+        (isAuthenticated() && resource.data.uid == request.auth.uid);
+      allow create: if isAuthenticated();
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // ===== 고객 상담 =====
+    match /consultations/{docId} {
+      allow create: if true; // 비로그인 상담 신청 허용
+      allow read, update, delete: if isAdmin();
+    }
+
+    // ===== 리뷰 =====
+    match /reviews/{reviewId} {
+      allow read: if true; // 리뷰는 공개
+      allow create: if true; // 고객이 리뷰 작성 (비로그인 허용)
+      allow update, delete: if isAdmin();
+    }
+
+    // ===== 설정 =====
+    match /settings/{docId} {
+      allow read: if true; // 공개 설정값
+      allow write: if isAdmin();
+    }
+
+    // ===== 기타 컬렉션 기본 차단 =====
     match /{document=**} {
-      // 개발 중에는 모두 허용하도록 설정 (추후 보안 강화 필요)
-      allow read, write: if true;
+      allow read, write: if isAdmin();
     }
   }
 }

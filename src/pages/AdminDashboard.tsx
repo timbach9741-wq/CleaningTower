@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { db } from '../firebase';
 import { collection, onSnapshot, doc, updateDoc, addDoc, deleteDoc, setDoc } from 'firebase/firestore';
+import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from 'firebase/auth';
 
 export interface Order {
   id: string;
@@ -96,7 +97,8 @@ export interface Review {
 export default function Admin() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(localStorage.getItem('adminLoggedIn') === 'true');
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [authLoading, setAuthLoading] = useState(true);
   const [loginForm, setLoginForm] = useState({ id: '', password: '' });
   const [quotes, setQuotes] = useState<Order[]>([]);
   const [partners, setPartners] = useState<PartnerUser[]>([]);
@@ -197,6 +199,21 @@ export default function Admin() {
 
 
   
+  // Firebase Auth 상태 감지
+  useEffect(() => {
+    const auth = getAuth();
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        // Firebase Auth로 로그인된 사용자
+        setIsLoggedIn(true);
+      } else {
+        setIsLoggedIn(false);
+      }
+      setAuthLoading(false);
+    });
+    return () => unsubscribe();
+  }, []);
+
   useEffect(() => {
     if (!db) return;
     const unsubscribe = onSnapshot(collection(db, 'quotes'), (snapshot) => {
@@ -798,20 +815,23 @@ export default function Admin() {
   // 드롭다운 필터용 파트너 고유 목록 추출
   const uniquePartners = Array.from(new Set(quotes.filter(q => q.assignedTo).map(q => q.assignedTo)));
 
-  const handleAdminLogin = (e: React.FormEvent) => {
+  const handleAdminLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (loginForm.id === 'timbach@naver.com' && loginForm.password === '123456') {
-      localStorage.setItem('adminLoggedIn', 'true');
-      setIsLoggedIn(true);
-    } else {
-      alert("아이디 또는 비밀번호가 일치하지 않습니다.");
+    const auth = getAuth();
+    try {
+      await signInWithEmailAndPassword(auth, loginForm.id, loginForm.password);
+      // onAuthStateChanged가 자동으로 isLoggedIn을 true로 설정
+    } catch (error: any) {
+      alert('아이디 또는 비밀번호가 일치하지 않습니다.');
+      console.error('Admin login error:', error.code);
     }
   };
 
-  const handleAdminLogout = () => {
-    if (confirm("로그아웃 하시겠습니까?")) {
-      localStorage.removeItem('adminLoggedIn');
-      setIsLoggedIn(false);
+  const handleAdminLogout = async () => {
+    if (confirm('로그아웃 하시겠습니까?')) {
+      const auth = getAuth();
+      await signOut(auth);
+      // onAuthStateChanged가 자동으로 isLoggedIn을 false로 설정
     }
   };
 
@@ -833,7 +853,7 @@ export default function Admin() {
                 type="text"
                 required
                 className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all shadow-sm"
-                placeholder="timbach@naver.com"
+                placeholder="이메일을 입력하세요"
                 value={loginForm.id}
                 onChange={e => setLoginForm({ ...loginForm, id: e.target.value })}
               />
@@ -2654,7 +2674,7 @@ export default function Admin() {
                       <div>
                         <p className="text-xs text-gray-400 font-bold mb-1">고객명</p>
                         <div className="flex items-center gap-1.5">
-                          <p className="text-gray-800 font-bold">{selectedQuoteDetail.name}</p>
+                          <p className="text-gray-800 font-bold">{selectedQuoteDetail.name || selectedQuoteDetail.customerName || '이름 없음'}</p>
                           {selectedQuoteDetail.isB2B && (
                             <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-purple-100 text-purple-700 border border-purple-200">
                               [사업자] {selectedQuoteDetail.businessName || ''}
@@ -2681,9 +2701,28 @@ export default function Admin() {
                         <p className="text-gray-800 font-bold">{selectedQuoteDetail.house} / {selectedQuoteDetail.size}평</p>
                       </div>
                       <div>
-                        <p className="text-xs text-gray-400 font-bold mb-1">예상 결제 금액</p>
-                        <p className="text-rose-600 font-black text-lg">{selectedQuoteDetail.price}</p>
+                        <p className="text-xs text-gray-400 font-bold mb-1">고객 결제 금액</p>
+                        <p className="text-rose-600 font-black text-lg">{selectedQuoteDetail.price || '미정'}</p>
                       </div>
+                      
+                      {/* 파트너 지급액 & 플랫폼 수익 */}
+                      {selectedQuoteDetail.price && (() => {
+                        const revenue = getPlatformRevenue(selectedQuoteDetail);
+                        return (
+                          <>
+                            <div>
+                              <p className="text-xs text-gray-400 font-bold mb-1">파트너 지급액</p>
+                              <p className="text-blue-600 font-black text-lg">{revenue.partnerPrice.toLocaleString()}원</p>
+                            </div>
+                            <div>
+                              <p className="text-xs text-gray-400 font-bold mb-1">플랫폼 수익</p>
+                              <p className={`font-black text-lg ${revenue.platformRevenue >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>
+                                {revenue.platformRevenue.toLocaleString()}원
+                              </p>
+                            </div>
+                          </>
+                        );
+                      })()}
                       
                       {/* 세부사항 옵션 표시 */}
                       <div className="col-span-2">

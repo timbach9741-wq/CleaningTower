@@ -59,6 +59,8 @@ interface PartnerData {
  */
 export default function Quote() {
   const navigate = useNavigate();
+  const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
   const { type } = useParams();
   const location = useLocation();
   
@@ -370,11 +372,11 @@ export default function Quote() {
       const successMsg = (cleaningType === '정기' || cleaningType === '가전')
         ? `${cleaningType === '정기' ? '정기 구독 청소' : '가전 분해 세척'} 예약이 성공적으로 접수되었습니다.\n상세 상담 및 안내를 위해 본사 담당자가 빠른 시간 내에 연락드리겠습니다.`
         : assignedPartnerName 
-          ? `예약이 성공적으로 접수되었습니다.\n${assignedPartnerName} 업체에 견적이 전달되었습니다.\n담당자가 확인 후 곧 연락드리겠습니다.`
-          : '예약이 성공적으로 접수되었습니다.\n최적의 전문 파트너를 배정 중입니다.\n담당자가 확인 후 곧 연락드리겠습니다.';
+          ? `예약이 성공적으로 접수되었습니다.\n${assignedPartnerName} 업체에 견적이 전달되었습니다.`
+          : '예약이 성공적으로 접수되었습니다.\n최적의 전문 파트너를 배정 중입니다.';
       
-      alert(successMsg);
-      navigate('/');
+      setSuccessMessage(successMsg);
+      setIsSuccessModalOpen(true);
     } catch (err) {
       console.error("Failed to save quote", err);
       alert('접수 중 오류가 발생했습니다. 다시 시도해주세요.');
@@ -1741,6 +1743,43 @@ export default function Quote() {
           </div>
         </div>
       )}
+      {/* Success Modal */}
+      {isSuccessModalOpen && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl w-full max-w-sm overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
+            <div className="p-6 text-center">
+              <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span className="material-symbols-outlined text-3xl text-blue-600">check_circle</span>
+              </div>
+              <h3 className="text-xl font-black text-slate-900 mb-2 whitespace-pre-wrap">{successMessage}</h3>
+              
+              <div className="bg-blue-50/80 rounded-xl p-4 mt-5 border border-blue-100 text-left">
+                <p className="text-blue-800 font-bold mb-2 flex items-center gap-1.5">
+                  <span className="material-symbols-outlined text-base">info</span>
+                  예약 확정 안내
+                </p>
+                <p className="text-sm text-slate-600 leading-relaxed mb-3">
+                  원활한 서비스 진행과 노쇼 방지를 위해 <strong className="text-rose-500 font-black">계약금 50,000원</strong>을 입금해주시면 예약이 최종 확정됩니다.
+                </p>
+                <div className="bg-white p-3 rounded-lg border border-blue-100">
+                  <p className="text-xs text-slate-500 mb-1">입금 계좌</p>
+                  <p className="font-bold text-slate-800 tracking-wide">농협 301-0348-1856-71</p>
+                  <p className="text-xs text-slate-500 mt-1">예금주: 청소타워(정재민)</p>
+                </div>
+              </div>
+            </div>
+            <div className="p-4 pt-0">
+              <button 
+                onClick={() => navigate('/')}
+                className="w-full py-3.5 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl transition-colors shadow-lg"
+              >
+                확인 및 메인으로 이동
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }

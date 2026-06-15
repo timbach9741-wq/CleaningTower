@@ -203,6 +203,7 @@ export default function Quote() {
 
   // 스텝 상태 (0: 서비스 안내, 1: 주거/면적, 2: 세부사항, 3: 일정/주소, 4: 정보입력, 5: 견적완료)
   const [step, setStep] = useState(0);
+  const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
 
   // 입력 상태
   const [houseType, setHouseType] = useState('아파트');
@@ -422,8 +423,7 @@ export default function Quote() {
         
         sendTelegramAlert(telegramMsg);
         
-        alert('사업자 전용 예약이 성공적으로 접수되었습니다.\n담당 매니저가 확인 후 신속하게 연락드리겠습니다.');
-        navigate('/');
+        setIsSuccessModalOpen(true);
       }
     } catch (err) {
       console.error("Failed to save quote", err);
@@ -1925,6 +1925,43 @@ export default function Quote() {
           </motion.div>
         )}
       </AnimatePresence>
+      {/* Success Modal */}
+      {isSuccessModalOpen && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl w-full max-w-sm overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
+            <div className="p-6 text-center">
+              <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span className="material-symbols-outlined text-3xl text-blue-600">check_circle</span>
+              </div>
+              <h3 className="text-xl font-black text-slate-900 mb-2 whitespace-pre-wrap">예약이 접수되었습니다.</h3>
+              
+              <div className="bg-blue-50/80 rounded-xl p-4 mt-5 border border-blue-100 text-left">
+                <p className="text-blue-800 font-bold mb-2 flex items-center gap-1.5">
+                  <span className="material-symbols-outlined text-base">info</span>
+                  예약 확정 안내
+                </p>
+                <p className="text-sm text-slate-600 leading-relaxed mb-3">
+                  원활한 서비스 진행과 노쇼 방지를 위해 <strong className="text-rose-500 font-black">계약금 50,000원</strong>을 입금해주시면 예약이 최종 확정됩니다.
+                </p>
+                <div className="bg-white p-3 rounded-lg border border-blue-100">
+                  <p className="text-xs text-slate-500 mb-1">입금 계좌</p>
+                  <p className="font-bold text-slate-800 tracking-wide">농협 301-0348-1856-71</p>
+                  <p className="text-xs text-slate-500 mt-1">예금주: 청소타워(정재민)</p>
+                </div>
+              </div>
+            </div>
+            <div className="p-4 pt-0">
+              <button 
+                onClick={() => navigate('/')}
+                className="w-full py-3.5 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl transition-colors shadow-lg"
+              >
+                확인 및 메인으로 이동
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }

@@ -39,6 +39,7 @@ export interface Order {
   customerName?: string;
   realPhone?: string;
   contactInfo?: string;
+  phone?: string;
   cleaningDate?: string;
   cleaningType?: string;
   detail?: string;
@@ -2684,7 +2685,7 @@ export default function Admin() {
                       </div>
                       <div>
                         <p className="text-xs text-gray-400 font-bold mb-1">실제 연락처</p>
-                        <p className="text-gray-800 font-bold tracking-wide">{selectedQuoteDetail.realPhone || '등록 번호 없음'}</p>
+                        <p className="text-gray-800 font-bold tracking-wide">{selectedQuoteDetail.realPhone || selectedQuoteDetail.contactInfo || selectedQuoteDetail.phone || '등록 번호 없음'}</p>
                       </div>
                       
                       <div>

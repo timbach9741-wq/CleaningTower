@@ -1945,8 +1945,8 @@ export default function Quote() {
                 </p>
                 <div className="bg-white p-3 rounded-lg border border-blue-100">
                   <p className="text-xs text-slate-500 mb-1">입금 계좌</p>
-                  <p className="font-bold text-slate-800 tracking-wide">농협 301-0348-1856-71</p>
-                  <p className="text-xs text-slate-500 mt-1">예금주: 청소타워(정재민)</p>
+                  <p className="font-bold text-slate-800 tracking-wide">신협 131-022-991902</p>
+                  <p className="text-xs text-slate-500 mt-1">예금주: 주식회사 청소타워</p>
                 </div>
               </div>
             </div>

@@ -8,13 +8,13 @@ const SITE = 'https://cheongsotower.kr';
 
 const CORE_PAGES = [
   '/',
-  '/service',
-  '/partners',
-  '/partners/join',
-  '/cleaning/move-in',
-  '/cleaning/sick-building',
-  '/cleaning/appliance',
-  '/cleaning/regular',
+  '/service/',
+  '/partners/',
+  '/partners/join/',
+  '/cleaning/move-in/',
+  '/cleaning/sick-building/',
+  '/cleaning/appliance/',
+  '/cleaning/regular/',
 ];
 
 function fetch(url) {

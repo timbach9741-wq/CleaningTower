@@ -74,7 +74,7 @@ export default function Footer() {
             <span className="hidden sm:inline">|</span>
             <span>사무실: <a href="tel:031-499-9509" className="hover:text-blue-600 transition-colors">031-499-9509</a></span>
             <span className="hidden sm:inline">|</span>
-            <span>이메일: <a href="mailto:cjdthxkdnj@naver.com" className="hover:text-blue-600 transition-colors">cjdthxkdnj@naver.com</a></span>
+            <span>이메일: <a href="mailto:cjdthxkdnj1@naver.com" className="hover:text-blue-600 transition-colors">cjdthxkdnj1@naver.com</a></span>
           </div>
           <p className="text-xs text-slate-400 text-center">
             © 2024 청소타워 Marketplace. 청결의 깊이가 다른 선택.

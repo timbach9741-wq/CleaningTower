@@ -61,6 +61,7 @@ export default function Quote() {
   const navigate = useNavigate();
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
+  const [createdQuoteId, setCreatedQuoteId] = useState<string | null>(null);
   const { type } = useParams();
   const location = useLocation();
   
@@ -345,11 +346,12 @@ export default function Quote() {
       }
 
       // 최종 견적 데이터 저장
-      await addDoc(collection(db!, 'quotes'), {
+      const docRef = await addDoc(collection(db!, 'quotes'), {
         ...payload,
         assignedTo: assignedToId || null,
         designatedPartnerName: assignedPartnerName || null
       });
+      setCreatedQuoteId(docRef.id);
 
       // 정기 구독 및 가전 분해 세척 전용 텔레그램 알림 전송
       if (cleaningType === '정기' || cleaningType === '가전') {
@@ -380,6 +382,35 @@ export default function Quote() {
     } catch (err) {
       console.error("Failed to save quote", err);
       alert('접수 중 오류가 발생했습니다. 다시 시도해주세요.');
+    }
+  };
+
+  const handleTossPayment = () => {
+    if (!createdQuoteId) {
+      alert('오류: 접수 번호를 찾을 수 없습니다.');
+      return;
+    }
+
+    const clientKey = import.meta.env.VITE_TOSS_CLIENT_KEY || 'test_ck_GjLJoRLbvxGLwR6M4935V4w2x1G3';
+    if (!(window as any).TossPayments) {
+      alert('결제 모듈을 로드하는 데 실패했습니다. 페이지를 새로고침 해주세요.');
+      return;
+    }
+
+    try {
+      const tossPayments = (window as any).TossPayments(clientKey);
+      
+      tossPayments.requestPayment('카드', {
+        amount: 50000,
+        orderId: createdQuoteId,
+        orderName: `${cleaningType || '청소'} 서비스 예약 계약금`,
+        customerName: businessName || '고객',
+        successUrl: `${window.location.origin}/payment/success`,
+        failUrl: `${window.location.origin}/payment/fail`,
+      });
+    } catch (error) {
+      console.error('결제창 호출 실패:', error);
+      alert('결제창을 여는 도중 에러가 발생했습니다.');
     }
   };
 
@@ -1766,14 +1797,29 @@ export default function Quote() {
                   <p className="font-bold text-slate-800 tracking-wide">신협 131-022-991902</p>
                   <p className="text-xs text-slate-500 mt-1">예금주: 주식회사 청소타워</p>
                 </div>
+
+                <div className="relative flex py-2 items-center">
+                  <div className="flex-grow border-t border-slate-200"></div>
+                  <span className="flex-shrink mx-3 text-slate-400 text-xs font-semibold">또는 간편 결제</span>
+                  <div className="flex-grow border-t border-slate-200"></div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleTossPayment}
+                  className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition-colors flex items-center justify-center gap-2 shadow"
+                >
+                  <span className="material-symbols-outlined text-lg">credit_card</span>
+                  카드/간편결제 결제하기
+                </button>
               </div>
             </div>
             <div className="p-4 pt-0">
               <button 
                 onClick={() => navigate('/')}
-                className="w-full py-3.5 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl transition-colors shadow-lg"
+                className="w-full py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl transition-colors"
               >
-                확인 및 메인으로 이동
+                닫기 및 홈으로 이동
               </button>
             </div>
           </div>

@@ -450,3 +450,115 @@ https://cheongsotower.kr
     }
   });
 
+/**
+ * ★ 결제 승인 처리 및 상태 변경 (토스페이먼츠 연동)
+ */
+exports.confirmPayment = functions.https.onRequest(async (req, res) => {
+  // CORS 수동 헤더 설정
+  res.set('Access-Control-Allow-Origin', '*');
+  res.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.set('Access-Control-Allow-Headers', 'Content-Type');
+
+  if (req.method === 'OPTIONS') {
+    res.status(204).send('');
+    return;
+  }
+
+  if (req.method !== 'POST') {
+    res.status(405).json({ success: false, message: 'Method Not Allowed' });
+    return;
+  }
+
+  const { paymentKey, orderId, amount } = req.body;
+
+  if (!paymentKey || !orderId || !amount) {
+    res.status(400).json({ success: false, message: 'Missing required fields (paymentKey, orderId, amount).' });
+    return;
+  }
+
+  // Toss Payments Secret Key 가져오기
+  const secretKey = process.env.TOSS_SECRET_KEY || 'test_sk_z5kWOCic5V51a2d5A2nB3o56';
+  // Basic Auth 헤더: "Basic " + Base64(secretKey + ":")
+  const basicAuth = 'Basic ' + Buffer.from(secretKey + ':').toString('base64');
+
+  try {
+    // 1. 토스페이먼츠 결제 승인 API 호출
+    const tossResponse = await axios.post(
+      'https://api.tosspayments.com/v1/payments/confirm',
+      { paymentKey, orderId, amount },
+      {
+        headers: {
+          'Authorization': basicAuth,
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+
+    const paymentData = tossResponse.data;
+
+    // 2. 승인 성공 시, Firestore quotes 문서 업데이트
+    const quoteRef = admin.firestore().collection('quotes').doc(orderId);
+    const quoteSnap = await quoteRef.get();
+
+    if (!quoteSnap.exists) {
+      res.status(404).json({
+        success: false,
+        message: `견적서(${orderId})를 찾을 수 없습니다. 결제는 승인되었으나 DB 업데이트에 실패했으므로 고객센터에 문의하십시오.`,
+      });
+      return;
+    }
+
+    const quoteData = quoteSnap.data();
+
+    // 상태를 '예약확정'으로 변경하고 결제 정보를 상세 기록
+    await quoteRef.update({
+      status: '예약확정',
+      paymentDetail: {
+        paymentKey,
+        orderId,
+        amount,
+        approvedAt: paymentData.approvedAt || new Date().toISOString(),
+        method: paymentData.method || '카드',
+        receiptUrl: paymentData.receipt?.url || '',
+        provider: paymentData.easyPay?.provider || '',
+      },
+    });
+
+    // 3. 관리자 알림 텔레그램 전송
+    const customerName = quoteData.customerName || quoteData.name || '고객';
+    const cleaningType = quoteData.type || '입주/이사 청소';
+    const cleaningDate = quoteData.date || quoteData.cleaningDate || '';
+    const assignedPartner = quoteData.designatedPartnerName || '미지정 (자동 배정)';
+    
+    const adminPaymentMsg = `💳 [결제 완료 & 예약 확정]
+    
+📋 의뢰번호: ${orderId.substring(0, 8)}
+👤 고객: ${customerName}
+🧹 서비스: ${cleaningType}
+📅 일정: ${cleaningDate}
+🏢 매칭업체: ${assignedPartner}
+💰 결제금액: ${parseInt(amount, 10).toLocaleString()}원
+💳 결제수단: ${paymentData.method || '카드'}${paymentData.easyPay?.provider ? ` (${paymentData.easyPay.provider})` : ''}
+
+✔️ 예약금 결제가 확인되어 최종 예약 확정 처리되었습니다.`;
+
+    await sendAdminNotification(adminPaymentMsg);
+
+    // 4. 성공 응답 반환
+    res.status(200).json({
+      success: true,
+      data: paymentData,
+    });
+
+  } catch (error) {
+    console.error('[결제 승인 오류]', error.response?.data || error.message);
+    const errorData = error.response?.data || {};
+    res.status(error.response?.status || 500).json({
+      success: false,
+      message: errorData.message || error.message || '결제 승인 처리 중 알 수 없는 에러가 발생했습니다.',
+      code: errorData.code || 'UNKNOWN_ERROR',
+    });
+  }
+});
+
+

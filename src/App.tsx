@@ -23,6 +23,8 @@ const B2BQuote = lazy(() => import('./pages/B2BQuote'));
 const B2BSignup = lazy(() => import('./pages/B2BSignup'));
 const ReviewWrite = lazy(() => import('./pages/ReviewWrite'));
 const LocalSEO = lazy(() => import('./pages/LocalSEO'));
+const PaymentSuccess = lazy(() => import('./pages/PaymentSuccess'));
+const PaymentFail = lazy(() => import('./pages/PaymentFail'));
 
 // 페이지 전환 시 보여줄 로딩 스피너 (최소한의 인라인 스타일로 별도 CSS 없이 동작)
 function PageLoader() {
@@ -69,6 +71,8 @@ function App() {
           <Route path="/cleaning/appliance" element={<CleaningAppliance />} />
           <Route path="/cleaning/regular" element={<CleaningRegular />} />
           <Route path="/quote/:type" element={<Quote />} />
+          <Route path="/payment/success" element={<PaymentSuccess />} />
+          <Route path="/payment/fail" element={<PaymentFail />} />
           
           {/* 숨겨진 B2B (사업자 전용) 라우트 - 헤더/푸터 메뉴에 노출되지 않음 */}
           <Route path="/b2b/quote" element={<B2BQuote />} />

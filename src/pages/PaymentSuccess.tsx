@@ -130,7 +130,7 @@ export default function PaymentSuccess() {
         예약 확정 완료!
       </h2>
       <p className="text-slate-500 mb-6 text-sm font-medium">
-        예약금 50,000원이 정상 결제되어<br />
+        예약금 {parseInt(amount || '0', 10).toLocaleString()}원이 정상 결제되어<br />
         청소타워 예약이 최종 확정되었습니다.
       </p>
 

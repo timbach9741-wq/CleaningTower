@@ -294,6 +294,7 @@ export default function Quote() {
   const estimatedPrice = getEstimatedPrice();
   const vatPrice = Math.floor(estimatedPrice * 0.1);
   const totalPriceIncVat = estimatedPrice + vatPrice;
+  const depositAmount = Math.floor((totalPriceIncVat * 0.1) / 100) * 100; // 100원 단위 절사
 
   const handleSizeChange = (e: ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
@@ -449,7 +450,7 @@ export default function Quote() {
       const tossPayments = (window as any).TossPayments(clientKey);
       
       tossPayments.requestPayment('카드', {
-        amount: 50000,
+        amount: depositAmount,
         orderId: createdQuoteId,
         orderName: `${cleaningType || '청소'} 서비스 예약 계약금`,
         customerName: businessName || '고객',
@@ -1972,7 +1973,7 @@ export default function Quote() {
                   예약 확정 안내
                 </p>
                 <p className="text-sm text-slate-600 leading-relaxed mb-3">
-                  원활한 서비스 진행과 노쇼 방지를 위해 <strong className="text-rose-500 font-black">계약금 50,000원</strong>을 입금해주시면 예약이 최종 확정됩니다.
+                  원활한 서비스 진행과 노쇼 방지를 위해 <strong className="text-rose-500 font-black">계약금 {depositAmount.toLocaleString()}원</strong>(총 견적 금액의 10%)을 입금해주시면 예약이 최종 확정됩니다.
                 </p>
                 <div className="bg-white p-3 rounded-lg border border-blue-100">
                   <p className="text-xs text-slate-500 mb-1">입금 계좌</p>

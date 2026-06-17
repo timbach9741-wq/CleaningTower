@@ -1798,6 +1798,7 @@ export default function Quote() {
                   <p className="text-xs text-slate-500 mt-1">예금주: 주식회사 청소타워</p>
                 </div>
 
+                {/* 에스크로 심사 완료 후 활성화 예정
                 <div className="relative flex py-2 items-center">
                   <div className="flex-grow border-t border-slate-200"></div>
                   <span className="flex-shrink mx-3 text-slate-400 text-xs font-semibold">또는 간편 결제</span>
@@ -1812,14 +1813,15 @@ export default function Quote() {
                   <span className="material-symbols-outlined text-lg">credit_card</span>
                   카드/간편결제 결제하기
                 </button>
+                */}
               </div>
             </div>
             <div className="p-4 pt-0">
               <button 
                 onClick={() => navigate('/')}
-                className="w-full py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl transition-colors"
+                className="w-full py-3.5 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl transition-colors shadow-lg"
               >
-                닫기 및 홈으로 이동
+                확인 및 메인으로 이동
               </button>
             </div>
           </div>

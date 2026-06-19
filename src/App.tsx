@@ -1,6 +1,7 @@
 import React, { Suspense, lazy } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import ScrollToTopButton from './components/common/ScrollToTopButton';
+import KakaoFloatingButton from './components/common/KakaoFloatingButton';
 import ScrollToAnchor from './components/common/ScrollToAnchor';
 
 import ErrorBoundary from './components/common/ErrorBoundary';
@@ -55,6 +56,7 @@ function App() {
     <ErrorBoundary>
       <BrowserRouter>
         <ScrollToTopButton />
+        <KakaoFloatingButton />
         <ScrollToAnchor />
         <Suspense fallback={<PageLoader />}>
           <Routes>

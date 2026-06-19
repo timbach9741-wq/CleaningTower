@@ -1,59 +1,306 @@
 import fs from 'fs';
+import path from 'path';
 
-let html = fs.readFileSync('stitch_home.html', 'utf8');
+// Q&A 데이터 정의 (비용/사용료 답변 수정 및 수수료 질문 2개 삭제 처리)
+const qnaData = {
+  "1. 가입 방법에 대한 질문 & 답변": [
+    ["Q1. 가입 신청은 어디서 하나요? 앱을 깔아야 하나요?", "별도의 앱 설치 없이 휴대폰이나 PC 브라우저로 https://cheongsotower.kr/partners 링크에 접속하시면 바로 1분 만에 가입이 가능합니다."],
+    ["Q2. 가입할 때 서류(사업자등록증 등)를 꼭 첨부해야 하나요?", "가입 신청 단계에서는 필수 서류가 없습니다. 인적사항과 활동 지역만 선택하시면 즉시 가입되며, 추후 실제 매칭이나 정산 단계에서 필요시 등록하시면 됩니다."],
+    ["Q3. 링크를 눌렀는데 가입 화면이 안 뜹니다. 어떻게 하나요?", "카카오톡 내 인터넷 창 오류일 수 있습니다. 해당 주소(cheongsotower.kr/partners)를 복사하셔서 크롬(Chrome)이나 네이버 앱 브라우저 주소창에 직접 입력해 접속해 보세요."],
+    ["Q4. 가입 신청을 하면 승인될 때까지 얼마나 걸리나요?", "일반/프리미엄 파트너는 신청 즉시 자동으로 승인되어 바로 오더 확인이 가능합니다. 단, '지역 독점'의 경우 남은 자리가 있는지 담당 매니저가 심사 후 유선으로 승인 안내를 드립니다."],
+    ["Q5. 비밀번호는 제가 따로 설정하는 건가요?", "가입 시 입력하신 휴대폰 번호의 뒷자리 4자리가 임시 비밀번호로 자동 설정됩니다. 로그인 후 [마이페이지/프로필] 메뉴에서 언제든지 원하시는 비밀번호로 변경하실 수 있습니다."],
+    ["Q6. 외국인 팀원이나 교포 팀장도 가입할 수 있나요?", "본인 명의의 한국 휴대폰 번호로 인증 및 연락이 가능하고, 한국어 소통에 문제가 없다면 가입하여 활동하실 수 있습니다."],
+    ["Q7. 컴퓨터(PC)로만 가입해야 하나요? 휴대폰으로도 되나요?", "모바일 화면에 최적화되어 있어, 현장에서 휴대폰으로도 아주 쉽고 빠르게 가입하실 수 있습니다."],
+    ["Q8. 가입 완료 문자를 받았는데 로그인은 어디서 하나요?", "홈페이지 우측 상단 메뉴의 [파트너 로그인]을 누르신 후, 가입하신 휴대폰 번호(숫자만)와 휴대폰 뒷번호 4자리를 입력하시면 됩니다."],
+    ["Q9. 여러 명의 팀원이 각각 가입해야 하나요?", "팀을 이끄는 오더 수급 대표자(팀장님) 한 분만 가입하셔서 일감을 배정받고 팀원들을 조율하시면 됩니다."]
+  ],
+  "2. 비용 및 광고비 질문 & 답변": [
+    ["Q1. 가입비나 등록비가 정말 0원인가요?", "현재 가입 후 3개월 동안은 무료로 서비스를 이용하실 수 있는 프로모션 이벤트 기간입니다. 다만, 3개월의 무료 체험 기간이 종료된 이후에는 선택하시는 멤버십이나 광고 플랜에 따라 추후 비용이 발생할 수 있습니다."],
+    ["Q2. 월 고정으로 나가는 사용료나 회비가 있나요?", "현재 가입 시점으로부터 3개월간은 고정 사용료나 회비가 전혀 없는 100% 무료 이벤트 기간입니다. 3개월 이후에는 정식 멤버십 광고비가 청구될 수 있으며, 월 고정 광고비는 [일반 광고: 월 15만원], [프리미엄 노출: 월 30만원], [지역 독점 노출: 월 50만원]으로 책정되어 있습니다."],
+    ["Q3. 타 플랫폼처럼 오더를 사기 위해 포인트를 미리 충전해야 하나요?", "청소타워는 무리한 포인트 충전 경쟁을 유도하지 않습니다. 사장님이 충전 압박 없이 편안하게 영업활동에 집중할 수 있도록 합리적인 매칭 관리 시스템을 지원하고 있습니다."],
+    ["Q4. 견적을 넣을 때마다(견적 입찰 시) 돈이 나가나요?", "아닙니다. 단순 견적 제출이나 상담 신청 단계에서는 일체 비용이 발생하지 않습니다."],
+    ["Q5. 광고비는 따로 안 내도 노출이 되나요?", "네, 현재 3개월 무료 이벤트 기간 중에는 광고비 지불 없이도 사장님의 활동 지역 내 고객들에게 리스트가 자동으로 정상 노출됩니다."],
+    ["Q6. 첫 가입 혜택이나 수수료 감면 프로모션이 있나요?", "현재 신규 가입 파트너분들을 대상으로 '3개월 멤버십 완전 무료 이용' 프로모션을 전면 진행하고 있습니다."],
+    ["Q7. 서비스 이용 요금에 대한 세금계산서 발행이 가능한가요?", "네, 법인 및 개인사업자 파트너분들의 비용 증빙을 위해 세금계산서를 정상 발행해 드립니다."],
+    ["Q8. 요금제 정책이 나중에 임의로 변경될 수도 있나요?", "이용료 및 광고 정책에 변동이 있을 경우 최소 30일 전에 파트너 공지사항 및 연락처를 통해 투명하게 사전에 안내해 드립니다."]
+  ],
+  "3. 오더(일감) 및 운영 관련 질문 & 답변": [
+    ["Q1. 하루에 올라오는 일감(오더)은 대략 몇 건인가요?", "전국 단위로 매일 평균 50~100건 이상의 견적 요청이 들어오며, 사장님이 설정하신 활동 지역에 매칭되는 오더들만 필터링해서 편하게 보실 수 있습니다."],
+    ["Q2. 주로 어떤 청소 오더가 많나요?", "입주청소와 이사청소가 약 70%로 가장 많으며, 거주청소, 준공청소, 사무실/상가 청소, 새집증후군, 에어컨 등 가전 분해 청소 오더도 고르게 인입됩니다."],
+    ["Q3. 다른 지역 오더도 제가 지원해서 들어갈 수 있나요?", "네, 기본 설정한 주 활동지역 외에 가끔 멀리 이동하여 작업하고 싶으실 경우 오더판에서 다른 지역의 남는 일감을 직접 선택하여 지원하실 수 있습니다."],
+    ["Q4. 고객과의 소통은 어떻게 진행되나요?", "견적 매칭이 완료되면 본사 시스템을 통해 고객의 안심번호와 상세 요청사항이 제공됩니다. 이후 자유롭게 유선 상담이나 일정을 확정하시면 됩니다."],
+    ["Q5. 청소 도구 나 세제, 유니폼은 본사에서 강매하나요?", "청소타워는 장비나 세제 강매 행위가 전혀 없습니다. 사장님이 평소 현장에서 쓰시던 검증된 장비와 전문 세제를 자유롭게 사용하시면 됩니다."],
+    ["Q6. 초보나 1인 청소업체도 일감을 딸 수 있나요?", "1인 전문 청소(가전/부분 청소) 오더도 많으며, 경력이 짧더라도 친절함과 꼼꼼한 후기를 쌓아가시면 매칭을 충분히 많이 받으실 수 있도록 시스템이 도와드립니다."],
+    ["Q7. B2B 제휴 오더란 무엇인가요?", "인테리어 업체, 이삿짐센터, 부동산 등 청소타워와 제휴된 기업 고객들이 정기적으로 맡기는 대량 오더입니다. 안정적인 단골 일감을 확보하시기에 좋습니다."],
+    ["Q8. 오더 알림은 어떻게 오나요? 현장 작업 중에 놓치면 어쩌죠?", "신규 오더 인입 시 알림톡(알림 문자)과 전용 알림음으로 발송됩니다. 놓치신 오더는 파트너 페이지의 '실시간 오더 현황판'에서 언제든 다시 확인하실 수 있습니다."],
+    ["Q9. 하루에 제가 가져갈 수 있는 오더 수에 제한이 있나요?", "제한은 없습니다. 사장님 팀의 하루 소화 물량(케파)에 맞춰 무리하지 않게 조율하여 자유롭게 수주하시면 됩니다."],
+    ["Q10. 고객들이 주로 주말 작업을 원하는데 주말 오더도 많나요?", "이사와 입주 일정 특성상 금, 토, 일 및 월말에 오더가 집중적으로 몰립니다. 주말 일정을 비워두시면 높은 단가의 오더를 빠르게 선점하실 수 있습니다."]
+  ],
+  "4. 독점/프리미엄 멤버십 관련 질문 & 답변": [
+    ["Q1. 프리미엄 파트너가 되면 구체적으로 뭐가 좋은가요?", "일반 파트너보다 상위 그룹에 노출되어 고객 눈에 가장 먼저 띄게 됩니다. 또한, '본사 인증 배지'가 붙어 신뢰도가 상승하며 상담 요청률이 2배 이상 높습니다."],
+    ["Q2. 지역 독점 파트너는 무엇인가요?", "사장님이 선점하신 구/군 지역의 청소 요청을 사장님 팀이 100% 독점하여 수주하는 최고 등급의 플랜입니다. 경쟁 입찰 없이 안정적인 일감 확보를 보장받습니다."],
+    ["Q3. 지역 독점은 한 구(지역)에 몇 팀까지 들어가나요?", "지역별 인구수 및 오더 물량에 따라 T.O(정원)가 철저히 제한되어 운영됩니다. 한 팀이 독점하는 구역의 경우 다른 업체는 가입할 수 없습니다."],
+    ["Q4. 독점/프리미엄은 비용이 어떻게 되나요?", "가입 시점으로부터 3개월 무료 기간 적용 이후, 정식 비용은 프리미엄 월 30만원, 지역독점 월 50만원으로 적용됩니다. 상세 구역 및 자격 조건은 가입 후 상담을 신청해주시면 상담 전화를 드립니다."],
+    ["Q5. 가입하자마자 바로 독점 신청이 가능한가요?", "신청은 가능하지만, 원하시는 지역에 이미 다른 독점 파트너가 활동 중이라면 대기 등록을 하셔야 합니다. 빈자리가 있는지 먼저 가입 후 상담을 받아보시는 것을 추천합니다."],
+    ["Q6. 독점 계약 기간이 정해져 있나요?", "기본적으로 월 단위 계약 및 연장으로 진행되어 사장님의 장기 계약 부담을 덜어드렸습니다."],
+    ["Q7. 프리미엄 무료 체험 프로모션이 사실인가요?", "네, 현재 프로모션 이벤트로 최초 3개월 동안은 프리미엄 및 독점(T.O 잔여시) 플랜도 무료 적용이 가능하므로 가입 즉시 혜택을 체험해 보실 수 있습니다."],
+    ["Q8. 일반 파트너로 하다가 나중에 프리미엄으로 올려도 되나요?", "네, 언제든지 가능합니다. 처음에는 무료 체험 기간 동안 일반 파트너로 가입해서 오더 흐름을 보신 뒤 전환하셔도 무방합니다."],
+    ["Q9. 독점 파트너인데 오더 처리를 못 하면 어떻게 되나요?", "일정 조율이 안 되어 독점 오더를 소화하지 못할 상황이 생기면 본사 고객센터로 즉시 넘겨주어 패널티 없이 다른 파트너에게 배차 조율이 가능합니다."],
+    ["Q10. 독점 지역을 중간에 다른 구로 바꿀 수 있나요?", "이동하시려는 지역에 잔여 T.O(빈자리)가 있다면 담당 매니저를 통해 구역 변경 처리가 가능합니다."]
+  ],
+  "5. 가입 및 정보 등록 관련 질문 & 답변": [
+    ["Q1. 가입 후 프로필(상호명, 사진 등)은 꼭 등록해야 하나요?", "필수는 아니지만, 사장님이 작업하신 전후 사진(포트폴리오)과 한 줄 소개 등을 잘 적어두실수록 고객들이 견적을 비교할 때 사장님을 선택할 확률이 훨씬 높아집니다."],
+    ["Q2. 가입 시 이름이나 번호를 잘못 입력했는데 수정이 되나요?", "네, 로그인 후 [프로필 관리] 혹은 [고객센터]를 통해 즉시 직접 수정하시거나 담당 매니저에게 요청하시면 바로 변경해 드립니다."],
+    ["Q3. 다른 플랫폼에 등록된 상호명 그대로 써도 되나요?", "네, 기존에 사용하시던 브랜드나 상호명 그대로 사용하셔야 기존 단골 고객 확보나 인지도 면에서 유리합니다."],
+    ["Q4. 청소 단가표(평당 비용 등)는 어떻게 설정해야 하나요?", "사장님이 평소 받으시던 평당 단가(예: 평당 12,000원~15,000원 등)를 기준으로 설정해 두시면, 시스템이 이를 기반으로 적합한 고객 견적을 자동 추천 및 비교해 드립니다."],
+    ["Q5. 활동 지역은 나중에 추가하거나 뺄 수 있나요?", "네, [내 활동 지역 설정] 메뉴에서 동, 구 단위로 언제든지 추가하거나 제외하실 수 있어 이사철 동선 관리가 매우 유연합니다."],
+    ["Q6. B2B 제휴를 맺으려면 추가 등록 양식이 있나요?", "사업자등록증과 보증보험 가입 여부 등의 간단한 확인 절차만 거치면 본사에서 B2B 전용 등급으로 전환해 드립니다."],
+    ["Q7. 계정을 분실하면 어떻게 찾나요?", "로그인 화면의 [아이디/비밀번호 찾기]를 이용하시거나 본사 고객센터(031-499-9509)로 연락해주시면 본인 확인 후 즉시 재발급해 드립니다."],
+    ["Q8. 한 업체에서 계정을 2개 만들어도 되나요?", "원칙적으로 중복 가입은 제한됩니다. 1개의 사업자(또는 전화번호)당 1개의 파트너 계정 생성이 가능합니다."],
+    ["Q9. 소개 사진에 남의 업체 사진을 쓰면 어떻게 되나요?", "타 업체의 이미지 도용 시 저작권 문제가 발생할 수 있으며, 확인될 경우 파트너 이용 제한 조치가 취해질 수 있으니 반드시 직접 촬영하신 현장 사진을 등록해 주세요."],
+    ["Q10. 리뷰나 평점 관리는 어떻게 하나요? 악성 리뷰도 삭제해 주나요?", "고객이 작성한 소중한 후기는 사장님의 큰 자산이 됩니다. 단, 허위 사실 기재나 악의적인 비방성 악성 리뷰의 경우 본사 분쟁 조정팀의 검토를 거쳐 비공개 처리 또는 중재를 도와드립니다."]
+  ],
+  "6. 정산 및 취소/탈퇴 관련 질문 & 답변": [
+    ["Q1. 정산 주기는 어떻게 되나요? 바로 입금되나요?", "청소타워는 사장님의 자금 회전을 위해 당일 정산(또는 익일 정산)을 원칙으로 합니다. 현장 작업 완료 보고가 확인되면 사장님 계좌로 즉시 출금 신청이 가능합니다."],
+    ["Q2. 정산받을 계좌는 아무 계좌나 상관없나요?", "가입자 본인(또는 대표 사업자) 명의의 계좌라면 제1금융권 및 신협, 수협 등 모든 은행 계좌 등록이 가능합니다."],
+    ["Q3. 예약금을 본사에서 보관했다가 주는 건가요?", "에스크로(결제 대금 보호) 시스템을 통해 안전하게 보관된 후, 사장님의 현장 완료 확인 버튼과 동시에 정산되어 출금 처리가 실행되므로 미수금 우려가 없습니다."],
+    ["Q4. 고객이 당일 청소를 노쇼(No-Show) 하거나 취소하면 보상이 있나요?", "예약 당일이나 전날 고객 변심 취소 시, 예약금의 일부가 사장님께 위약금으로 정산 지급되어 헛걸음하신 일정을 보상해 드립니다."],
+    ["Q5. 작업 중 하자가 발생해서 고객이 잔금 결제를 거부하면 정산이 묶이나요?", "하자 보수 분쟁 시 본사 매니저가 즉시 중재에 개입합니다. 정당한 하자가 아닌 억지 주장일 경우, 이미 확보된 계약금을 기준으로 안전하게 정산 처리를 지원합니다."],
+    ["Q6. 파트너 탈퇴는 어떻게 하나요?", "파트너 메뉴 내 [탈퇴 신청] 버튼을 누르시거나 고객센터 유선 전화를 통해 위약금 없이 즉시 탈퇴 처리가 완료됩니다."],
+    ["Q7. 탈퇴 후 재가입이 가능한가요?", "네, 탈퇴 후 재가입이 가능합니다. 다만, 부정행위나 누적 패널티로 인해 강제 퇴출된 계정의 경우에는 재가입이 거절될 수 있습니다."],
+    ["Q8. 충전했던 잔여 포인트나 예약금은 탈퇴 시 환불해 주나요?", "물론입니다. 사용하지 않은 충전식 포인트나 정산 대기 중인 잔액은 탈퇴 신청 시 사장님 등록 계좌로 전액 환불 입금해 드립니다."],
+    ["Q9. 현금 영수증 발행 요청은 어떻게 처리하나요?", "고객이 현금영수증 발행을 원할 경우 본사 시스템에서 대행 발행을 지원하거나, 사장님이 직접 국세청을 통해 발행하실 수 있도록 양방향 가이드를 제공합니다."],
+    ["Q10. 하자가 생겨 A/S를 가야 하는데 추가 수수료가 드나요?", "무상 A/S 기간 내의 단순 하자 보수 방문 시 본사에서 차감하는 추가 수수료나 비용은 전혀 없습니다. 사장님과 고객 간의 일정 조율만 하시면 됩니다."]
+  ]
+};
 
-// Extract body inner content
-const bodyMatch = html.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
-if (!bodyMatch) {
-  console.error("Could not find <body> tag");
-  process.exit(1);
-}
+// 1. TXT 파일 생성 로직
+let txtContent = `============================================================
+청소타워 파트너 가입 및 안내 Q&A 답변 예상지 (수정용)
+============================================================
 
-let content = bodyMatch[1];
-
-// Convert to JSX
-content = content.replace(/class=/g, 'className=');
-content = content.replace(/for=/g, 'htmlFor=');
-content = content.replace(/<!--([\s\S]*?)-->/g, '{/* $1 */}');
-
-// Self close input and img tags
-content = content.replace(/<img([^>]*?)(?<!\/)>/g, '<img$1 />');
-content = content.replace(/<input([^>]*?)(?<!\/)>/g, '<input$1 />');
-content = content.replace(/<hr([^>]*?)(?<!\/)>/g, '<hr$1 />');
-content = content.replace(/<br([^>]*?)(?<!\/)>/g, '<br$1 />');
-
-// Style attributes
-// style="font-variation-settings: 'FILL' 1;"
-content = content.replace(/style="font-variation-settings:\s*'FILL'\s*1;"/g, "style={{ fontVariationSettings: \"'FILL' 1\" }}");
-
-const jsxFile = `import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
-
-export default function CleaningHome() {
-  const [houseType, setHouseType] = useState('아파트');
-  const [size, setSize] = useState(24);
-  const [addons, setAddons] = useState({
-    syndrome: false,
-    acWash: false,
-    regular: false
-  });
-
-  const getEstimatedPrice = () => {
-    const basePrice = houseType === '아파트' ? 12000 : 14000;
-    let total = size * basePrice;
-    if (addons.syndrome) total += 150000;
-    if (addons.acWash) total += 120000;
-    if (addons.regular) total += 200000;
-    return total;
-  };
-
-  return (
-    <div className="bg-background text-on-background font-body-md overflow-x-hidden">
-${content}
-    </div>
-  );
-}
+* 팁: 필요에 따라 질문과 답변 내용을 수정하신 뒤 다른 이름으로 저장하시거나 카카오톡/문자 전송 시 복사해서 사용하세요.
 `;
 
-fs.writeFileSync('src/pages/CleaningHome.jsx', jsxFile, 'utf8');
-console.log('Successfully converted and written to src/pages/CleaningHome.jsx');
+for (const [section, qnas] of Object.entries(qnaData)) {
+  txtContent += `\n\n------------------------------------------------------------\n${section}\n------------------------------------------------------------\n`;
+  qnas.forEach(([q, a]) => {
+    txtContent += `\n${q}\nA: ${a}\n`;
+  });
+}
+
+// 2. HTML 파일 생성 로직
+let htmlContent = `<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>청소타워 파트너 가입 및 안내 Q&A 답변 예상지</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Noto+Sans+KR:wght@400;700;900&display=swap');
+
+    body {
+      font-family: 'Noto Sans KR', 'Inter', sans-serif;
+      background-color: #f8fafc;
+      color: #0f172a;
+      margin: 0;
+      padding: 40px 20px;
+      line-height: 1.6;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      background: #ffffff;
+      padding: 50px 60px;
+      border-radius: 24px;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 40px;
+      border-bottom: 2px solid #e2e8f0;
+      padding-bottom: 30px;
+    }
+
+    .logo {
+      font-size: 14px;
+      font-weight: 800;
+      color: #2563eb;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      margin-bottom: 10px;
+    }
+
+    h1 {
+      font-size: 28px;
+      font-weight: 900;
+      color: #0f172a;
+      margin: 0 0 12px 0;
+      word-break: keep-all;
+    }
+
+    .description {
+      color: #64748b;
+      font-size: 14px;
+      font-weight: 500;
+      margin: 0;
+    }
+
+    .meta-info {
+      display: inline-block;
+      margin-top: 15px;
+      background-color: #eff6ff;
+      color: #1e40af;
+      padding: 6px 16px;
+      border-radius: 9999px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .section {
+      margin-bottom: 45px;
+      page-break-inside: avoid;
+    }
+
+    .section-title {
+      font-size: 20px;
+      font-weight: 900;
+      color: #1e3a8a;
+      border-left: 5px solid #2563eb;
+      padding-left: 15px;
+      margin: 30px 0 20px 0;
+    }
+
+    .qna-list {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .qna-card {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 14px;
+      padding: 20px 24px;
+      transition: all 0.2s ease-in-out;
+    }
+
+    .qna-card:hover {
+      border-color: #bfdbfe;
+      background-color: #f0fdf4;
+    }
+
+    .question {
+      font-size: 15px;
+      font-weight: 700;
+      color: #0f172a;
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .question-badge {
+      background-color: #2563eb;
+      color: #ffffff;
+      font-size: 11px;
+      font-weight: 800;
+      padding: 2px 6px;
+      border-radius: 6px;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    .answer {
+      font-size: 14px;
+      font-weight: 400;
+      color: #334155;
+      padding-left: 32px;
+      position: relative;
+    }
+
+    .answer::before {
+      content: "A.";
+      position: absolute;
+      left: 8px;
+      font-weight: 800;
+      color: #16a34a;
+    }
+
+    @media print {
+      body {
+        background-color: #ffffff;
+        padding: 0;
+      }
+      .container {
+        box-shadow: none;
+        padding: 0;
+        max-width: 100%;
+      }
+      .qna-card {
+        page-break-inside: avoid;
+        border-color: #e2e8f0;
+        background: #ffffff;
+      }
+      .page-break {
+        page-break-before: always;
+      }
+      .meta-info {
+        border: 1px solid #bfdbfe;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="logo">청소타워 (Cheongso Tower)</div>
+      <h1>청소업체 가입 상담 Q&A 답변 예상지</h1>
+      <p class="description">청소업체(파트너) 가입 유도 문자 발송 후 인입되는 문의사항 대응용 공식 응대 가이드북</p>
+      <div class="meta-info">💡 브라우저에서 마우스 우클릭 후 [인쇄] 또는 Ctrl + P를 눌러 즉시 PDF로 저장할 수 있습니다.</div>
+    </header>
+`;
+
+let isFirst = true;
+for (const [section, qnas] of Object.entries(qnaData)) {
+  if (!isFirst) {
+    htmlContent += `\n    <div class="page-break"></div>\n`;
+  }
+  isFirst = false;
+  
+  htmlContent += `
+    <div class="section">
+      <div class="section-title">${section}</div>
+      <div class="qna-list">`;
+      
+  qnas.forEach(([q, a], index) => {
+    htmlContent += `
+        <div class="qna-card">
+          <div class="question"><span class="question-badge">Q${index + 1}</span> ${q.substring(q.indexOf('.') + 1).trim()}</div>
+          <div class="answer">${a}</div>
+        </div>`;
+  });
+  
+  htmlContent += `
+      </div>
+    </div>`;
+}
+
+htmlContent += `
+  </div>
+</body>
+</html>`;
+
+// 파일 쓰기
+try {
+  // 1. 바탕화면 TXT 파일
+  fs.writeFileSync('C:\\Users\\PC\\Desktop\\청소타워_파트너_가입_QnA_답변서.txt', '\\ufeff' + txtContent, 'utf8');
+  // 2. 바탕화면 HTML 파일
+  fs.writeFileSync('C:\\Users\\PC\\Desktop\\청소타워_파트너_가입_QnA_답변서.html', '\\ufeff' + htmlContent, 'utf8');
+  // 3. 프로젝트 내 HTML 파일
+  fs.writeFileSync('C:\\Users\\PC\\Desktop\\CheongsoTower\\청소타워_파트너_가입_QnA_답변서.html', '\\ufeff' + htmlContent, 'utf8');
+  console.log('SUCCESS: All files successfully updated with pricing logic changes.');
+} catch (err) {
+  console.error('ERROR during files update:', err);
+}

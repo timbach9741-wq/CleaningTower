@@ -67,12 +67,31 @@ export default function PartnerSignup() {
       const finalRegionString = [finalRegionArray.join(', '), formData.regionDetail.trim()].filter(Boolean).join(' ');
 
       const defaultImages = [
-        '/images/korean_cleaner_livingroom.webp',
-        '/images/korean_cleaner_bathroom.webp',
-        '/images/korean_cleaner_kitchen.webp',
-        '/images/korean_cleaning_team.webp'
+        '/images/partners/team_blue_uniform.webp',
+        '/images/partners/couple_team_apron.webp',
+        '/images/partners/female_team_green.webp',
+        '/images/partners/male_steam_expert.webp',
+        '/images/partners/experienced_leader.webp',
+        '/images/partners/mixed_team_white.webp',
+        '/images/partners/female_eco_expert.webp',
+        '/images/partners/young_duo_brothers.webp',
+        '/images/partners/young_couple_team.webp',
+        '/images/partners/premium_team_black.webp',
+        '/images/partners/female_duo_cheerful.webp',
+        '/images/partners/team_karcher_equip.webp',
+        '/images/partners/large_team_photo.webp',
+        '/images/partners/female_leader_pro.webp',
+        '/images/partners/team_orange_vest.webp',
+        '/images/partners/couple_mature_expert.webp',
+        '/images/partners/young_female_solo.webp',
+        '/images/partners/team_red_uniform.webp',
+        '/images/partners/male_solo_trusted.webp',
+        '/images/partners/team_gray_modern.webp',
+        '/images/partners/couple_young_casual.webp',
+        '/images/partners/team_professional_van.webp'
       ];
       const randomImage = defaultImages[Math.floor(Math.random() * defaultImages.length)];
+
 
       const firestoreData = {
         plan: formData.plan,

@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 
-// Q&A 데이터 정의 (비용/사용료 답변 수정 및 수수료 질문 2개 삭제 처리)
+// Q&A 데이터 정의 (6번 섹션 정산 주기를 '1안: 주간 정산 - 차주 수요일 일괄 입금'으로 수정)
 const qnaData = {
   "1. 가입 방법에 대한 질문 & 답변": [
     ["Q1. 가입 신청은 어디서 하나요? 앱을 깔아야 하나요?", "별도의 앱 설치 없이 휴대폰이나 PC 브라우저로 https://cheongsotower.kr/partners 링크에 접속하시면 바로 1분 만에 가입이 가능합니다."],
@@ -50,9 +50,9 @@ const qnaData = {
   ],
   "5. 가입 및 정보 등록 관련 질문 & 답변": [
     ["Q1. 가입 후 프로필(상호명, 사진 등)은 꼭 등록해야 하나요?", "필수는 아니지만, 사장님이 작업하신 전후 사진(포트폴리오)과 한 줄 소개 등을 잘 적어두실수록 고객들이 견적을 비교할 때 사장님을 선택할 확률이 훨씬 높아집니다."],
-    ["Q2. 가입 시 이름이나 번호를 잘못 입력했는데 수정이 되나요?", "네, 로그인 후 [프로필 관리] 혹은 [고객센터]를 통해 즉시 직접 수정하시거나 담당 매니저에게 요청하시면 바로 변경해 드립니다."],
-    ["Q3. 다른 플랫폼에 등록된 상호명 그대로 써도 되나요?", "네, 기존에 사용하시던 브랜드나 상호명 그대로 사용하셔야 기존 단골 고객 확보나 인지도 면에서 유리합니다."],
-    ["Q4. 청소 단가표(평당 비용 등)는 어떻게 설정해야 하나요?", "사장님이 평소 받으시던 평당 단가(예: 평당 12,000원~15,000원 등)를 기준으로 설정해 두시면, 시스템이 이를 기반으로 적합한 고객 견적을 자동 추천 및 비교해 드립니다."],
+    ["Q2. 등록된 기본 프로필 이미지(사진)를 제가 원하는 사진으로 변경할 수 있나요?", "네, 물론 가능합니다! 최초 가입 시에는 시스템 내 22개의 기본 이미지 중 임의의 이미지가 무작위로 임시 배정됩니다. 가입 완료 후 파트너스 페이지에 로그인하셔서 [프로필 관리] ➡️ [홍보 정보 수정] 메뉴를 통해 사장님 팀의 실제 작업 전후 사진, 유니폼을 입은 단체 팀 사진, 혹은 상호명 로고 이미지 등으로 언제든지 직접 자유롭게 변경하실 수 있습니다. 실제 현장 작업 사진을 등록해주시면 고객 신뢰도가 크게 올라가 오더 매칭률이 훨씬 높아집니다."],
+    ["Q3. 가입 시 이름이나 번호를 잘못 입력했는데 수정이 되나요?", "네, 로그인 후 [프로필 관리] 혹은 [고객센터]를 통해 즉시 직접 수정하시거나 담당 매니저에게 요청하시면 바로 변경해 드립니다."],
+    ["Q4. 다른 플랫폼에 등록된 상호명 그대로 써도 되나요?", "네, 기존에 사용하시던 브랜드나 상호명 그대로 사용하셔야 기존 단골 고객 확보나 인지도 면에서 유리합니다."],
     ["Q5. 활동 지역은 나중에 추가하거나 뺄 수 있나요?", "네, [내 활동 지역 설정] 메뉴에서 동, 구 단위로 언제든지 추가하거나 제외하실 수 있어 이사철 동선 관리가 매우 유연합니다."],
     ["Q6. B2B 제휴를 맺으려면 추가 등록 양식이 있나요?", "사업자등록증과 보증보험 가입 여부 등의 간단한 확인 절차만 거치면 본사에서 B2B 전용 등급으로 전환해 드립니다."],
     ["Q7. 계정을 분실하면 어떻게 찾나요?", "로그인 화면의 [아이디/비밀번호 찾기]를 이용하시거나 본사 고객센터(031-499-9509)로 연락해주시면 본인 확인 후 즉시 재발급해 드립니다."],
@@ -61,7 +61,7 @@ const qnaData = {
     ["Q10. 리뷰나 평점 관리는 어떻게 하나요? 악성 리뷰도 삭제해 주나요?", "고객이 작성한 소중한 후기는 사장님의 큰 자산이 됩니다. 단, 허위 사실 기재나 악의적인 비방성 악성 리뷰의 경우 본사 분쟁 조정팀의 검토를 거쳐 비공개 처리 또는 중재를 도와드립니다."]
   ],
   "6. 정산 및 취소/탈퇴 관련 질문 & 답변": [
-    ["Q1. 정산 주기는 어떻게 되나요? 바로 입금되나요?", "청소타워는 사장님의 자금 회전을 위해 당일 정산(또는 익일 정산)을 원칙으로 합니다. 현장 작업 완료 보고가 확인되면 사장님 계좌로 즉시 출금 신청이 가능합니다."],
+    ["Q1. 정산 주기는 어떻게 되나요? 바로 입금되나요?", "청소타워는 안정적이고 원활한 정산을 위해 주간 정산(주 1회)으로 운영됩니다. 매주 월요일부터 일요일까지 완료 처리된 작업 건을 취합하여, 차주 수요일에 등록하신 사장님의 계좌로 정산 금액이 일괄 입금됩니다."],
     ["Q2. 정산받을 계좌는 아무 계좌나 상관없나요?", "가입자 본인(또는 대표 사업자) 명의의 계좌라면 제1금융권 및 신협, 수협 등 모든 은행 계좌 등록이 가능합니다."],
     ["Q3. 예약금을 본사에서 보관했다가 주는 건가요?", "에스크로(결제 대금 보호) 시스템을 통해 안전하게 보관된 후, 사장님의 현장 완료 확인 버튼과 동시에 정산되어 출금 처리가 실행되므로 미수금 우려가 없습니다."],
     ["Q4. 고객이 당일 청소를 노쇼(No-Show) 하거나 취소하면 보상이 있나요?", "예약 당일이나 전날 고객 변심 취소 시, 예약금의 일부가 사장님께 위약금으로 정산 지급되어 헛걸음하신 일정을 보상해 드립니다."],
@@ -230,24 +230,38 @@ let htmlContent = `<!DOCTYPE html>
 
     @media print {
       body {
-        background-color: #ffffff;
-        padding: 0;
+        background-color: #ffffff !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        padding: 0 !important;
       }
       .container {
-        box-shadow: none;
-        padding: 0;
-        max-width: 100%;
+        box-shadow: none !important;
+        padding: 0 !important;
+        max-width: 100% !important;
       }
       .qna-card {
-        page-break-inside: avoid;
-        border-color: #e2e8f0;
-        background: #ffffff;
+        background-color: #f8fafc !important;
+        border: 1px solid #e2e8f0 !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        page-break-inside: avoid !important;
       }
-      .page-break {
-        page-break-before: always;
+      .question-badge {
+        background-color: #2563eb !important;
+        color: #ffffff !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
       }
       .meta-info {
-        border: 1px solid #bfdbfe;
+        background-color: #eff6ff !important;
+        color: #1e40af !important;
+        border: 1px solid #bfdbfe !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+      .page-break {
+        page-break-before: always !important;
       }
     }
   </style>
@@ -299,8 +313,10 @@ try {
   // 2. 바탕화면 HTML 파일
   fs.writeFileSync('C:\\Users\\PC\\Desktop\\청소타워_파트너_가입_QnA_답변서.html', '\\ufeff' + htmlContent, 'utf8');
   // 3. 프로젝트 내 HTML 파일
-  fs.writeFileSync('C:\\Users\\PC\\Desktop\\CheongsoTower\\청소타워_파트너_가입_QnA_답변서.html', '\\ufeff' + htmlContent, 'utf8');
-  console.log('SUCCESS: All files successfully updated with pricing logic changes.');
+  fs.writeFileSync('C:\\Users\\PC\\Desktop\\CheongsoTower\\청소타워_파트너_가입_QnA_답변서.html', '\ufeff' + htmlContent, 'utf8');
+  // 4. 프로젝트 내 qna.html 파일 (영어 경로 인쇄용)
+  fs.writeFileSync('C:\\Users\\PC\\Desktop\\CheongsoTower\\qna.html', '\ufeff' + htmlContent, 'utf8');
+  console.log('SUCCESS: All files successfully updated with weekly settlement rules.');
 } catch (err) {
   console.error('ERROR during files update:', err);
 }

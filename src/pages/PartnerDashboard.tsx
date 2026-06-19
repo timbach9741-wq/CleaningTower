@@ -98,6 +98,9 @@ export interface PartnerUser {
   password?: string;
   loginPassword?: string;
   loginId?: string;
+  bankName?: string;
+  accountNumber?: string;
+  accountHolder?: string;
 }
 
 export default function Partner() {
@@ -138,7 +141,10 @@ export default function Partner() {
     teamSize: '',
     mainServices: [] as string[],
     tags: [] as string[],
-    image: ''
+    image: '',
+    bankName: '',
+    accountNumber: '',
+    accountHolder: ''
   });
   const [customService, setCustomService] = useState('');
   const serviceExamples = ['입주청소', '거주청소', '상가청소', '쓰레기집', '에어컨청소', '새집증후군', '줄눈시공'];
@@ -970,7 +976,10 @@ export default function Partner() {
       teamSize: currentUser?.teamSize || '',
       mainServices: currentUser?.mainServices || [],
       tags: currentUser?.tags || [],
-      image: currentUser?.image || getDeterministicDefaultImage(currentUser?.id)
+      image: currentUser?.image || getDeterministicDefaultImage(currentUser?.id),
+      bankName: currentUser?.bankName || '',
+      accountNumber: currentUser?.accountNumber || '',
+      accountHolder: currentUser?.accountHolder || ''
     });
     setCustomService('');
     setShowEditProfileModal(true);
@@ -991,7 +1000,10 @@ export default function Partner() {
         teamSize: editProfileForm.teamSize,
         mainServices: editProfileForm.mainServices,
         tags: editProfileForm.tags,
-        image: editProfileForm.image
+        image: editProfileForm.image,
+        bankName: editProfileForm.bankName,
+        accountNumber: editProfileForm.accountNumber,
+        accountHolder: editProfileForm.accountHolder
       });
       alert('홍보 정보가 성공적으로 저장되었습니다.');
       setShowEditProfileModal(false);
@@ -1925,6 +1937,13 @@ export default function Partner() {
                     <p className="text-xl font-black text-emerald-600">정상 활동</p>
                   </div>
                 </div>
+                {currentUser?.bankName && (
+                  <div className="mt-4 bg-blue-50/50 p-3.5 rounded-xl border border-blue-100/50 text-left text-xs">
+                    <p className="font-bold text-slate-800 flex items-center gap-1.5 mb-1.5">🏦 등록된 정산 계좌</p>
+                    <p className="text-slate-600 font-medium">{currentUser.bankName} {currentUser.accountNumber}</p>
+                    <p className="text-[10px] text-slate-400 mt-0.5">예금주: {currentUser.accountHolder}</p>
+                  </div>
+                )}
                 <button 
                   onClick={openEditProfileModal}
                   className="mt-6 w-full py-3 bg-blue-50 hover:bg-blue-100 text-blue-600 font-black rounded-xl border border-blue-200 transition-colors flex items-center justify-center gap-2"
@@ -2618,6 +2637,48 @@ export default function Partner() {
                       <RegionSelector 
                         selectedRegions={editProfileForm.regions} 
                         onChange={(arr) => setEditProfileForm({...editProfileForm, regions: arr})} 
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-slate-500 mb-1.5">정산 계좌 정보 (입금 계좌)</label>
+                      <div className="grid grid-cols-2 gap-3 mb-2">
+                        <div>
+                          <select 
+                            className="w-full border border-slate-200 rounded-xl p-3 text-sm outline-none focus:border-blue-500 text-slate-700 bg-white"
+                            value={editProfileForm.bankName}
+                            onChange={(e) => setEditProfileForm({...editProfileForm, bankName: e.target.value})}
+                          >
+                            <option value="">은행 선택</option>
+                            <option value="국민은행">국민은행</option>
+                            <option value="신한은행">신한은행</option>
+                            <option value="우리은행">우리은행</option>
+                            <option value="하나은행">하나은행</option>
+                            <option value="기업은행">기업은행</option>
+                            <option value="농협은행">농협은행</option>
+                            <option value="카카오뱅크">카카오뱅크</option>
+                            <option value="토스뱅크">토스뱅크</option>
+                            <option value="새마을금고">새마을금고</option>
+                            <option value="우체국">우체국</option>
+                            <option value="신협">신협</option>
+                            <option value="수협">수협</option>
+                          </select>
+                        </div>
+                        <div>
+                          <input 
+                            type="text"
+                            value={editProfileForm.accountHolder}
+                            onChange={(e) => setEditProfileForm({...editProfileForm, accountHolder: e.target.value})}
+                            placeholder="예금주명"
+                            className="w-full border border-slate-200 rounded-xl p-3 text-sm outline-none focus:border-blue-500"
+                          />
+                        </div>
+                      </div>
+                      <input 
+                        type="text"
+                        value={editProfileForm.accountNumber}
+                        onChange={(e) => setEditProfileForm({...editProfileForm, accountNumber: e.target.value.replace(/[^0-9]/g, '')})}
+                        placeholder="계좌번호 (- 없이 숫자만 입력)"
+                        className="w-full border border-slate-200 rounded-xl p-3 text-sm outline-none focus:border-blue-500"
                       />
                     </div>
                   </div>

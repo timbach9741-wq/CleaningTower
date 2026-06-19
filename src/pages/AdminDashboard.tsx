@@ -1960,7 +1960,7 @@ export default function Admin() {
                   <table className="hidden lg:table w-full min-w-[900px] text-left">
                     <thead>
                       <tr className="bg-gray-50 border-b border-gray-200 text-sm text-gray-500">
-                        <th className="p-3 font-bold whitespace-nowrap">계정 발급일</th>
+                        <th className="p-3 font-bold whitespace-nowrap">가입일</th>
                         <th className="p-3 font-bold whitespace-nowrap">파트너 (업체/담당자)</th>
                         <th className="p-3 font-bold whitespace-nowrap">연락처</th>
                         <th className="p-3 font-bold text-blue-600 bg-blue-50/50 whitespace-nowrap">접속 ID</th>
@@ -1981,8 +1981,11 @@ export default function Admin() {
                       ) : (
                         filteredPartnersList.map((partner) => (
                           <tr key={partner.id} className="hover:bg-slate-50 transition-colors">
-                            <td className="p-4 text-sm text-gray-500 whitespace-nowrap">
-                              {partner.createdAt ? new Date(partner.createdAt).toLocaleDateString() : '날짜 없음'}
+                            <td className="p-4 text-sm whitespace-nowrap">
+                              <div className="flex flex-col">
+                                <span className="font-bold text-slate-700">{partner.createdAt ? new Date(partner.createdAt).toLocaleDateString() : '-'}</span>
+                                {partner.createdAt && <span className="text-[10px] text-slate-400">{(() => { const d = new Date(partner.createdAt); const now = new Date(); const diff = Math.floor((now.getTime() - d.getTime()) / (1000*60*60*24)); return diff === 0 ? '오늘' : diff < 30 ? `${diff}일 전` : diff < 365 ? `${Math.floor(diff/30)}개월 전` : `${Math.floor(diff/365)}년 전`; })()}</span>}
+                              </div>
                             </td>
                             <td className="p-3 font-bold text-gray-800 whitespace-nowrap">
                               <div className="flex items-center gap-1.5">
@@ -2180,7 +2183,10 @@ export default function Admin() {
                                   );
                                 })()}
                               </div>
-                              <p className="text-xs text-slate-400 font-medium">가입일: {partner.createdAt ? new Date(partner.createdAt).toLocaleDateString() : '날짜 없음'}</p>
+                              <p className="text-xs text-slate-400 font-medium">
+                                가입일: {partner.createdAt ? new Date(partner.createdAt).toLocaleDateString() : '-'}
+                                {partner.createdAt && <span className="ml-1 text-slate-300">({(() => { const d = new Date(partner.createdAt); const now = new Date(); const diff = Math.floor((now.getTime() - d.getTime()) / (1000*60*60*24)); return diff === 0 ? '오늘' : diff < 30 ? `${diff}일 전` : diff < 365 ? `${Math.floor(diff/30)}개월 전` : `${Math.floor(diff/365)}년 전`; })()})</span>}
+                              </p>
                               {(() => {
                                 const cs = getContractStatus(partner);
                                 return (

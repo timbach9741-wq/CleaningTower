@@ -4,7 +4,7 @@ import { loadTossPayments } from '@tosspayments/payment-sdk';
 import { ShieldCheck, CreditCard, ArrowRight, Loader2 } from 'lucide-react';
 
 // 토스페이먼츠 테스트 클라이언트 키
-const clientKey = 'test_gck_docs_Ovk5rk1EwkEbP0W43n07xlzm';
+const clientKey = 'test_ck_0RnYX2w5327mYLLNkgpRVNeyqApQ';
 
 export default function PartnerCheckout() {
   const location = useLocation();

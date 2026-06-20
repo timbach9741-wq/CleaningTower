@@ -3,10 +3,58 @@ import { Link } from 'react-router-dom';
 import Header from '../components/cleaning/Header';
 import { partnerQnaData } from '../data/partnerQnaData';
 
+const planData = {
+  basic: {
+    name: '일반 파트너',
+    sub: '진입장벽 없이 성사 수수료로 시작',
+    features: [
+      '입점비/가입비 무료',
+      '리뷰/평점 기반 정직한 노출',
+      '성사 건당 수수료 정산'
+    ],
+    pricing: {
+      '1month': { monthly: '50,000', total: '50,000', discount: 0 },
+      '3month': { monthly: '45,000', total: '135,000', discount: 10 },
+      '6month': { monthly: '40,000', total: '240,000', discount: 20 }
+    }
+  },
+  premium: {
+    name: '프리미엄 파트너',
+    sub: '가장 많은 사장님들이 선택하는 플랜',
+    features: [
+      '기본 검색 시 상위 그룹 노출',
+      '전용 프리미엄 배지 부여',
+      '프리미엄 전담 매니저 배정',
+      '상세 페이지 브랜딩 영역 제공'
+    ],
+    pricing: {
+      '1month': { monthly: '150,000', total: '150,000', discount: 0 },
+      '3month': { monthly: '130,000', total: '390,000', discount: 13 },
+      '6month': { monthly: '120,000', total: '720,000', discount: 20, isBest: true }
+    }
+  },
+  exclusive: {
+    name: '지역 독점 파트너',
+    sub: '특정 지역의 청소 오더를 완벽 독점',
+    features: [
+      '선택 지역 내 최상단 독점 노출',
+      '한 지역당 단 1~2팀 제한',
+      '모든 프리미엄 파트너 혜택 포함',
+      'B2B 청소 오더 우선 배정'
+    ],
+    pricing: {
+      '1month': { monthly: '300,000', total: '300,000', discount: 0 },
+      '3month': { monthly: '270,000', total: '810,000', discount: 10 },
+      '6month': { monthly: '240,000', total: '1,440,000', discount: 20 }
+    }
+  }
+};
+
 export default function PartnerLanding() {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState('전체');
   const [expandedIndex, setExpandedIndex] = useState(null);
+  const [billingCycle, setBillingCycle] = useState('6month'); // '1month', '3month', '6month'
   const faqSectionRef = useRef(null);
 
   const categories = ['전체', '가입방법', '수수료/비용', '오더/운영', '멤버십', '정보등록/오류', '정산/탈퇴'];
@@ -138,123 +186,166 @@ export default function PartnerLanding() {
         {/* 수익화 모델 / 멤버십 안내 섹션 */}
         <section className="py-24 px-4 bg-slate-50">
           <div className="max-w-6xl mx-auto">
-            <div className="text-center mb-20 lg:mb-24 flex flex-col items-center">
+            <div className="text-center mb-16 flex flex-col items-center">
               <span className="text-blue-600 font-bold mb-2 block tracking-wider">MEMBERSHIP</span>
               <h2 className="text-3xl md:text-4xl font-extrabold text-blue-950 mb-4 tracking-tight">사장님 상황에 맞는 맞춤형 플랜</h2>
               <p className="text-lg text-slate-500 font-medium mb-6">주문이 늘어남에 따라 알맞은 플랜을 선택해보세요.</p>
               
-              <div className="inline-flex items-center gap-3 bg-gradient-to-r from-rose-600 via-pink-600 to-rose-500 text-white px-8 py-4 rounded-2xl text-sm sm:text-base md:text-lg font-black shadow-xl animate-pulse ring-4 ring-rose-200/50 border border-rose-400/30">
-                🎁 런칭 기념 특급 프로모션: 지금 가입 시 모든 멤버십 3개월 무료!
+              <div className="inline-flex items-center gap-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-8 py-3.5 rounded-2xl text-sm sm:text-base md:text-lg font-black shadow-lg border border-blue-400/20">
+                🎁 신규 파트너 론칭 특별 프로모션: 장기 결제 시 최대 20% 즉시 할인 혜택 제공!
               </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-end">
-              
-              {/* 1. 베이직 */}
-              <div className="bg-white rounded-3xl p-8 border border-slate-200 shadow-sm relative flex flex-col h-full hover:border-blue-300 transition-colors">
-                <div className="mb-8">
-                  <h3 className="text-slate-500 font-bold mb-1">일반 파트너</h3>
-                  <div className="text-3xl font-extrabold text-slate-900 mb-2">BASIC</div>
-                  <div className="text-sm text-slate-500">실력으로 승부하는 사장님께 추천</div>
-                </div>
-                <div className="mb-8 flex-grow">
-                  <ul className="space-y-4">
-                    <li className="flex items-start gap-3 text-slate-700">
-                      <span className="text-green-500 font-bold shrink-0 mt-0.5">✓</span> <span className="break-keep">입점비/가입비 무료</span>
-                    </li>
-                    <li className="flex items-start gap-3 text-slate-700">
-                      <span className="text-green-500 font-bold shrink-0 mt-0.5">✓</span> <span className="break-keep">리뷰/평점 기반 노출</span>
-                    </li>
-                    <li className="flex items-start gap-3 text-slate-700">
-                      <span className="text-green-500 font-bold shrink-0 mt-0.5">✓</span> <span className="break-keep">성사 건당 소정의 수수료</span>
-                    </li>
-                  </ul>
-                </div>
-                <div className="mt-auto pt-6 border-t border-slate-100">
-                  <div className="flex flex-col mb-4 text-left">
-                    <span className="text-xs text-rose-500 font-bold line-through opacity-85">₩39,000 / 월</span>
-                    <div className="text-2xl lg:text-3xl font-black text-slate-900 flex items-baseline gap-1">
-                      ₩39,000 <span className="text-[10px] font-extrabold text-rose-500 bg-rose-50 px-2 py-0.5 rounded border border-rose-200 ml-1">3개월 무료</span>
+            {/* 기간 선택 토글 스위치 */}
+            <div className="flex justify-center mb-16">
+              <div className="bg-slate-200/80 backdrop-blur-md p-1.5 rounded-2xl flex gap-1 border border-slate-300/40">
+                <button
+                  onClick={() => setBillingCycle('1month')}
+                  className={`px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all ${
+                    billingCycle === '1month'
+                      ? 'bg-white text-blue-950 shadow-md scale-105'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  1개월 가입
+                </button>
+                <button
+                  onClick={() => setBillingCycle('3month')}
+                  className={`px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all relative ${
+                    billingCycle === '3month'
+                      ? 'bg-white text-blue-950 shadow-md scale-105'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  3개월 가입
+                  <span className="absolute -top-3.5 -right-1.5 bg-rose-500 text-white text-[8px] px-1.5 py-0.5 rounded-full font-black scale-90 border border-white">
+                    최대 13% 할인
+                  </span>
+                </button>
+                <button
+                  onClick={() => setBillingCycle('6month')}
+                  className={`px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all relative ${
+                    billingCycle === '6month'
+                      ? 'bg-white text-blue-950 shadow-md scale-105'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  6개월 가입
+                  <span className="absolute -top-3.5 -right-1.5 bg-rose-500 text-white text-[8px] px-1.5 py-0.5 rounded-full font-black scale-90 border border-white animate-pulse">
+                    20% 특별 할인
+                  </span>
+                </button>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-stretch pt-4">
+              {['basic', 'premium', 'exclusive'].map((key) => {
+                const plan = planData[key];
+                const pricing = plan.pricing[billingCycle];
+                const isPremium = key === 'premium';
+                const isExclusive = key === 'exclusive';
+                
+                // 스타일 분기
+                let cardClass = "rounded-3xl p-8 border shadow-sm relative flex flex-col transition-all duration-300 ";
+                let buttonClass = "block w-full font-bold py-3.5 rounded-xl text-center transition-all ";
+                
+                if (isPremium) {
+                  // 프리미엄 카드 (가운데 강조)
+                  cardClass += "bg-slate-900 text-white border-2 border-blue-500 shadow-2xl lg:-translate-y-4 z-10 scale-[1.02] lg:scale-[1.03]";
+                  buttonClass += "bg-blue-600 hover:bg-blue-500 text-white shadow-[0_0_20px_rgba(37,99,235,0.4)] hover:-translate-y-0.5";
+                } else if (isExclusive) {
+                  // 독점 카드
+                  cardClass += "bg-white text-slate-900 border-amber-200 hover:border-amber-300 shadow-sm hover:shadow-md";
+                  buttonClass += "bg-gradient-to-r from-amber-400 to-yellow-500 text-amber-950 hover:from-amber-300 hover:to-yellow-400 hover:-translate-y-0.5 shadow-md";
+                } else {
+                  // 베이직 카드
+                  cardClass += "bg-white text-slate-900 border-slate-200 hover:border-blue-300 hover:shadow-md";
+                  buttonClass += "bg-slate-100 hover:bg-slate-200 text-slate-700 hover:-translate-y-0.5";
+                }
+
+                return (
+                  <div key={key} className={cardClass}>
+                    {/* 상단 뱃지 */}
+                    {isPremium && (
+                      <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-blue-600 text-white font-black px-5 py-1.5 rounded-full text-xs shadow-md whitespace-nowrap flex items-center gap-1.5 ring-4 ring-blue-950">
+                        🔥 <span>강력 추천! 가장 인기 있는 플랜</span>
+                      </div>
+                    )}
+                    {isExclusive && (
+                      <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-amber-400 text-amber-950 font-black px-4 py-0.5 rounded-full text-xs shadow-sm whitespace-nowrap">
+                        👑 VIP EXCLUSIVE
+                      </div>
+                    )}
+
+                    <div className="mb-8">
+                      <h3 className={`font-bold mb-1 ${isPremium ? 'text-blue-400' : 'text-slate-500'}`}>
+                        {plan.name}
+                      </h3>
+                      <div className="text-3xl font-extrabold mb-2">{key.toUpperCase()}</div>
+                      <div className={`text-sm ${isPremium ? 'text-slate-300' : 'text-slate-500'} break-keep`}>
+                        {plan.sub}
+                      </div>
+                    </div>
+
+                    <div className="mb-8 flex-grow">
+                      <ul className="space-y-4">
+                        {plan.features.map((feature, idx) => (
+                          <li key={idx} className="flex items-start gap-3">
+                            <span className={`font-bold shrink-0 mt-0.5 ${isPremium ? 'text-blue-400' : isExclusive ? 'text-amber-500' : 'text-green-500'}`}>
+                              ✓
+                            </span>
+                            <span className="break-keep">{feature}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+
+                    {/* 요금 정보 */}
+                    <div className={`mt-auto pt-6 border-t ${isPremium ? 'border-slate-800' : 'border-slate-100'}`}>
+                      <div className="flex flex-col mb-6 text-left">
+                        {/* 할인 이전 원가 및 할인율 표기 */}
+                        {pricing.discount > 0 ? (
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className={`text-xs line-through opacity-60 ${isPremium ? 'text-slate-400' : 'text-slate-500'}`}>
+                              ₩{key === 'basic' ? '50,000' : key === 'premium' ? '150,000' : '300,000'}
+                            </span>
+                            <span className="text-[10px] font-black px-2 py-0.5 rounded bg-rose-500 text-white">
+                              {pricing.discount}% OFF
+                            </span>
+                          </div>
+                        ) : (
+                          <div className="h-5" />
+                        )}
+
+                        {/* 월별 환산 요금 */}
+                        <div className="text-2xl lg:text-3xl font-black flex items-baseline gap-1">
+                          ₩{pricing.monthly} 
+                          <span className={`text-xs font-normal ${isPremium ? 'text-slate-400' : 'text-slate-500'}`}>
+                            / 월
+                          </span>
+                        </div>
+
+                        {/* 장기 할인 총 납부금액 안내 */}
+                        {billingCycle !== '1month' ? (
+                          <span className={`text-xs mt-1.5 font-bold ${isPremium ? 'text-blue-300' : 'text-blue-600'}`}>
+                            (총 {billingCycle === '3month' ? '3개월' : '6개월'} 금액: ₩{pricing.total})
+                          </span>
+                        ) : (
+                          <span className="text-xs mt-1.5 h-4 opacity-0" />
+                        )}
+                      </div>
+
+                      <Link 
+                        to="/partners/register" 
+                        state={{ plan: key, cycle: billingCycle }} 
+                        className={buttonClass}
+                      >
+                        {billingCycle === '6month' ? '6개월 특별 혜택가 신청' : '가입 신청하기'}
+                      </Link>
                     </div>
                   </div>
-                  <Link to="/partners/register" state={{ plan: 'basic' }} className="block w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-3 rounded-xl transition-colors text-center">
-                    3개월 무료로 시작하기
-                  </Link>
-                </div>
-              </div>
-
-              {/* 2. 독점 (가장 비쌈, 가운데 강조) */}
-              <div className="bg-slate-900 rounded-3xl p-8 border-2 border-amber-400 shadow-2xl relative flex flex-col h-[105%] transform lg:-translate-y-4 z-10">
-                <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-amber-400 text-amber-950 font-black px-6 py-1 rounded-full text-sm shadow-md whitespace-nowrap">
-                  V.I.P EXCLUSIVE
-                </div>
-                <div className="mb-8">
-                  <h3 className="text-amber-400 font-bold mb-1">지역 독점 파트너</h3>
-                  <div className="text-3xl font-extrabold text-white mb-2 flex items-center gap-2">
-                    <span className="text-amber-400 text-2xl">👑</span> EXCLUSIVE
-                  </div>
-                  <div className="text-sm text-slate-300">지역 내 압도적 1위 달성 목표</div>
-                </div>
-                <div className="mb-8 flex-grow">
-                  <ul className="space-y-4">
-                    <li className="flex items-start gap-3 text-white">
-                      <span className="text-amber-400 font-bold shrink-0 mt-0.5">✓</span> 
-                      <span className="break-keep">선택 지역 내 <span className="text-amber-400 font-bold underline decoration-amber-400/50 decoration-2">최상단 독점 노출</span></span>
-                    </li>
-                    <li className="flex items-start gap-3 text-white">
-                      <span className="text-amber-400 font-bold shrink-0 mt-0.5">✓</span> <span className="break-keep">한 지역당 단 1~2팀 제한</span>
-                    </li>
-                    <li className="flex items-start gap-3 text-white">
-                      <span className="text-amber-400 font-bold shrink-0 mt-0.5">✓</span> <span className="break-keep">프리미엄 혜택 모두 포함</span>
-                    </li>
-                  </ul>
-                </div>
-                <div className="mt-auto pt-6 border-t border-slate-800">
-                  <div className="flex flex-col mb-4 text-left">
-                    <span className="text-xs text-amber-400 font-bold line-through opacity-85">₩299,000 / 월</span>
-                    <div className="text-2xl lg:text-3xl font-black text-white flex items-baseline gap-1">
-                      ₩299,000 <span className="text-[10px] font-extrabold text-amber-950 bg-amber-400 px-2 py-0.5 rounded ml-1">3개월 무료</span>
-                    </div>
-                  </div>
-                  <Link to="/partners/register" state={{ plan: 'exclusive' }} className="block w-full bg-gradient-to-r from-amber-400 to-yellow-500 text-amber-950 font-bold py-4 rounded-xl hover:from-amber-300 hover:to-yellow-400 transition-colors shadow-[0_0_15px_rgba(251,191,36,0.3)] text-center">
-                    3개월 무료 신청하기
-                  </Link>
-                </div>
-              </div>
-
-              {/* 3. 프리미엄 (오른쪽 일반) */}
-              <div className="bg-blue-50/50 rounded-3xl p-8 border border-blue-200 shadow-sm relative flex flex-col h-full hover:border-blue-400 transition-colors">
-                <div className="mb-8">
-                  <h3 className="text-blue-600 font-bold mb-1">프리미엄 파트너</h3>
-                  <div className="text-3xl font-extrabold text-slate-900 mb-2">PREMIUM</div>
-                  <div className="text-sm text-slate-600">안정적인 오더가 필요한 업체</div>
-                </div>
-                <div className="mb-8 flex-grow">
-                  <ul className="space-y-4">
-                    <li className="flex items-start gap-3 text-slate-700">
-                      <span className="text-blue-500 font-bold shrink-0 mt-0.5">✓</span> <span className="break-keep">기본 정렬 시 상위 그룹핑 노출</span>
-                    </li>
-                    <li className="flex items-start gap-3 text-slate-700">
-                      <span className="text-blue-500 font-bold shrink-0 mt-0.5">✓</span> <span className="break-keep">전용 프리미엄 배지 부여</span>
-                    </li>
-                    <li className="flex items-start gap-3 text-slate-700">
-                      <span className="text-blue-500 font-bold shrink-0 mt-0.5">✓</span> <span className="break-keep">프리미엄 전담 매니저 배정</span>
-                    </li>
-                  </ul>
-                </div>
-                <div className="mt-auto pt-6 border-t border-slate-100">
-                  <div className="flex flex-col mb-4 text-left">
-                    <span className="text-xs text-rose-500 font-bold line-through opacity-85">₩79,000 / 월</span>
-                    <div className="text-2xl lg:text-3xl font-black text-slate-900 flex items-baseline gap-1">
-                      ₩79,000 <span className="text-[10px] font-extrabold text-rose-500 bg-rose-50 px-2 py-0.5 rounded border border-rose-200 ml-1">3개월 무료</span>
-                    </div>
-                  </div>
-                  <Link to="/partners/register" state={{ plan: 'premium' }} className="block w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 rounded-xl transition-all shadow-md text-center">
-                    3개월 무료로 가입하기
-                  </Link>
-                </div>
-              </div>
-
+                );
+              })}
             </div>
           </div>
         </section>

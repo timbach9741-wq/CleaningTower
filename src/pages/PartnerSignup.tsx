@@ -169,15 +169,7 @@ export default function PartnerSignup() {
         password: actualPassword
       }));
       
-      navigate('/partners/checkout', {
-        state: {
-          partnerId: docId || 'local_test_id',
-          plan: formData.plan,
-          cycle: location.state?.cycle || '1month',
-          phone: formData.phone,
-          name: formData.managerName || formData.name || '미기재'
-        }
-      });
+      setStep(4);
     } catch (e) {
       console.error(e);
       alert(`신청 중 오류가 발생했습니다: ${e instanceof Error ? e.message : '알 수 없는 오류'}`);

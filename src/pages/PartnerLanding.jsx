@@ -86,7 +86,7 @@ export default function PartnerLanding() {
                 onClick={handleScrollToFaq}
                 className="inline-flex items-center gap-1.5 text-amber-300 hover:text-amber-200 font-bold text-sm md:text-base underline underline-offset-4 decoration-2 transition-colors cursor-pointer group bg-white/5 backdrop-blur-sm px-5 py-2.5 rounded-full border border-white/10 hover:bg-white/10"
               >
-                <span>💡 가입인증 문자 안 오거나 사진 업로드 오류 해결법 보기</span>
+                <span>💡 가입방법 및 오류 해결 방법 보기</span>
                 <span className="material-symbols-outlined text-base group-hover:translate-y-0.5 transition-transform">arrow_downward</span>
               </a>
             </div>

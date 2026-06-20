@@ -738,6 +738,53 @@ export default function Quote() {
                   </div>
                 </div>
 
+                {/* (서브 섹션 1) 청소타워만의 독보적인 3-in-1 케어 시스템 */}
+                <div className="px-5 lg:px-8 py-10 max-w-4xl mx-auto w-full border-t border-slate-100 mt-10">
+                  <div className="text-center mb-8">
+                    <span className="text-xs font-black text-blue-600 bg-blue-50 border border-blue-200 px-3 py-1 rounded-full uppercase tracking-wider">
+                      SYSTEM
+                    </span>
+                    <h2 className="text-xl lg:text-3xl font-black text-slate-900 tracking-tight mt-3">
+                      1. 청소타워만의 독보적인 3-in-1 케어 시스템
+                    </h2>
+                    <p className="text-xs lg:text-sm text-slate-500 font-semibold leading-relaxed mt-2.5 break-keep">
+                      인테리어 마감 후 발생하는 미세한 하자들, 소비자가 먼저 발견하면 <strong className="text-rose-600 font-extrabold">'컴플레인'</strong>이지만 청소타워가 먼저 발견하면 <strong className="text-blue-600 font-extrabold">'고객 감동'</strong>이 됩니다.
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                    <div className="bg-white border border-slate-100 p-5 rounded-2xl shadow-sm hover:shadow-md transition-shadow text-left">
+                      <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center mb-4">
+                        <span className="material-symbols-outlined text-[22px]">clean_hands</span>
+                      </div>
+                      <h4 className="font-extrabold text-slate-800 text-sm md:text-base mb-1.5">프리미엄 입주청소</h4>
+                      <p className="text-xs text-slate-500 leading-relaxed break-keep font-medium">
+                        눈에 보이지 않는 공사 분진과 유해 물질까지 완벽 제거
+                      </p>
+                    </div>
+
+                    <div className="bg-white border border-slate-100 p-5 rounded-2xl shadow-sm hover:shadow-md transition-shadow text-left">
+                      <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center mb-4">
+                        <span className="material-symbols-outlined text-[22px]">content_paste_search</span>
+                      </div>
+                      <h4 className="font-extrabold text-slate-800 text-sm md:text-base mb-1.5">하자 사전 점검</h4>
+                      <p className="text-xs text-slate-500 leading-relaxed break-keep font-medium">
+                        실리콘 미비, 도배 찍힘, 장판 및 마루 찍힘 사전 모니터링
+                      </p>
+                    </div>
+
+                    <div className="bg-white border border-slate-100 p-5 rounded-2xl shadow-sm hover:shadow-md transition-shadow text-left">
+                      <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-4">
+                        <span className="material-symbols-outlined text-[22px]">construction</span>
+                      </div>
+                      <h4 className="font-extrabold text-slate-800 text-sm md:text-base mb-1.5">간단 보수 서비스</h4>
+                      <p className="text-xs text-slate-500 leading-relaxed break-keep font-medium">
+                        현장에서 즉시 해결 가능한 미비점 원스톱 케어 지원
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
                 {/* 실리콘 · 마루콕 전/후 사진 카드 */}
                 <div className="px-5 lg:px-8 mb-6 mt-8">
                   <div className="text-center mb-6">
@@ -978,17 +1025,135 @@ export default function Quote() {
                   </div>
                 </div>
 
-                {/* 무상 강조 배너 */}
-                <div className="px-5 lg:px-8 mb-6 lg:mb-10">
-                  <div className="bg-gradient-to-r from-amber-50 to-blue-50 border border-amber-200 rounded-2xl lg:rounded-3xl py-6 lg:py-8 px-5 lg:px-8 text-center relative overflow-hidden">
-                    <div className="hidden lg:block absolute top-0 left-1/2 -translate-x-1/2 w-[400px] h-[200px] bg-amber-200/30 rounded-full blur-[80px] pointer-events-none" />
-                    <span className="text-2xl lg:text-4xl mb-1.5 lg:mb-3 block relative z-10">✨</span>
-                    <p className="text-[17px] lg:text-[23px] font-black text-red-600 mb-1 lg:mb-2 break-keep relative z-10 leading-snug">
-                      <span className="text-blue-600 mr-1.5">✓</span>인테리어 공사잔금 사수하여 지켜내자
-                    </p>
-                    <p className="text-[17px] lg:text-[23px] font-black text-red-600 break-keep relative z-10 leading-snug">
-                      <span className="text-blue-600 mr-1.5">✓</span>밀당고수 소비자들 청소타워가 박멸한다
-                    </p>
+                {/* (서브 섹션 2) B2B 파트너사를 위한 강력한 윈윈(Win-Win) 혜택 */}
+                <div className="px-5 lg:px-8 py-12 bg-slate-50 border-y border-slate-200/60 w-full">
+                  <div className="max-w-4xl mx-auto">
+                    <div className="text-center mb-8">
+                      <span className="text-xs font-black text-amber-600 bg-amber-50 border border-amber-200 px-3 py-1 rounded-full uppercase tracking-wider">
+                        BENEFITS
+                      </span>
+                      <h2 className="text-xl lg:text-3xl font-black text-slate-900 tracking-tight mt-3">
+                        2. B2B 파트너사를 위한 강력한 윈윈(Win-Win) 혜택
+                      </h2>
+                      <p className="text-xs lg:text-sm text-slate-500 font-semibold leading-relaxed mt-2.5 break-keep">
+                        청소타워는 파트너 사장님들의 현장 퀄리티를 높여드릴 뿐만 아니라, 확실한 추가 수익 기회까지 보장해 드립니다.
+                      </p>
+                    </div>
+
+                    {/* 10% 페이백 메인 배너 */}
+                    <div className="bg-gradient-to-br from-blue-900 to-slate-950 text-white rounded-3xl p-6 md:p-8 border border-blue-900 shadow-xl shadow-blue-950/20 mb-6 text-center md:text-left relative overflow-hidden">
+                      <div className="absolute top-0 right-0 w-80 h-80 bg-blue-500/10 rounded-full blur-[80px] pointer-events-none" />
+                      
+                      <div className="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+                        <div className="text-left">
+                          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-400 text-amber-950 text-[10px] md:text-xs font-black tracking-wider mb-3">
+                            💰 10% 파트너 인센티브 (페이백) 제도
+                          </div>
+                          <h3 className="text-lg md:text-2xl font-black leading-tight text-white break-keep">
+                            소개 및 직접 의뢰 시 계약 금액의 10% 지급
+                          </h3>
+                          <p className="text-xs md:text-sm text-slate-300 font-semibold mt-2.5 break-keep">
+                            소개 및 직접 의뢰 시 청소 계약 금액의 10%를 파트너사 마케팅 지원금(인센티브)으로 즉시 정산해 드립니다.
+                          </p>
+                        </div>
+                        <button
+                          onClick={() => navigate('/b2b/signup')}
+                          className="shrink-0 bg-white hover:bg-slate-100 text-blue-950 font-black text-xs md:text-sm px-6 py-3.5 rounded-xl shadow-md transition-all whitespace-nowrap hover:-translate-y-0.5 active:translate-y-0"
+                        >
+                          파트너 신청하기
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* 대상별 카드 2열 */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="bg-white border border-slate-100 p-5 rounded-2xl shadow-sm text-left">
+                        <div className="w-9 h-9 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center mb-3">
+                          <span className="material-symbols-outlined text-[20px]">real_estate_agent</span>
+                        </div>
+                        <h4 className="font-extrabold text-slate-800 text-sm md:text-base mb-1">부동산 대표님</h4>
+                        <p className="text-xs text-slate-500 leading-relaxed break-keep font-medium">
+                          이사/입주 앞둔 계약 고객을 소개만 해주셔도 고정 부가 수익 창출!
+                        </p>
+                      </div>
+
+                      <div className="bg-white border border-slate-100 p-5 rounded-2xl shadow-sm text-left">
+                        <div className="w-9 h-9 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center mb-3">
+                          <span className="material-symbols-outlined text-[20px]">chair</span>
+                        </div>
+                        <h4 className="font-extrabold text-slate-800 text-sm md:text-base mb-1">인테리어 사장님</h4>
+                        <p className="text-xs text-slate-500 leading-relaxed break-keep font-medium">
+                          마감 청소 비용 부담은 낮추고, 완벽한 검수로 잔금 회수율 100% 달성!
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* (서브 섹션 3) 안심하고 맡기는 3대 보장제 */}
+                <div className="px-5 lg:px-8 py-12 max-w-4xl mx-auto w-full">
+                  <div className="text-center mb-8">
+                    <span className="text-xs font-black text-emerald-600 bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-full uppercase tracking-wider">
+                      TRUST
+                    </span>
+                    <h2 className="text-xl lg:text-3xl font-black text-slate-900 tracking-tight mt-3">
+                      3. 안심하고 맡기는 3대 보장제
+                    </h2>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                    <div className="bg-white border border-slate-100 p-5 rounded-2xl shadow-sm text-left flex flex-col justify-between h-full hover:shadow-md transition-shadow">
+                      <div>
+                        <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-4">
+                          <span className="material-symbols-outlined text-[22px]">verified_user</span>
+                        </div>
+                        <h4 className="font-extrabold text-slate-800 text-sm md:text-base mb-1.5">A/S 제로 목표 보장</h4>
+                        <p className="text-xs text-slate-500 leading-relaxed break-keep font-medium">
+                          사장님 현장에 민원이 발생하지 않도록 철저한 검수 후 작업 완료 사진 전송
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="bg-white border border-slate-100 p-5 rounded-2xl shadow-sm text-left flex flex-col justify-between h-full hover:shadow-md transition-shadow">
+                      <div>
+                        <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center mb-4">
+                          <span className="material-symbols-outlined text-[22px]">group</span>
+                        </div>
+                        <h4 className="font-extrabold text-slate-800 text-sm md:text-base mb-1.5">베테랑 반장 전담 배치</h4>
+                        <p className="text-xs text-slate-500 leading-relaxed break-keep font-medium">
+                          검증된 지역별 프리미엄 전문 인력 우선 매칭
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="bg-white border border-slate-100 p-5 rounded-2xl shadow-sm text-left flex flex-col justify-between h-full hover:shadow-md transition-shadow">
+                      <div>
+                        <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center mb-4">
+                          <span className="material-symbols-outlined text-[22px]">payments</span>
+                        </div>
+                        <h4 className="font-extrabold text-slate-800 text-sm md:text-base mb-1.5">간편한 정산 및 오더 시스템</h4>
+                        <p className="text-xs text-slate-500 leading-relaxed break-keep font-medium">
+                          복잡한 절차 없이 웹에서 실시간 의뢰 및 정산 내역 확인 가능
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 하단 가입 유도 배너 */}
+                <div className="px-5 lg:px-8 mb-12 w-full">
+                  <div className="bg-gradient-to-br from-amber-50 to-yellow-100 border border-amber-200 rounded-3xl py-8 px-6 text-center max-w-4xl mx-auto shadow-md">
+                    <span className="text-2xl mb-2 block">⚡</span>
+                    <h3 className="text-lg md:text-xl lg:text-2xl font-black text-amber-950 mb-4 break-keep">
+                      지금 가입하고 우리 동네 프리미엄 오더와 혜택을 선점하세요!
+                    </h3>
+                    <button
+                      onClick={() => navigate('/b2b/signup')}
+                      className="inline-flex items-center gap-2 bg-slate-900 hover:bg-slate-800 text-white font-black text-sm md:text-base px-8 py-4 rounded-xl shadow-lg active:scale-95 transition-all"
+                    >
+                      <span>인테리어/부동산 파트너 신청하기 (3초 완료)</span>
+                      <span className="material-symbols-outlined text-[18px]">arrow_right_alt</span>
+                    </button>
                   </div>
                 </div>
               </motion.div>

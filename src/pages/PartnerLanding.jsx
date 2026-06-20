@@ -54,8 +54,19 @@ export default function PartnerLanding() {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState('전체');
   const [expandedIndex, setExpandedIndex] = useState(null);
-  const [billingCycle, setBillingCycle] = useState('6month'); // '1month', '3month', '6month'
+  const [cycles, setCycles] = useState({
+    basic: '6month',
+    premium: '6month',
+    exclusive: '6month'
+  });
   const faqSectionRef = useRef(null);
+
+  const handleCycleChange = (planKey, cycle) => {
+    setCycles(prev => ({
+      ...prev,
+      [planKey]: cycle
+    }));
+  };
 
   const categories = ['전체', '가입방법', '수수료/비용', '오더/운영', '멤버십', '정보등록/오류', '정산/탈퇴'];
 
@@ -196,51 +207,10 @@ export default function PartnerLanding() {
               </div>
             </div>
 
-            {/* 기간 선택 토글 스위치 */}
-            <div className="flex justify-center mb-16">
-              <div className="bg-slate-200/80 backdrop-blur-md p-1.5 rounded-2xl flex gap-1 border border-slate-300/40">
-                <button
-                  onClick={() => setBillingCycle('1month')}
-                  className={`px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all ${
-                    billingCycle === '1month'
-                      ? 'bg-white text-blue-950 shadow-md scale-105'
-                      : 'text-slate-600 hover:text-slate-900'
-                  }`}
-                >
-                  1개월 가입
-                </button>
-                <button
-                  onClick={() => setBillingCycle('3month')}
-                  className={`px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all relative ${
-                    billingCycle === '3month'
-                      ? 'bg-white text-blue-950 shadow-md scale-105'
-                      : 'text-slate-600 hover:text-slate-900'
-                  }`}
-                >
-                  3개월 가입
-                  <span className="absolute -top-3.5 -right-1.5 bg-rose-500 text-white text-[8px] px-1.5 py-0.5 rounded-full font-black scale-90 border border-white">
-                    최대 13% 할인
-                  </span>
-                </button>
-                <button
-                  onClick={() => setBillingCycle('6month')}
-                  className={`px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all relative ${
-                    billingCycle === '6month'
-                      ? 'bg-white text-blue-950 shadow-md scale-105'
-                      : 'text-slate-600 hover:text-slate-900'
-                  }`}
-                >
-                  6개월 가입
-                  <span className="absolute -top-3.5 -right-1.5 bg-rose-500 text-white text-[8px] px-1.5 py-0.5 rounded-full font-black scale-90 border border-white animate-pulse">
-                    20% 특별 할인
-                  </span>
-                </button>
-              </div>
-            </div>
-
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-stretch pt-4">
               {['basic', 'premium', 'exclusive'].map((key) => {
                 const plan = planData[key];
+                const billingCycle = cycles[key];
                 const pricing = plan.pricing[billingCycle];
                 const isPremium = key === 'premium';
                 const isExclusive = key === 'exclusive';
@@ -277,13 +247,46 @@ export default function PartnerLanding() {
                       </div>
                     )}
 
-                    <div className="mb-8">
+                    <div className="mb-6">
                       <h3 className={`font-bold mb-1 ${isPremium ? 'text-blue-400' : 'text-slate-500'}`}>
                         {plan.name}
                       </h3>
                       <div className="text-3xl font-extrabold mb-2">{key.toUpperCase()}</div>
                       <div className={`text-sm ${isPremium ? 'text-slate-300' : 'text-slate-500'} break-keep`}>
                         {plan.sub}
+                      </div>
+                    </div>
+
+                    {/* 카드 내 개월수 선택 컨트롤러 */}
+                    <div className="mb-6 flex flex-col gap-2">
+                      <span className={`text-[11px] font-bold ${isPremium ? 'text-slate-400' : 'text-slate-500'}`}>가입 기간 선택</span>
+                      <div className={`grid grid-cols-3 gap-1 p-1 rounded-xl ${isPremium ? 'bg-slate-800' : 'bg-slate-100'}`}>
+                        {['1month', '3month', '6month'].map((cycle) => {
+                          const discountText = cycle === '1month' ? '정상가' : cycle === '3month' ? (key === 'premium' ? '13% 할인' : '10% 할인') : '20% 할인';
+                          const isSelected = billingCycle === cycle;
+                          
+                          return (
+                            <button
+                              key={cycle}
+                              type="button"
+                              onClick={() => handleCycleChange(key, cycle)}
+                              className={`py-2 px-1 rounded-lg text-[10px] sm:text-xs font-bold transition-all text-center ${
+                                isSelected
+                                  ? isPremium 
+                                    ? 'bg-blue-600 text-white shadow' 
+                                    : 'bg-white text-blue-950 shadow'
+                                  : isPremium
+                                    ? 'text-slate-400 hover:text-slate-200'
+                                    : 'text-slate-600 hover:text-slate-900'
+                              }`}
+                            >
+                              <div>{cycle === '1month' ? '1개월' : cycle === '3month' ? '3개월' : '6개월'}</div>
+                              <div className={`text-[8px] mt-0.5 opacity-80 ${isSelected ? 'font-extrabold' : 'font-normal'}`}>
+                                {discountText}
+                              </div>
+                            </button>
+                          );
+                        })}
                       </div>
                     </div>
 

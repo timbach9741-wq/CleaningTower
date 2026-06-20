@@ -1,8 +1,36 @@
-import React from 'react';
+import React, { useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import Header from '../components/cleaning/Header';
+import { partnerQnaData } from '../data/partnerQnaData';
 
 export default function PartnerLanding() {
+  const [searchQuery, setSearchQuery] = useState('');
+  const [activeCategory, setActiveCategory] = useState('전체');
+  const [expandedIndex, setExpandedIndex] = useState(null);
+  const faqSectionRef = useRef(null);
+
+  const categories = ['전체', '가입방법', '수수료/비용', '오더/운영', '멤버십', '정보등록/오류', '정산/탈퇴'];
+
+  const handleToggleAccordion = (index) => {
+    setExpandedIndex(expandedIndex === index ? null : index);
+  };
+
+  const handleScrollToFaq = (e) => {
+    e.preventDefault();
+    if (faqSectionRef.current) {
+      faqSectionRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
+
+  // 필터링된 Q&A 목록
+  const filteredQna = partnerQnaData.filter((item) => {
+    const matchesCategory = activeCategory === '전체' || item.category === activeCategory;
+    const matchesSearch = searchQuery.trim() === '' || 
+      item.q.toLowerCase().includes(searchQuery.toLowerCase()) || 
+      item.a.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesCategory && matchesSearch;
+  });
+
   return (
     <div className="bg-slate-50 min-h-screen text-slate-900 font-sans flex flex-col overflow-x-hidden">
       {/* 
@@ -51,6 +79,16 @@ export default function PartnerLanding() {
               >
                 지역 독점 상담 신청
               </Link>
+            </div>
+            <div className="mt-8 flex justify-center">
+              <a 
+                href="#faq"
+                onClick={handleScrollToFaq}
+                className="inline-flex items-center gap-1.5 text-amber-300 hover:text-amber-200 font-bold text-sm md:text-base underline underline-offset-4 decoration-2 transition-colors cursor-pointer group bg-white/5 backdrop-blur-sm px-5 py-2.5 rounded-full border border-white/10 hover:bg-white/10"
+              >
+                <span>💡 가입인증 문자 안 오거나 사진 업로드 오류 해결법 보기</span>
+                <span className="material-symbols-outlined text-base group-hover:translate-y-0.5 transition-transform">arrow_downward</span>
+              </a>
             </div>
           </div>
         </section>
@@ -221,6 +259,185 @@ export default function PartnerLanding() {
           </div>
         </section>
 
+        {/* Q&A / FAQ 검색 섹션 */}
+        <section id="faq" ref={faqSectionRef} className="py-24 px-4 bg-white border-t border-slate-100 scroll-mt-20">
+          <div className="max-w-4xl mx-auto">
+            <div className="text-center mb-12">
+              <span className="text-blue-600 font-bold mb-2 block tracking-wider uppercase">FAQ</span>
+              <h2 className="text-3xl md:text-4xl font-extrabold text-blue-950 mb-4 tracking-tight">
+                자주 묻는 질문 (FAQ)
+              </h2>
+              <p className="text-lg text-slate-500 font-medium">
+                가입, 수수료, 정산 및 시스템 이용에 관한 궁금증을 실시간으로 검색해 보세요.
+              </p>
+            </div>
+
+            {/* 검색바 */}
+            <div className="relative max-w-xl mx-auto mb-10 shadow-sm rounded-2xl">
+              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                <span className="material-symbols-outlined text-slate-400">search</span>
+              </div>
+              <input
+                type="text"
+                placeholder="예: 인증, 사진, 오류, 정산, 수수료 등 검색어 입력..."
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setExpandedIndex(null); // 검색 시 아코디언 초기화
+                }}
+                className="block w-full pl-12 pr-10 py-4 border border-slate-200 rounded-2xl bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-slate-800 text-base transition-all font-medium placeholder-slate-400"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => {
+                    setSearchQuery('');
+                    setExpandedIndex(null);
+                  }}
+                  className="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-400 hover:text-slate-600"
+                >
+                  <span className="material-symbols-outlined text-lg">close</span>
+                </button>
+              )}
+            </div>
+
+            {/* 카테고리 탭 */}
+            <div className="flex flex-wrap justify-center gap-2 mb-10">
+              {categories.map((cat) => (
+                <button
+                  key={cat}
+                  onClick={() => {
+                    setActiveCategory(cat);
+                    setExpandedIndex(null); // 카테고리 변경 시 아코디언 초기화
+                  }}
+                  className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all ${
+                    activeCategory === cat
+                      ? 'bg-blue-600 text-white shadow-md shadow-blue-600/20'
+                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-800'
+                  }`}
+                >
+                  {cat === '전체' ? '전체보기' : cat}
+                </button>
+              ))}
+            </div>
+
+            {/* 검색 결과 건수 표시 */}
+            {searchQuery && (
+              <p className="text-sm text-slate-500 mb-6 text-center">
+                <span className="text-blue-600 font-bold">"{searchQuery}"</span> 검색 결과 총{' '}
+                <span className="text-blue-600 font-bold">{filteredQna.length}</span>건이 검색되었습니다.
+              </p>
+            )}
+
+            {/* Q&A 리스트 */}
+            <div className="space-y-4">
+              {filteredQna.length > 0 ? (
+                filteredQna.map((item, index) => {
+                  const isOpen = expandedIndex === index;
+                  return (
+                    <div
+                      key={index}
+                      className={`border rounded-2xl transition-all duration-300 ${
+                        isOpen
+                          ? 'border-blue-200 bg-blue-50/25 shadow-md shadow-blue-500/5'
+                          : 'border-slate-100 bg-slate-50/50 hover:bg-slate-50 hover:border-slate-200'
+                      }`}
+                    >
+                      <button
+                        onClick={() => handleToggleAccordion(index)}
+                        className="w-full flex items-center justify-between px-6 py-5 text-left focus:outline-none"
+                      >
+                        <div className="flex items-start gap-3">
+                          <span
+                            className={`flex-shrink-0 text-[10px] font-black px-2 py-0.5 rounded ${
+                              isOpen
+                                ? 'bg-blue-600 text-white'
+                                : 'bg-slate-200 text-slate-700'
+                            }`}
+                          >
+                            Q
+                          </span>
+                          <span className="font-bold text-slate-800 text-sm sm:text-base leading-snug break-keep">
+                            {item.q}
+                          </span>
+                        </div>
+                        <span
+                          className={`material-symbols-outlined text-slate-400 transition-transform duration-300 ml-2 ${
+                            isOpen ? 'rotate-180 text-blue-600' : ''
+                          }`}
+                        >
+                          expand_more
+                        </span>
+                      </button>
+
+                      <div
+                        className={`transition-all duration-300 overflow-hidden ${
+                          isOpen ? 'max-h-[300px] border-t border-slate-100/50' : 'max-h-0'
+                        }`}
+                      >
+                        <div className="px-6 py-5 text-slate-600 text-xs sm:text-sm leading-relaxed whitespace-pre-wrap pl-[38px] relative">
+                          <span className="absolute left-6 font-extrabold text-[#16a34a] text-sm">A.</span>
+                          {item.a}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })
+              ) : (
+                <div className="text-center py-16 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+                  <span className="material-symbols-outlined text-5xl text-slate-300 mb-3">search_off</span>
+                  <p className="text-slate-500 font-bold text-base mb-2">검색 결과가 없습니다.</p>
+                  <p className="text-slate-400 text-xs sm:text-sm mb-6 break-keep">
+                    다른 키워드로 검색하시거나, 카테고리 탭을 선택해 보세요.
+                  </p>
+                  
+                  {/* 카카오톡 상담 바로가기 퀵 배너 */}
+                  <a
+                    href="http://pf.kakao.com/_xnHTnX/chat"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 bg-[#FEE500] hover:bg-[#FDD800] text-black font-extrabold px-6 py-3 rounded-xl text-sm shadow-md transition-all active:scale-[0.98]"
+                  >
+                    <svg viewBox="0 0 24 24" className="w-5 h-5 fill-current">
+                      <path d="M12 3c-5.52 0-10 3.51-10 7.84 0 2.8 1.83 5.24 4.6 6.55-.26.96-.94 3.44-.97 3.56-.03.11.02.22.11.27.09.05.21.05.3 0 .12-.06 3.65-2.48 4.2-2.87.56.09 1.15.13 1.76.13 5.52 0 10-3.51 10-7.84S17.52 3 12 3z" />
+                    </svg>
+                    <span>1:1 카카오톡 상담하기</span>
+                  </a>
+                </div>
+              )}
+            </div>
+
+            {/* 해결이 안 되었을 때 안내 배너 */}
+            <div className="mt-16 bg-gradient-to-r from-blue-900 to-indigo-950 text-white rounded-3xl p-6 md:p-8 flex flex-col md:flex-row items-center justify-between gap-6 shadow-xl relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-blue-700/20 rounded-full blur-2xl -mr-10 -mt-10"></div>
+              <div className="text-center md:text-left z-10">
+                <h3 className="text-lg md:text-xl font-extrabold mb-1">원하시는 답변을 찾지 못하셨나요?</h3>
+                <p className="text-xs md:text-sm text-blue-200 opacity-90 break-keep">
+                  본사 지원센터로 문의 주시면 친절하게 가입 승인 및 지정을 대행해 드립니다.
+                </p>
+              </div>
+              <div className="flex flex-wrap justify-center gap-3 z-10">
+                <a
+                  href="tel:031-499-9509"
+                  className="bg-white/10 hover:bg-white/20 text-white border border-white/20 font-bold px-5 py-3 rounded-xl text-xs sm:text-sm transition-all flex items-center gap-1.5"
+                >
+                  <span className="material-symbols-outlined text-base">call</span>
+                  <span>전화 상담</span>
+                </a>
+                <a
+                  href="http://pf.kakao.com/_xnHTnX/chat"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="bg-[#FEE500] hover:bg-[#FDD800] text-black font-extrabold px-5 py-3 rounded-xl text-xs sm:text-sm shadow-md transition-all flex items-center gap-1.5"
+                >
+                  <svg viewBox="0 0 24 24" className="w-5 h-5 fill-current">
+                    <path d="M12 3c-5.52 0-10 3.51-10 7.84 0 2.8 1.83 5.24 4.6 6.55-.26.96-.94 3.44-.97 3.56-.03.11.02.22.11.27.09.05.21.05.3 0 .12-.06 3.65-2.48 4.2-2.87.56.09 1.15.13 1.76.13 5.52 0 10-3.51 10-7.84S17.52 3 12 3z" />
+                  </svg>
+                  <span>카톡 문의</span>
+                </a>
+              </div>
+            </div>
+          </div>
+        </section>
 
       </main>
     </div>

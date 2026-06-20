@@ -417,6 +417,31 @@ export default function Quote() {
     }
   };
 
+  const handleRemittance = (type: 'toss' | 'kakao') => {
+    const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    
+    if (!isMobileDevice) {
+      alert("모바일 기기에서 토스/카카오톡 앱이 설치되어 있어야 즉시 송금이 가능합니다. PC 환경이시라면 아래 계좌 정보 복사 기능을 이용해 이체해 주세요!");
+      return;
+    }
+
+    if (type === 'toss') {
+      const tossUrl = `supertoss://send?bank=신협&account=131022991902&amount=${depositAmount}`;
+      window.location.href = tossUrl;
+    } else {
+      const kakaoUrl = `kakaotalk://kakaopay/money/to/bank?bank_code=048&account_no=131022991902&amount=${depositAmount}`;
+      window.location.href = kakaoUrl;
+    }
+  };
+
+  const handleCopyAccount = () => {
+    navigator.clipboard.writeText('131-022-991902').then(() => {
+      alert('계좌번호(신협 131-022-991902)가 복사되었습니다. 주거래 은행 앱에 붙여넣기 하여 이체해 주세요.');
+    }).catch(err => {
+      console.error('Failed to copy', err);
+    });
+  };
+
   const [isSimpleForm, setIsSimpleForm] = useState(() => cleaningType === '정기' || cleaningType === '가전');
 
   useEffect(() => {
@@ -1547,6 +1572,64 @@ export default function Quote() {
                         </div>
                      </div>
                    </div>
+                </div>
+
+                {/* 계약금 입금 안내 */}
+                <div className="bg-blue-950/40 rounded-xl p-4 mb-4 border border-blue-500/20 text-left">
+                  <p className="text-blue-400 text-[13px] font-bold mb-1.5 flex items-center gap-1.5">
+                    <span className="material-symbols-outlined text-[16px]">info</span>
+                    예약 확정을 위한 계약금 입금 안내
+                  </p>
+                  <p className="text-xs text-slate-300 leading-relaxed mb-3">
+                    원활한 서비스 진행과 노쇼 방지를 위해{' '}
+                    <strong className="text-rose-400 font-bold">
+                      계약금 {depositAmount.toLocaleString()}원
+                    </strong>
+                    {cleaningType === '정기' || cleaningType === '가전'
+                      ? '을 입금해 주시면 예약이 최종 확정됩니다.'
+                      : '(최종 예상 결제액의 10%)을 아래 방법으로 입금해 주시면 예약이 최종 확정됩니다.'}
+                  </p>
+
+                  {/* 간편 송금 버튼 그룹 */}
+                  <div className="grid grid-cols-2 gap-2 mb-3">
+                    <button
+                      type="button"
+                      onClick={() => handleRemittance('toss')}
+                      className="py-2.5 bg-[#3182F6] hover:bg-[#206FE5] text-white font-bold rounded-xl text-xs transition-all flex items-center justify-center gap-1.5 shadow active:scale-95"
+                    >
+                      <span className="font-sans font-black tracking-tighter text-[11px]">toss</span>
+                      토스 간편송금
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleRemittance('kakao')}
+                      className="py-2.5 bg-[#FFEB00] hover:bg-[#FADA00] text-[#1A1A1C] font-bold rounded-xl text-xs transition-all flex items-center justify-center gap-1.5 shadow active:scale-95"
+                    >
+                      <span className="material-symbols-outlined text-[13px] font-bold">chat</span>
+                      카카오페이 송금
+                    </button>
+                  </div>
+
+                  {/* 계좌 정보 */}
+                  <div className="bg-slate-900/50 p-2.5 rounded-lg border border-white/5 flex flex-col gap-1">
+                    <div className="flex justify-between items-center text-[11px]">
+                      <span className="text-slate-400">입금 계좌</span>
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-bold text-slate-200 tracking-wide select-all">신협 131-022-991902</span>
+                        <button
+                          type="button"
+                          onClick={handleCopyAccount}
+                          className="px-1.5 py-0.5 bg-white/10 hover:bg-white/20 text-slate-300 rounded text-[9px] font-bold transition-all border border-white/10 active:scale-95"
+                        >
+                          복사
+                        </button>
+                      </div>
+                    </div>
+                    <div className="flex justify-between items-center text-[11px]">
+                      <span className="text-slate-400">예금주</span>
+                      <span className="text-slate-200 font-semibold">주식회사 청소타워</span>
+                    </div>
+                  </div>
                 </div>
 
                 {/* 신뢰도 문구 */}

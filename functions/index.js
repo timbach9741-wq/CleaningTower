@@ -107,8 +107,8 @@ async function sendCustomerKakaoNotification(phone, templateCode, text, buttonUr
       text: text, // 알림톡 실패 시 문자로 전송될 텍스트
     };
 
-    // 카카오 알림톡 옵션 추가 (카카오 비즈니스 채널 프로필 ID가 있을 때만 활성화)
-    if (SOLAPI_PF_ID) {
+    // 카카오 알림톡 옵션 추가 (카카오 비즈니스 채널 프로필 ID 및 템플릿 코드가 있을 때만 활성화)
+    if (SOLAPI_PF_ID && templateCode) {
       const kakaoOptions = {
         pfId: SOLAPI_PF_ID,
         templateId: templateCode,
@@ -558,6 +558,60 @@ exports.confirmPayment = functions.https.onRequest(async (req, res) => {
       message: errorData.message || error.message || '결제 승인 처리 중 알 수 없는 에러가 발생했습니다.',
       code: errorData.code || 'UNKNOWN_ERROR',
     });
+  }
+});
+
+/**
+ * ★ 관리자가 직접 파트너에게 개별 알림톡/문자 발송할 수 있도록 하는 HTTPS API
+ */
+exports.sendAlimtalk = functions.https.onRequest(async (req, res) => {
+  // CORS 수동 헤더 설정
+  res.set('Access-Control-Allow-Origin', '*');
+  res.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+
+  if (req.method === 'OPTIONS') {
+    res.status(204).send('');
+    return;
+  }
+
+  if (req.method !== 'POST') {
+    res.status(405).json({ success: false, message: 'Method Not Allowed' });
+    return;
+  }
+
+  // 1. 관리자 권한 검증 (Bearer Token)
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    res.status(401).json({ success: false, message: 'Unauthorized (No token provided)' });
+    return;
+  }
+
+  const token = authHeader.split('Bearer ')[1];
+  try {
+    const decodedToken = await admin.auth().verifyIdToken(token);
+    if (!decodedToken.admin) {
+      res.status(403).json({ success: false, message: 'Forbidden (Not an admin)' });
+      return;
+    }
+  } catch (err) {
+    res.status(401).json({ success: false, message: 'Unauthorized (Invalid token)' });
+    return;
+  }
+
+  const { phone, templateCode, text, buttonUrl } = req.body;
+
+  if (!phone || !text) {
+    res.status(400).json({ success: false, message: 'Missing phone or text.' });
+    return;
+  }
+
+  try {
+    const success = await sendCustomerKakaoNotification(phone, templateCode || '', text, buttonUrl || '');
+    res.status(200).json({ success });
+  } catch (error) {
+    console.error('[sendAlimtalk error]', error);
+    res.status(500).json({ success: false, message: error.message });
   }
 });
 

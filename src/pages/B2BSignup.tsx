@@ -17,6 +17,9 @@ export default function Signup() {
     businessImage: null as File | null,
     password: '',
     passwordConfirm: '',
+    bankName: '',
+    accountNumber: '',
+    accountHolder: '',
   });
 
   const [agreements, setAgreements] = useState({
@@ -114,7 +117,7 @@ export default function Signup() {
         phone: formData.phone,
         email: formData.email,
         businessNumber: formData.businessNumber,
-        isAutoApproved: isVerified
+        isAutoApproved: true
       };
       
       // 앱스 스크립트 연결 주소가 입력되었을 때만 전송되도록 처리
@@ -132,11 +135,15 @@ export default function Signup() {
       // 2. Firebase Firestore에 파트너 정보 저장 (관리자 연동)
       try {
         await addDoc(collection(db, "partners"), {
+          isB2B: true,
           name: formData.name,
           phone: formData.phone,
           email: formData.email,
           businessNumber: formData.businessNumber,
-          status: isVerified ? 'active' : 'pending',
+          status: 'active',
+          bankName: formData.bankName,
+          accountNumber: formData.accountNumber,
+          accountHolder: formData.accountHolder,
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString()
         });
@@ -149,20 +156,32 @@ export default function Signup() {
           phone: formData.phone,
           email: formData.email,
           businessNumber: formData.businessNumber,
+          bankName: formData.bankName,
+          accountNumber: formData.accountNumber,
+          accountHolder: formData.accountHolder,
           createdAt: new Date().toISOString()
         });
       } catch (fbError) {
         console.error("Firebase 저장 중 오류:", fbError);
       }
 
+      // B2B 세션 로그인 처리
+      sessionStorage.setItem('b2b_logged_in', 'true');
+      sessionStorage.setItem('b2b_business_name', formData.name);
+      sessionStorage.setItem('b2b_login_id', formData.phone);
+      sessionStorage.setItem('b2b_bank_name', formData.bankName);
+      sessionStorage.setItem('b2b_account_number', formData.accountNumber);
+      sessionStorage.setItem('b2b_account_holder', formData.accountHolder);
+
       // 텔레그램 알림 발송 (비동기)
       try {
-        const approvalText = isVerified ? "⚡ 즉시 자동 승인" : "⏳ 승인 대기";
+        const approvalText = "⚡ 즉시 자동 승인";
         const message = `🔔 <b>[청소타워 B2B 가입 신청]</b>\n\n` +
           `👤 <b>대표자명:</b> ${formData.name}\n` +
           `📱 <b>연락처:</b> ${formData.phone}\n` +
           `📧 <b>이메일:</b> ${formData.email}\n` +
           `💼 <b>사업자번호:</b> ${formData.businessNumber}\n` +
+          `🏦 <b>은행/계좌:</b> ${formData.bankName} ${formData.accountNumber} (예금주: ${formData.accountHolder})\n` +
           `⌛ <b>승인 상태:</b> ${approvalText}`;
         
         sendTelegramAlert(message).catch(err => console.error("텔레그램 발송 오류:", err));
@@ -458,9 +477,56 @@ export default function Signup() {
                       value={formData.passwordConfirm}
                       onChange={e => setFormData({ ...formData, passwordConfirm: e.target.value })}
                     />
-                     {formData.passwordConfirm && formData.password !== formData.passwordConfirm && (
-                        <p className="text-xs text-rose-500 mt-2 font-medium pl-1">비밀번호가 일치하지 않습니다.</p>
-                     )}
+                    {formData.passwordConfirm && formData.password !== formData.passwordConfirm && (
+                       <p className="text-xs text-rose-500 mt-2 font-medium pl-1">비밀번호가 일치하지 않습니다.</p>
+                    )}
+                  </div>
+
+                  <div className="pt-4 border-t border-slate-100 mt-4">
+                    <label className="block text-sm font-bold text-blue-600 mb-3 flex items-center gap-1.5">
+                      <span className="material-symbols-outlined text-[18px]">payments</span>
+                      페이백 정산 계좌 등록
+                    </label>
+                    <div className="space-y-3">
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-xs font-bold text-slate-600 mb-1">정산 은행</label>
+                          <input
+                            type="text"
+                            required
+                            className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                            placeholder="예) 국민은행"
+                            value={formData.bankName}
+                            onChange={e => setFormData({ ...formData, bankName: e.target.value })}
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-bold text-slate-600 mb-1">예금주명 (또는 상호)</label>
+                          <input
+                            type="text"
+                            required
+                            className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                            placeholder="예) 홍길동"
+                            value={formData.accountHolder}
+                            onChange={e => setFormData({ ...formData, accountHolder: e.target.value })}
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-slate-600 mb-1">계좌 번호</label>
+                        <input
+                          type="text"
+                          required
+                          className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                          placeholder="숫자만 입력 (- 제외)"
+                          value={formData.accountNumber}
+                          onChange={e => setFormData({ ...formData, accountNumber: e.target.value.replace(/[^0-9]/g, '') })}
+                        />
+                      </div>
+                      <p className="text-[11px] text-slate-500 leading-relaxed break-keep mt-1">
+                        ※ 최종 청소 시공이 완료되면, 위 계좌로 시공 최종 금액의 10% 페이백이 정산 지급됩니다.
+                      </p>
+                    </div>
                   </div>
                 </div>
 
@@ -473,7 +539,7 @@ export default function Signup() {
                   </button>
                   <button 
                     onClick={handleSubmit}
-                    disabled={!formData.name || !formData.phone || !formData.email || !formData.password || formData.password !== formData.passwordConfirm || isSubmitting}
+                    disabled={!formData.name || !formData.phone || !formData.email || !formData.password || formData.password !== formData.passwordConfirm || !formData.bankName || !formData.accountNumber || !formData.accountHolder || isSubmitting}
                     className="flex-1 py-4 bg-slate-900 hover:bg-slate-800 disabled:bg-slate-300 disabled:cursor-not-allowed text-white font-bold rounded-xl shadow-xl active:scale-[0.98] transition-all flex items-center justify-center"
                   >
                     {isSubmitting ? <Loader2 size={18} className="animate-spin" /> : '가입 완료'}
@@ -506,6 +572,37 @@ export default function Signup() {
                     <p className="text-sm text-slate-700 font-medium">
                       <span className="text-slate-400">비밀번호:</span> 가입 시 설정한 비밀번호
                     </p>
+                  </div>
+                </div>
+
+                {/* 모바일 바로가기 앱 설치 안내 */}
+                <div className="w-full bg-blue-50 border border-blue-100 rounded-xl p-5 mb-6 text-left">
+                  <h4 className="text-sm font-bold text-blue-900 flex items-center gap-1.5 mb-3">
+                    📱 홈 화면에 앱(바로가기) 추가하는 방법
+                  </h4>
+                  <div className="space-y-4 text-xs text-slate-600 font-medium leading-relaxed">
+                    <div className="bg-white p-3 rounded-lg border border-blue-50">
+                      <p className="font-bold text-slate-800 text-xs mb-1">🍎 아이폰 (Safari 브라우저)</p>
+                      <ol className="list-decimal list-inside space-y-0.5 text-slate-500">
+                        <li>하단 <span className="font-extrabold text-blue-600">공유 버튼(내보내기)</span> 클릭</li>
+                        <li>메뉴를 아래로 내려 <span className="font-extrabold text-blue-600">'홈 화면에 추가'</span> 선택</li>
+                      </ol>
+                    </div>
+
+                    <div className="bg-white p-3 rounded-lg border border-blue-50">
+                      <p className="font-bold text-slate-800 text-xs mb-1">🤖 안드로이드 (Chrome / 삼성 인터넷)</p>
+                      <ol className="list-decimal list-inside space-y-0.5 text-slate-500">
+                        <li>우측 상단/하단 <span className="font-extrabold text-blue-600">메뉴(더보기)</span> 아이콘 클릭</li>
+                        <li><span className="font-extrabold text-blue-600">'홈 화면에 추가'</span> 또는 <span className="font-extrabold text-blue-600">'앱 설치'</span> 선택</li>
+                      </ol>
+                    </div>
+
+                    <div className="bg-amber-50/50 p-3 rounded-lg border border-amber-100/50 text-amber-800">
+                      <p className="font-bold text-xs mb-0.5">⚠️ 카카오톡/네이버 인앱 브라우저로 접속한 경우</p>
+                      <p className="text-[11px] text-amber-700 leading-normal">
+                        인앱 브라우저는 홈 화면 추가 기능이 제한됩니다. <span className="font-extrabold">우측 상단 더보기(...)</span>를 눌러 <span className="font-extrabold">'다른 브라우저로 열기'</span>를 실행한 후 위 순서대로 진행해 주세요.
+                      </p>
+                    </div>
                   </div>
                 </div>
 

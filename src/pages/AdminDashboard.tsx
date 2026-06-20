@@ -17,7 +17,7 @@ import {
   Star,
 } from 'lucide-react';
 import { db } from '../firebase';
-import { collection, onSnapshot, doc, updateDoc, addDoc, deleteDoc, setDoc } from 'firebase/firestore';
+import { collection, onSnapshot, doc, updateDoc, addDoc, deleteDoc, setDoc, query, where, getDocs } from 'firebase/firestore';
 import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from 'firebase/auth';
 
 export interface Order {
@@ -90,6 +90,9 @@ export interface PartnerUser {
   unavailableDates?: string[];
   kakaoId?: string;
   naverId?: string;
+  isB2B?: boolean;
+  email?: string;
+  businessNumber?: string;
 }
 
 export interface Review {
@@ -145,6 +148,10 @@ export default function Admin() {
   const [partnerFilterPlan, setPartnerFilterPlan] = useState('전체');
   const [partnerFilterTier, setPartnerFilterTier] = useState('전체');
 
+  // B2B 파트너 관리 탭 필터
+  const [b2bSearchTerm, setB2bSearchTerm] = useState('');
+  const [b2bFilterStatus, setB2bFilterStatus] = useState('전체');
+
 
   // 재무 탭 데이터 필터 상탯값
   const [financeStartDate, setFinanceStartDate] = useState('');
@@ -166,6 +173,7 @@ export default function Admin() {
     realPhone: '',
     type: '일반 청소',
     house: '아파트',
+    houseSubType: '',
     size: '',
     location: '',
     date: '',
@@ -173,6 +181,28 @@ export default function Admin() {
     price: '',
     detail: '',
   });
+  
+  const [isManualB2B, setIsManualB2B] = useState(false);
+  const [selectedB2BPartnerId, setSelectedB2BPartnerId] = useState('');
+  
+  // 견적 계산 마법사 상태값
+  const [isQuoteWizardOpen, setIsQuoteWizardOpen] = useState(true);
+  const [wizardOptions, setWizardOptions] = useState<{ [key: string]: number }>({
+    phytoncide: 0,
+    veranda: 0,
+    refrigerator: 0,
+    washer: 0,
+    ac: 0,
+    dishwasher: 0,
+    oven: 0,
+    mold: 0,
+    sticker: 0,
+    insulation: 0,
+  });
+  const [contaminationLevel, setContaminationLevel] = useState<'normal' | 'high' | 'severe'>('normal');
+  const [hasNoElevatorSurcharge, setHasNoElevatorSurcharge] = useState(false);
+  const [customDiscount, setCustomDiscount] = useState('');
+  const [selectedWizardOptions, setSelectedWizardOptions] = useState<string[]>([]);
   
   // CRM 고도화용 상태
   const [customersData, setCustomersData] = useState<any[]>([]);
@@ -193,13 +223,16 @@ export default function Admin() {
   
   const adminNotifications = quotes.filter(q => q.cancelReason && !q.adminReviewedCancel);
 
-  // 수동 예약 등록 시 자동 견적가 계산기 헬퍼 함수
-  const calculateEstimatedPrice = (type: string, size: string) => {
+  const calculateEstimatedPrice = (type: string, size: string, forceB2B?: boolean) => {
     const sizeNum = Number(size);
     if (!sizeNum || isNaN(sizeNum) || sizeNum <= 0) return 0;
     
+    const isB2B = forceB2B !== undefined ? forceB2B : isManualB2B;
+    
     let pricePerPyeong = 15000;
-    if (type === '프리미엄 청소') {
+    if (isB2B) {
+      pricePerPyeong = 20000;
+    } else if (type === '프리미엄 청소') {
       pricePerPyeong = 20000;
     } else if (type === '상가/사무실 정기청소') {
       pricePerPyeong = 18000;
@@ -208,6 +241,103 @@ export default function Admin() {
     const basePrice = sizeNum * pricePerPyeong;
     const vat = Math.floor(basePrice * 0.1);
     return basePrice + vat;
+  };
+
+  const getWizardCalculations = () => {
+    const sizeNum = Number(newQuoteForm.size) || 0;
+    
+    // 1. 기본 청소비
+    let pricePerPyeong = 15000;
+    if (isManualB2B) {
+      pricePerPyeong = 20000;
+    } else if (newQuoteForm.type === '프리미엄 청소') {
+      pricePerPyeong = 20000;
+    } else if (newQuoteForm.type === '상가/사무실 정기청소') {
+      pricePerPyeong = 18000;
+    }
+    const baseCleanPrice = sizeNum * pricePerPyeong;
+    
+    // 2. 추가 옵션비
+    let optionsTotal = 0;
+    const selectedOptLabels: string[] = [];
+    
+    // 피톤치드 (평당 1,000원)
+    if (wizardOptions.phytoncide > 0) {
+      const pPrice = sizeNum * 1000;
+      optionsTotal += pPrice;
+      selectedOptLabels.push(`피톤치드 연무소독 (${pPrice.toLocaleString()}원)`);
+    }
+    // 거실 비확장형 베란다 (+40,000원)
+    if (wizardOptions.veranda > 0) {
+      optionsTotal += 40000;
+      selectedOptLabels.push(`거실 비확장형 베란다 청소 (40,000원)`);
+    }
+    // 가전 제품 내부 청소 (개당 +30,000원)
+    const applianceItems = [
+      { id: 'refrigerator', name: '냉장고' },
+      { id: 'washer', name: '세탁기' },
+      { id: 'ac', name: '에어컨' },
+      { id: 'dishwasher', name: '식기세척기' },
+      { id: 'oven', name: '오븐' },
+    ];
+    applianceItems.forEach(item => {
+      const count = wizardOptions[item.id] || 0;
+      if (count > 0) {
+        const itemPrice = count * 30000;
+        optionsTotal += itemPrice;
+        selectedOptLabels.push(`${item.name} 내부 청소 x${count} (${itemPrice.toLocaleString()}원)`);
+      }
+    });
+    // 특수 오염 제거 (개당 +40,000원)
+    const contaminationItems = [
+      { id: 'mold', name: '곰팡이 제거' },
+      { id: 'sticker', name: '스티커 제거' },
+      { id: 'insulation', name: '단열재(뽁뽁이) 제거' },
+    ];
+    contaminationItems.forEach(item => {
+      const count = wizardOptions[item.id] || 0;
+      if (count > 0) {
+        const itemPrice = count * 40000;
+        optionsTotal += itemPrice;
+        selectedOptLabels.push(`${item.name} x${count} (${itemPrice.toLocaleString()}원)`);
+      }
+    });
+
+    // 3. 할증 및 조정
+    // 오염도 할증 (기본 청소비 기준)
+    let contaminationSurcharge = 0;
+    let contaminationRate = 0;
+    if (contaminationLevel === 'high') {
+      contaminationRate = 10;
+      contaminationSurcharge = Math.floor(baseCleanPrice * 0.1);
+    } else if (contaminationLevel === 'severe') {
+      contaminationRate = 30;
+      contaminationSurcharge = Math.floor(baseCleanPrice * 0.3);
+    }
+    
+    // 엘리베이터 할증 (+30,000원)
+    const elevatorSurcharge = hasNoElevatorSurcharge ? 30000 : 0;
+    
+    // 수동 할인액
+    const discountVal = Number(customDiscount) || 0;
+    
+    // 합계 (VAT 제외 공급가액)
+    const supplyTotal = baseCleanPrice + optionsTotal + contaminationSurcharge + elevatorSurcharge - discountVal;
+    const vat = Math.floor(supplyTotal * 0.1);
+    const grandTotal = supplyTotal + vat;
+    
+    return {
+      baseCleanPrice,
+      optionsTotal,
+      contaminationSurcharge,
+      contaminationRate,
+      elevatorSurcharge,
+      discountVal,
+      supplyTotal,
+      vat,
+      grandTotal: grandTotal > 0 ? grandTotal : 0,
+      selectedOptLabels,
+    };
   };
 
 
@@ -328,6 +458,27 @@ export default function Admin() {
   const handleStatusChange = async (id: string, newStatus: string) => {
     if (!db) return;
     await updateDoc(doc(db, 'quotes', id), { status: newStatus });
+  };
+
+  const handleAssignPartner = async (quoteId: string, partnerId: string, partnerName: string) => {
+    if (!db) return;
+    try {
+      await updateDoc(doc(db, 'quotes', quoteId), {
+        assignedTo: partnerId,
+        designatedPartnerName: partnerName,
+        status: '배정완료'
+      });
+      setSelectedQuoteDetail(prev => prev && prev.id === quoteId ? { 
+        ...prev, 
+        assignedTo: partnerId, 
+        designatedPartnerName: partnerName, 
+        status: '배정완료' 
+      } : prev);
+      alert('파트너 배정이 완료되었습니다.');
+    } catch (e) {
+      console.error(e);
+      alert('파트너 배정 중 오류가 발생했습니다.');
+    }
   };
 
   const handleSaveAdminMemo = async () => {
@@ -463,10 +614,53 @@ export default function Admin() {
     }
   };
 
-  const handleSendBusinessUrl = (partner: PartnerUser) => {
+  const handleSendBusinessUrl = async (partner: PartnerUser) => {
     const businessUrl = `https://clean-partner.dailyhousing.kr`;
     const message = `[입주청소 파트너스]\n${partner.companyName || partner.name}님, 사업자 전용 페이지 주소가 발송되었습니다.\n\nURL: ${businessUrl}\n아이디: ${partner.loginId}\n비밀번호: ${partner.loginPassword || partner.password}`;
-    alert(`아래 내용으로 파트너에게 URL 발송이 시뮬레이션 되었습니다. (추후 카카오톡 연동 예정)\n\n${message}`);
+    
+    const phone = partner.phone;
+    if (!phone) {
+      alert("전송할 파트너의 전화번호가 등록되어 있지 않습니다.");
+      return;
+    }
+
+    if (!confirm(`${partner.companyName || partner.name} 대표님께 문자/알림톡을 실제로 발송하시겠습니까?`)) {
+      return;
+    }
+
+    try {
+      const auth = getAuth();
+      const currentUser = auth.currentUser;
+      if (!currentUser) {
+        alert("로그인이 만료되었습니다. 다시 로그인해 주세요.");
+        return;
+      }
+
+      const idToken = await currentUser.getIdToken();
+
+      const response = await fetch('https://us-central1-house-clean-hub.cloudfunctions.net/sendAlimtalk', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${idToken}`
+        },
+        body: JSON.stringify({
+          phone: phone,
+          text: message,
+          templateCode: '' // 빈값 전달 시 LMS/SMS로 즉시 발급/전달
+        })
+      });
+
+      const data = await response.json();
+      if (response.ok && data.success) {
+        alert("문자/알림톡이 성공적으로 발송되었습니다!");
+      } else {
+        alert(`발송 실패: ${data.message || '알 수 없는 에러가 발생했습니다.'}`);
+      }
+    } catch (e: any) {
+      console.error("URL 발송 오류:", e);
+      alert(`알림톡 발송 중 네트워크 오류가 발생했습니다: ${e.message}`);
+    }
   };
 
   const handleCreateQuote = async () => {
@@ -477,20 +671,49 @@ export default function Admin() {
     }
     
     try {
-      await addDoc(collection(db, 'quotes'), {
+      const selectedB2BPartner = isManualB2B ? partners.find(p => p.id === selectedB2BPartnerId) : null;
+      
+      const docData: any = {
         ...newQuoteForm,
+        house: newQuoteForm.houseSubType ? `${newQuoteForm.house} (${newQuoteForm.houseSubType})` : newQuoteForm.house,
+        houseType: newQuoteForm.house,
+        houseSubType: newQuoteForm.houseSubType,
         status: '대기중', // 수동 등록 시 기본값
         createdAt: new Date().toISOString(),
-        options: [], 
+        options: selectedWizardOptions, 
         assignedTo: null,
         isUrgent: false,
-      });
+      };
+
+      if (isManualB2B && selectedB2BPartner) {
+        const b2bLoginId = selectedB2BPartner.phone || selectedB2BPartner.loginId || '';
+        const businessName = selectedB2BPartner.companyName || selectedB2BPartner.name || '';
+        docData.isB2B = true;
+        docData.b2bLoginId = b2bLoginId;
+        docData.businessName = businessName;
+        docData.customerName = businessName;
+        docData.name = businessName;
+        docData.realPhone = selectedB2BPartner.phone || newQuoteForm.realPhone;
+      }
+
+      await addDoc(collection(db, 'quotes'), docData);
       alert("새 예약이 정상적으로 등록되었습니다.");
       setIsCreateQuoteModalOpen(false);
       setNewQuoteForm({
-        name: '', realPhone: '', type: '일반 청소', house: '아파트',
+        name: '', realPhone: '', type: '일반 청소', house: '아파트', houseSubType: '',
         size: '', location: '', date: '', time: '시간협의', price: '', detail: ''
       });
+      setIsManualB2B(false);
+      setSelectedB2BPartnerId('');
+      setIsQuoteWizardOpen(true);
+      setWizardOptions({
+        phytoncide: 0, veranda: 0, refrigerator: 0, washer: 0, ac: 0,
+        dishwasher: 0, oven: 0, mold: 0, sticker: 0, insulation: 0
+      });
+      setContaminationLevel('normal');
+      setHasNoElevatorSurcharge(false);
+      setCustomDiscount('');
+      setSelectedWizardOptions([]);
     } catch (e) {
       console.error(e);
       alert("예약 등록에 실패했습니다.");
@@ -778,6 +1001,9 @@ export default function Admin() {
 
   // 파트너 탭 데이터 필터링 로직
   const filteredPartnersList = partners.filter(p => {
+    // B2B 파트너 제외
+    if (p.isB2B) return false;
+
     // 1. 상태 필터
     if (partnerFilterStatus !== '전체') {
       if (partnerFilterStatus === 'active' && p.status !== 'active') return false;
@@ -827,6 +1053,74 @@ export default function Admin() {
 
   // 드롭다운 필터용 파트너 고유 목록 추출
   const uniquePartners = Array.from(new Set(quotes.filter(q => q.assignedTo).map(q => q.assignedTo)));
+
+  // B2B 파트너 탭 데이터 필터링 로직
+  const filteredB2BPartnersList = useMemo(() => {
+    return partners.filter(p => {
+      // B2B 파트너만 포함
+      if (!p.isB2B) return false;
+
+      // 1. 상태 필터
+      if (b2bFilterStatus !== '전체') {
+        if (b2bFilterStatus === 'active' && p.status !== 'active') return false;
+        if (b2bFilterStatus === 'pending' && p.status !== 'pending') return false;
+        if (b2bFilterStatus === 'suspended' && p.status !== 'suspended') return false;
+      }
+
+      // 2. 검색어 필터
+      if (b2bSearchTerm) {
+        const term = b2bSearchTerm.toLowerCase();
+        const matchName = String(p.name || '').toLowerCase().includes(term);
+        const matchEmail = String(p.email || '').toLowerCase().includes(term);
+        const matchPhone = String(p.phone || '').toLowerCase().includes(term);
+        const matchBusinessNumber = String(p.businessNumber || '').toLowerCase().includes(term);
+        const matchBankName = String(p.bankName || '').toLowerCase().includes(term);
+
+        if (!matchName && !matchEmail && !matchPhone && !matchBusinessNumber && !matchBankName) {
+          return false;
+        }
+      }
+      return true;
+    });
+  }, [partners, b2bFilterStatus, b2bSearchTerm]);
+
+  // B2B 파트너 승인/정지/삭제 처리 핸들러
+  const handleApproveB2BPartner = async (id: string) => {
+    if (!db) return;
+    if (confirm("해당 B2B 파트너를 승인(활성화)하시겠습니까?")) {
+      await updateDoc(doc(db, 'partners', id), { status: 'active' });
+      alert("B2B 파트너가 승인되었습니다.");
+    }
+  };
+
+  const handleSuspendB2BPartner = async (id: string) => {
+    if (!db) return;
+    if (confirm("해당 B2B 파트너 계정을 정지하시겠습니까?")) {
+      await updateDoc(doc(db, 'partners', id), { status: 'suspended' });
+      alert("B2B 파트너 계정이 정지되었습니다.");
+    }
+  };
+
+  const handleDeleteB2BPartner = async (id: string, phone?: string) => {
+    if (!db) return;
+    if (confirm("정말 이 B2B 파트너를 거절/삭제하시겠습니까?\n이 작업은 파트너 정보와 로그인용 B2B 계정을 모두 삭제하며 복구할 수 없습니다.")) {
+      try {
+        await deleteDoc(doc(db, 'partners', id));
+        const cleanPhone = phone ? phone.replace(/[^0-9]/g, '') : '';
+        if (cleanPhone) {
+          const q = query(collection(db, 'b2bAccounts'), where('phone', '==', phone));
+          const snapshot = await getDocs(q);
+          for (const document of snapshot.docs) {
+            await deleteDoc(doc(db, 'b2bAccounts', document.id));
+          }
+        }
+        alert("B2B 파트너 및 로그인 계정이 모두 성공적으로 삭제되었습니다.");
+      } catch (err) {
+        console.error("B2B 파트너 삭제 오류:", err);
+        alert("삭제 중 오류가 발생했습니다.");
+      }
+    }
+  };
 
   const handleAdminLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -911,6 +1205,44 @@ export default function Admin() {
     } catch (err) {
       console.error('Error saving customer note:', err);
       alert('저장 중 오류가 발생했습니다.');
+    }
+  };
+  const handleDeleteCustomer = async (phone: string) => {
+    if (!db) return;
+    if (confirm(`정말 이 고객을 삭제하시겠습니까?\n이 고객의 모든 문의/예약 내역 및 등록된 특이사항 메모가 영구 삭제되며 복구할 수 없습니다.`)) {
+      try {
+        // 1. customers 컬렉션에서 해당 고객 정보 삭제
+        await deleteDoc(doc(db, 'customers', phone));
+        
+        // 2. quotes 컬렉션에서 해당 고객의 전화번호와 일치하는 모든 견적서 삭제
+        const quotesQuery1 = query(collection(db, 'quotes'), where('realPhone', '==', phone));
+        const quotesQuery2 = query(collection(db, 'quotes'), where('contactInfo', '==', phone));
+        const quotesQuery3 = query(collection(db, 'quotes'), where('phone', '==', phone));
+        
+        const [snap1, snap2, snap3] = await Promise.all([
+          getDocs(quotesQuery1),
+          getDocs(quotesQuery2),
+          getDocs(quotesQuery3)
+        ]);
+        
+        const deletePromises: Promise<void>[] = [];
+        
+        const addDeletePromise = (snapshot: any) => {
+          snapshot.forEach((d: any) => {
+            deletePromises.push(deleteDoc(doc(db, 'quotes', d.id)));
+          });
+        };
+        
+        addDeletePromise(snap1);
+        addDeletePromise(snap2);
+        addDeletePromise(snap3);
+        
+        await Promise.all(deletePromises);
+        alert('고객 정보 및 해당 고객의 모든 예약 내역이 성공적으로 삭제되었습니다.');
+      } catch (err) {
+        console.error("고객 삭제 중 오류:", err);
+        alert("고객 삭제 중 오류가 발생했습니다.");
+      }
     }
   };
 
@@ -998,7 +1330,14 @@ export default function Admin() {
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'partners' ? 'bg-blue-600 text-white' : 'text-slate-300 hover:bg-slate-800'}`}
           >
             <UserCheck size={20} />
-            <span className="font-medium">파트너 관리</span>
+            <span className="font-medium">청소 파트너 관리</span>
+          </button>
+          <button 
+            onClick={() => { setActiveTab('b2bPartners'); setIsMobileMenuOpen(false); }}
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'b2bPartners' ? 'bg-blue-600 text-white' : 'text-slate-300 hover:bg-slate-800'}`}
+          >
+            <Building2 size={20} />
+            <span className="font-medium">B2B 파트너 관리</span>
           </button>
           <button 
             onClick={() => { setActiveTab('customers'); setIsMobileMenuOpen(false); }}
@@ -1244,7 +1583,19 @@ export default function Admin() {
                 </div>
                 <div className="flex flex-wrap gap-2">
                   <button onClick={() => setIsFilterModalOpen(true)} className="px-4 py-2 bg-white border border-gray-200 text-sm font-bold rounded-lg text-gray-700 hover:bg-gray-50 shadow-sm transition-colors flex items-center gap-1"><Search size={14} /> 필터조회</button>
-                  <button onClick={() => setIsCreateQuoteModalOpen(true)} className="px-4 py-2 bg-slate-900 text-sm font-bold rounded-lg text-white hover:bg-slate-800 shadow-sm transition-colors">+ 새 예약 수동등록</button>
+                  <button 
+                    onClick={() => {
+                      setIsCreateQuoteModalOpen(true);
+                      setIsManualB2B(true);
+                      setNewQuoteForm(prev => ({
+                        ...prev,
+                        type: '프리미엄 청소'
+                      }));
+                    }} 
+                    className="px-4 py-2 bg-slate-900 text-sm font-bold rounded-lg text-white hover:bg-slate-800 shadow-sm transition-colors"
+                  >
+                    + 새 예약 수동등록
+                  </button>
                 </div>
               </div>
               <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
@@ -1614,7 +1965,7 @@ export default function Admin() {
                         <th className="p-4 font-bold text-right">누적 결제</th>
                         <th className="p-4 font-bold text-center">등급</th>
                         <th className="p-4 font-bold">메모/특이사항</th>
-                        <th className="p-4 font-bold text-center">상세</th>
+                        <th className="p-4 font-bold text-center">관리</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100">
@@ -1675,12 +2026,20 @@ export default function Admin() {
                                 </button>
                               </td>
                               <td className="p-4 text-center">
-                                <button 
-                                  onClick={() => setSelectedQuoteDetail(customer.orders[0])}
-                                  className="text-gray-500 hover:text-gray-800 text-sm font-bold hover:underline"
-                                >
-                                  내역
-                                </button>
+                                <div className="flex justify-center gap-3">
+                                  <button 
+                                    onClick={() => setSelectedQuoteDetail(customer.orders[0])}
+                                    className="text-gray-500 hover:text-gray-800 text-sm font-bold hover:underline"
+                                  >
+                                    내역
+                                  </button>
+                                  <button 
+                                    onClick={() => handleDeleteCustomer(customer.phone)}
+                                    className="text-red-500 hover:text-red-700 text-sm font-bold hover:underline"
+                                  >
+                                    삭제
+                                  </button>
+                                </div>
                               </td>
                             </tr>
                           );
@@ -1735,12 +2094,20 @@ export default function Admin() {
                             </div>
                           </div>
 
-                          <button 
-                            onClick={() => setSelectedQuoteDetail(customer.orders[0])}
-                            className="w-full mt-1 bg-white border border-gray-200 text-gray-700 py-2.5 rounded-lg text-sm font-bold hover:bg-gray-50 active:bg-gray-100 transition-colors"
-                          >
-                            최근 이용 상세 보기
-                          </button>
+                          <div className="flex gap-2 mt-1">
+                            <button 
+                              onClick={() => setSelectedQuoteDetail(customer.orders[0])}
+                              className="flex-1 bg-white border border-gray-200 text-gray-700 py-2.5 rounded-lg text-sm font-bold hover:bg-gray-50 active:bg-gray-100 transition-colors"
+                            >
+                              최근 이용 상세 보기
+                            </button>
+                            <button 
+                              onClick={() => handleDeleteCustomer(customer.phone)}
+                              className="bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 px-4 py-2.5 rounded-lg text-sm font-bold active:scale-95 transition-all"
+                            >
+                              삭제
+                            </button>
+                          </div>
                         </div>
                       );
                     })
@@ -2323,6 +2690,273 @@ export default function Admin() {
             </div>
           )}
 
+          {activeTab === 'b2bPartners' && (
+            <div className="space-y-6">
+              <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+                <div>
+                  <h2 className="text-2xl font-bold border-b border-purple-600 inline-block pb-1">B2B 파트너 관리</h2>
+                  <p className="text-gray-500 mt-2">업체 전용 페이지를 통해 가입한 인테리어/부동산 비즈니스 파트너들을 관리합니다.</p>
+                </div>
+              </div>
+              
+              {/* B2B 파트너 검색 및 필터 UI */}
+              <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex flex-col md:flex-row gap-4 items-center justify-between">
+                <div className="flex flex-wrap items-center gap-4 w-full md:w-auto">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-bold text-gray-600 whitespace-nowrap">상태 필터</span>
+                    <select 
+                      value={b2bFilterStatus}
+                      onChange={(e) => setB2bFilterStatus(e.target.value)}
+                      className="border border-gray-300 rounded-lg px-3 py-2 text-sm font-medium focus:border-purple-500 outline-none bg-gray-50 text-gray-700"
+                    >
+                      <option value="전체">전체 상태</option>
+                      <option value="active">활동 중 (승인)</option>
+                      <option value="pending">승인 대기</option>
+                      <option value="suspended">계정 정지</option>
+                    </select>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 w-full md:w-96 relative">
+                  <Search size={18} className="text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
+                  <input 
+                    type="text" 
+                    value={b2bSearchTerm}
+                    onChange={(e) => setB2bSearchTerm(e.target.value)}
+                    placeholder="대표자/상호명, 연락처, 이메일, 사업자번호 검색..." 
+                    className="w-full border border-gray-300 rounded-lg pl-10 pr-4 py-2 text-sm font-medium focus:border-purple-500 outline-none bg-gray-50 text-gray-700 placeholder:text-gray-400"
+                  />
+                </div>
+              </div>
+
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mt-2">
+                <div className="overflow-x-auto">
+                  {/* 데스크탑 뷰: B2B 파트너 테이블 */}
+                  <table className="hidden lg:table w-full min-w-[900px] text-left">
+                    <thead>
+                      <tr className="bg-gray-50 border-b border-gray-200 text-sm text-gray-500">
+                        <th className="p-3 font-bold whitespace-nowrap">가입일</th>
+                        <th className="p-3 font-bold whitespace-nowrap">상호명/대표자</th>
+                        <th className="p-3 font-bold whitespace-nowrap">연락처</th>
+                        <th className="p-3 font-bold whitespace-nowrap">이메일</th>
+                        <th className="p-3 font-bold whitespace-nowrap">사업자번호</th>
+                        <th className="p-3 font-bold whitespace-nowrap">정산 계좌 정보</th>
+                        <th className="p-3 font-bold whitespace-nowrap">가입 상태</th>
+                        <th className="p-3 font-bold text-center whitespace-nowrap">승인 관리</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {filteredB2BPartnersList.length === 0 ? (
+                        <tr>
+                          <td colSpan={8} className="p-12 text-center text-gray-400">
+                            등록되거나 대기 중인 B2B 파트너가 없습니다.
+                          </td>
+                        </tr>
+                      ) : (
+                        filteredB2BPartnersList.map((partner) => (
+                          <tr key={partner.id} className="hover:bg-slate-50 transition-colors">
+                            <td className="p-4 text-sm whitespace-nowrap">
+                              <div className="flex flex-col">
+                                <span className="font-bold text-slate-700">{partner.createdAt ? new Date(partner.createdAt).toLocaleDateString() : '-'}</span>
+                              </div>
+                            </td>
+                            <td className="p-3 font-bold text-gray-800 whitespace-nowrap">
+                              <span>{partner.companyName || partner.name}</span>
+                            </td>
+                            <td className="p-3 text-sm font-medium text-gray-600 tracking-wide whitespace-nowrap">
+                              {partner.phone}
+                            </td>
+                            <td className="p-3 text-sm text-gray-600 whitespace-nowrap">
+                              {partner.email || '-'}
+                            </td>
+                            <td className="p-3 text-sm font-mono text-gray-600 whitespace-nowrap">
+                              {partner.businessNumber || '-'}
+                            </td>
+                            <td className="p-3 text-sm">
+                              {partner.bankName ? (
+                                <div className="text-xs text-gray-700">
+                                  <span className="font-bold">{partner.bankName}</span> {partner.accountNumber} <span className="text-gray-400">({partner.accountHolder})</span>
+                                </div>
+                              ) : (
+                                <span className="text-gray-400 text-xs">미등록</span>
+                              )}
+                            </td>
+                            <td className="p-3 whitespace-nowrap">
+                              <span className={`px-2 py-1 rounded-full text-xs font-bold border whitespace-nowrap ${
+                                partner.status === 'active' 
+                                  ? 'bg-emerald-100 text-emerald-700 border-emerald-200' 
+                                  : partner.status === 'suspended'
+                                  ? 'bg-red-100 text-red-700 border-red-200'
+                                  : 'bg-amber-100 text-amber-700 border-amber-200'
+                              }`}>
+                                {partner.status === 'active' ? '활동 중' : partner.status === 'suspended' ? '활동 정지' : '승인 대기'}
+                              </span>
+                            </td>
+                            <td className="p-3 text-center whitespace-nowrap">
+                              <div className="flex justify-center gap-1.5">
+                                {partner.status === 'pending' && (
+                                  <>
+                                    <button 
+                                      onClick={() => handleApproveB2BPartner(partner.id)}
+                                      className="bg-slate-900 hover:bg-slate-800 text-white font-bold px-3 py-1.5 rounded-lg text-xs shadow-sm transition-all active:scale-[0.98]"
+                                    >
+                                      승인
+                                    </button>
+                                    <button 
+                                      onClick={() => handleDeleteB2BPartner(partner.id, partner.phone)}
+                                      className="bg-red-50 hover:bg-red-100 text-red-600 font-bold px-3 py-1.5 rounded-lg text-xs border border-red-200 transition-all active:scale-[0.98]"
+                                    >
+                                      거절
+                                    </button>
+                                  </>
+                                )}
+                                {partner.status === 'active' && (
+                                  <>
+                                    <button 
+                                      onClick={() => handleSuspendB2BPartner(partner.id)}
+                                      className="bg-orange-50 hover:bg-orange-100 text-orange-600 font-bold px-3 py-1.5 rounded-lg text-xs border border-orange-200 transition-all active:scale-[0.98]"
+                                    >
+                                      계정 정지
+                                    </button>
+                                    <button 
+                                      onClick={() => handleDeleteB2BPartner(partner.id, partner.phone)}
+                                      className="bg-red-50 hover:bg-red-100 text-red-600 font-bold px-3 py-1.5 rounded-lg text-xs border border-red-200 transition-all active:scale-[0.98]"
+                                    >
+                                      영구 삭제
+                                    </button>
+                                  </>
+                                )}
+                                {partner.status === 'suspended' && (
+                                  <>
+                                    <button 
+                                      onClick={() => handleApproveB2BPartner(partner.id)}
+                                      className="bg-emerald-50 hover:bg-emerald-100 text-emerald-600 font-bold px-3 py-1.5 rounded-lg text-xs border border-emerald-200 transition-all active:scale-[0.98]"
+                                    >
+                                      활동 재개
+                                    </button>
+                                    <button 
+                                      onClick={() => handleDeleteB2BPartner(partner.id, partner.phone)}
+                                      className="bg-red-50 hover:bg-red-100 text-red-600 font-bold px-3 py-1.5 rounded-lg text-xs border border-red-200 transition-all active:scale-[0.98]"
+                                    >
+                                      영구 삭제
+                                    </button>
+                                  </>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+
+                  {/* 모바일 뷰: B2B 파트너 카드 */}
+                  <div className="lg:hidden divide-y divide-gray-100">
+                    {filteredB2BPartnersList.length === 0 ? (
+                      <div className="p-12 text-center text-gray-400 font-medium">대기 중인 B2B 파트너가 없습니다.</div>
+                    ) : (
+                      filteredB2BPartnersList.map(partner => (
+                        <div key={partner.id} className="p-4 flex flex-col gap-3 hover:bg-slate-50 transition-colors">
+                          <div className="flex justify-between items-start">
+                            <div>
+                              <div className="flex items-center flex-wrap gap-1.5 mb-1">
+                                <span className="font-bold text-gray-900 text-lg leading-none">
+                                  {partner.companyName || partner.name}
+                                </span>
+                                <span className="flex items-center gap-1 text-[10px] text-purple-600 bg-purple-50 px-1.5 py-0.5 rounded font-bold border border-purple-100">B2B 파트너</span>
+                              </div>
+                              <p className="text-xs text-slate-400 font-medium">
+                                가입일: {partner.createdAt ? new Date(partner.createdAt).toLocaleDateString() : '-'}
+                              </p>
+                            </div>
+                            <span className={`px-2 py-1 rounded-full text-xs font-bold border ${
+                              partner.status === 'active' 
+                                ? 'bg-emerald-50 text-emerald-600 border-emerald-200/60' 
+                                : partner.status === 'suspended'
+                                ? 'bg-red-50 text-red-600 border-red-200/60'
+                                : 'bg-amber-50 text-amber-600 border-amber-200/60'
+                            }`}>
+                              {partner.status === 'active' ? '활동 중' : partner.status === 'suspended' ? '활동 정지' : '승인 대기'}
+                            </span>
+                          </div>
+                          
+                          <div className="bg-white border border-slate-100 shadow-sm p-3 rounded-lg flex flex-col gap-2 text-sm mt-1">
+                            <div className="grid grid-cols-2 gap-2">
+                              <div>
+                                <p className="text-[10px] text-slate-400 font-bold mb-0.5">연락처</p>
+                                <p className="text-slate-800 font-bold tracking-wide">{partner.phone}</p>
+                              </div>
+                              <div>
+                                <p className="text-[10px] text-slate-400 font-bold mb-0.5">사업자 번호</p>
+                                <p className="text-slate-800 font-bold font-mono">{partner.businessNumber || '-'}</p>
+                              </div>
+                            </div>
+                            <div className="border-t border-slate-50 pt-2">
+                              <p className="text-[10px] text-emerald-500 font-bold mb-0.5">페이백 정산 계좌</p>
+                              <p className="text-slate-800 font-bold text-xs">
+                                {partner.bankName ? `${partner.bankName} ${partner.accountNumber} (${partner.accountHolder})` : '미등록'}
+                              </p>
+                            </div>
+                          </div>
+                          
+                          <div className="mt-1 flex gap-2">
+                            {partner.status === 'pending' && (
+                              <div className="flex gap-2 w-full">
+                                <button 
+                                  onClick={() => handleApproveB2BPartner(partner.id)}
+                                  className="flex-1 bg-slate-900 hover:bg-slate-800 text-white font-black py-3 rounded-xl shadow-[0_4px_12px_rgba(0,0,0,0.1)] transition-all active:scale-[0.98] active:shadow-none text-sm"
+                                >
+                                  승인
+                                </button>
+                                <button 
+                                  onClick={() => handleDeleteB2BPartner(partner.id, partner.phone)}
+                                  className="flex-1 bg-red-50 hover:bg-red-100 text-red-600 font-bold py-3 rounded-xl border border-red-200 transition-all active:scale-[0.98] text-sm"
+                                >
+                                  거절
+                                </button>
+                              </div>
+                            )}
+                            {partner.status === 'active' && (
+                              <div className="flex gap-2 w-full">
+                                <button 
+                                  onClick={() => handleSuspendB2BPartner(partner.id)}
+                                  className="flex-1 bg-orange-50 hover:bg-orange-100 text-orange-600 font-bold py-3 rounded-xl border border-orange-200 transition-all active:scale-[0.98] text-sm"
+                                >
+                                  계정 정지
+                                </button>
+                                <button 
+                                  onClick={() => handleDeleteB2BPartner(partner.id, partner.phone)}
+                                  className="flex-1 bg-red-50 hover:bg-red-100 text-red-600 font-bold py-3 rounded-xl border border-red-200 transition-all active:scale-[0.98] text-sm"
+                                >
+                                  영구 삭제
+                                </button>
+                              </div>
+                            )}
+                            {partner.status === 'suspended' && (
+                              <div className="flex gap-2 w-full">
+                                <button 
+                                  onClick={() => handleApproveB2BPartner(partner.id)}
+                                  className="flex-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-600 font-bold py-3 rounded-xl border border-emerald-200 transition-all active:scale-[0.98] text-sm"
+                                >
+                                  활동 재개
+                                </button>
+                                <button 
+                                  onClick={() => handleDeleteB2BPartner(partner.id, partner.phone)}
+                                  className="flex-1 bg-red-50 hover:bg-red-100 text-red-600 font-bold py-3 rounded-xl border border-red-200 transition-all active:scale-[0.98] text-sm"
+                                >
+                                  영구 삭제
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
           {activeTab === 'finance' && (
             <div className="space-y-6">
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -2614,7 +3248,49 @@ export default function Admin() {
                         </div>
                         <div>
                           <p className="text-xs text-blue-600/80 font-bold mb-1">담당 배차 파트너</p>
-                          <p className="font-bold text-gray-800 text-sm mt-1">본사 수동 배정 (정기/가전)</p>
+                          <div className="flex items-center gap-2 mt-1">
+                            <select
+                              value={selectedQuoteDetail.assignedTo || ''}
+                              onChange={async (e) => {
+                                const partnerId = e.target.value;
+                                if (!partnerId) {
+                                  if (confirm('배정을 취소하고 대기중 상태로 변경하시겠습니까?')) {
+                                    await updateDoc(doc(db, 'quotes', selectedQuoteDetail.id), {
+                                      assignedTo: null,
+                                      designatedPartnerName: null,
+                                      status: '대기중'
+                                    });
+                                    setSelectedQuoteDetail(prev => prev ? { 
+                                      ...prev, 
+                                      assignedTo: null, 
+                                      designatedPartnerName: undefined, 
+                                      status: '대기중' 
+                                    } : null);
+                                    alert('배정이 취소되었습니다.');
+                                  }
+                                  return;
+                                }
+                                const partner = partners.find(p => p.id === partnerId);
+                                if (partner) {
+                                  const partnerName = partner.companyName || partner.name || '';
+                                  if (confirm(`[${partnerName}] 파트너에게 이 견적을 직접 배정하시겠습니까?`)) {
+                                    await handleAssignPartner(selectedQuoteDetail.id, partnerId, partnerName);
+                                  }
+                                }
+                              }}
+                              className="text-xs border border-gray-300 bg-white rounded-md px-2 py-1 cursor-pointer outline-none text-gray-800 focus:ring-2 focus:ring-blue-500 max-w-[180px] truncate"
+                            >
+                              <option value="">배정 대기중 (선택안함)</option>
+                              {partners.filter(p => !p.isB2B && p.status === 'active').map(p => (
+                                <option key={p.id} value={p.id}>
+                                  {p.companyName || p.name}
+                                </option>
+                              ))}
+                            </select>
+                            {selectedQuoteDetail.designatedPartnerName && (
+                              <span className="text-[10px] text-blue-600 bg-blue-50 px-1 py-0.5 rounded font-bold shrink-0">지정됨</span>
+                            )}
+                          </div>
                         </div>
                       </div>
 
@@ -2682,11 +3358,49 @@ export default function Admin() {
                         </div>
                         <div>
                           <p className="text-xs text-blue-600/80 font-bold mb-1">담당 배차 파트너</p>
-                          <p className="font-bold text-gray-800 text-lg">
-                            {selectedQuoteDetail.designatedPartnerName 
-                              ? `${selectedQuoteDetail.designatedPartnerName} (지정요청)` 
-                              : (selectedQuoteDetail.assignedTo || '대기중 (배정전)')}
-                          </p>
+                          <div className="flex items-center gap-2 mt-1">
+                            <select
+                              value={selectedQuoteDetail.assignedTo || ''}
+                              onChange={async (e) => {
+                                const partnerId = e.target.value;
+                                if (!partnerId) {
+                                  if (confirm('배정을 취소하고 대기중 상태로 변경하시겠습니까?')) {
+                                    await updateDoc(doc(db, 'quotes', selectedQuoteDetail.id), {
+                                      assignedTo: null,
+                                      designatedPartnerName: null,
+                                      status: '대기중'
+                                    });
+                                    setSelectedQuoteDetail(prev => prev ? { 
+                                      ...prev, 
+                                      assignedTo: null, 
+                                      designatedPartnerName: undefined, 
+                                      status: '대기중' 
+                                    } : null);
+                                    alert('배정이 취소되었습니다.');
+                                  }
+                                  return;
+                                }
+                                const partner = partners.find(p => p.id === partnerId);
+                                if (partner) {
+                                  const partnerName = partner.companyName || partner.name || '';
+                                  if (confirm(`[${partnerName}] 파트너에게 이 견적을 직접 배정하시겠습니까?`)) {
+                                    await handleAssignPartner(selectedQuoteDetail.id, partnerId, partnerName);
+                                  }
+                                }
+                              }}
+                              className="text-xs border border-gray-300 bg-white rounded-md px-2 py-1 cursor-pointer outline-none text-gray-800 focus:ring-2 focus:ring-blue-500 max-w-[180px] truncate"
+                            >
+                              <option value="">배정 대기중 (선택안함)</option>
+                              {partners.filter(p => !p.isB2B && p.status === 'active').map(p => (
+                                <option key={p.id} value={p.id}>
+                                  {p.companyName || p.name}
+                                </option>
+                              ))}
+                            </select>
+                            {selectedQuoteDetail.designatedPartnerName && (
+                              <span className="text-[10px] text-blue-600 bg-blue-50 px-1 py-0.5 rounded font-bold shrink-0">지정됨</span>
+                            )}
+                          </div>
                         </div>
                       </div>
                       
@@ -3469,6 +4183,65 @@ export default function Admin() {
             </div>
             
             <div className="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
+              {/* B2B 의뢰 여부 선택 */}
+              <div className="bg-slate-50 p-4 rounded-xl border border-slate-200/60 space-y-3">
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="isManualB2B"
+                    checked={isManualB2B}
+                    onChange={(e) => {
+                      const checked = e.target.checked;
+                      setIsManualB2B(checked);
+                      if (!checked) {
+                        setSelectedB2BPartnerId('');
+                      }
+                      // B2B 의뢰 체크 시 서비스 종류를 '프리미엄 청소'로 자동 고정하여 단가(2만원) 일치시킴
+                      const nextType = checked ? '프리미엄 청소' : '일반 청소';
+                      const calculated = calculateEstimatedPrice(nextType, newQuoteForm.size, checked);
+                      setNewQuoteForm(prev => ({
+                        ...prev,
+                        type: nextType,
+                        price: calculated > 0 ? calculated.toLocaleString() + '원' : prev.price
+                      }));
+                    }}
+                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
+                  />
+                  <label htmlFor="isManualB2B" className="text-sm font-bold text-gray-700 cursor-pointer select-none">
+                    🏢 B2B (업체전용) 견적 의뢰로 등록
+                  </label>
+                </div>
+                
+                {isManualB2B && (
+                  <div className="animate-in fade-in slide-in-from-top-2 duration-200">
+                    <label className="block text-xs font-bold text-gray-600 mb-1">B2B 파트너사 선택</label>
+                    <select
+                      value={selectedB2BPartnerId}
+                      onChange={(e) => {
+                        const partnerId = e.target.value;
+                        setSelectedB2BPartnerId(partnerId);
+                        const p = partners.find(part => part.id === partnerId);
+                        if (p) {
+                          setNewQuoteForm(prev => ({
+                            ...prev,
+                            name: p.companyName || p.name || '',
+                            realPhone: p.phone || '',
+                          }));
+                        }
+                      }}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:border-blue-500 outline-none bg-white text-gray-800"
+                    >
+                      <option value="">-- B2B 파트너사 선택 (필수) --</option>
+                      {partners.filter(p => p.isB2B && p.status === 'active').map(p => (
+                        <option key={p.id} value={p.id}>
+                          {p.companyName || p.name} ({p.managerName || '담당자 없음'} - {p.phone})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+              </div>
+
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-gray-600 mb-1">고객명 (필수)</label>
@@ -3491,11 +4264,12 @@ export default function Admin() {
                 </div>
               </div>
               
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-3 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-gray-600 mb-1">서비스 종류</label>
                   <select 
                     value={newQuoteForm.type}
+                    disabled={isManualB2B}
                     onChange={e => {
                       const nextType = e.target.value;
                       const calculated = calculateEstimatedPrice(nextType, newQuoteForm.size);
@@ -3505,7 +4279,7 @@ export default function Admin() {
                         price: calculated > 0 ? calculated.toLocaleString() + '원' : newQuoteForm.price
                       });
                     }}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:border-blue-500 outline-none"
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:border-blue-500 outline-none disabled:bg-gray-100 disabled:text-gray-500"
                   >
                     <option value="일반 청소">일반 청소</option>
                     <option value="프리미엄 청소">프리미엄 청소</option>
@@ -3523,6 +4297,22 @@ export default function Admin() {
                     <option value="빌라">빌라</option>
                     <option value="오피스텔">오피스텔</option>
                     <option value="상가/기타">상가/기타</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-gray-600 mb-1">상세 구조 (선택)</label>
+                  <select 
+                    value={newQuoteForm.houseSubType}
+                    onChange={e => setNewQuoteForm({...newQuoteForm, houseSubType: e.target.value})}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:border-blue-500 outline-none bg-white text-gray-800"
+                  >
+                    <option value="">구조 선택 안함</option>
+                    <option value="원룸">원룸</option>
+                    <option value="분리형 원룸">분리형 원룸</option>
+                    <option value="투룸">투룸</option>
+                    <option value="쓰리룸 이상">쓰리룸 이상</option>
+                    <option value="복층">복층</option>
+                    <option value="기타">기타</option>
                   </select>
                 </div>
               </div>
@@ -3602,6 +4392,273 @@ export default function Admin() {
                     </p>
                   )}
                 </div>
+              </div>
+
+              {/* 견적 계산 마법사 영역 */}
+              <div className="pt-2">
+                <button
+                  type="button"
+                  onClick={() => setIsQuoteWizardOpen(!isQuoteWizardOpen)}
+                  className="w-full py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-extrabold rounded-lg text-xs shadow-md transition-all flex items-center justify-center gap-1.5"
+                >
+                  <span>🧙‍♂️ 견적 계산 마법사</span>
+                  <span>{isQuoteWizardOpen ? '접기 ▲' : '열기 ▼'}</span>
+                </button>
+                
+                {isQuoteWizardOpen && (() => {
+                  const calcs = getWizardCalculations();
+                  return (
+                    <div className="mt-3 bg-purple-50/50 border border-purple-200/80 rounded-xl p-4 space-y-4 animate-in fade-in slide-in-from-top-2 duration-200 text-slate-800">
+                      <div>
+                        <h4 className="text-xs font-black text-purple-900 border-b border-purple-200/60 pb-1.5 mb-2.5">
+                          1. 추가 청소 옵션
+                        </h4>
+                        <div className="space-y-3">
+                          {/* 맞춤 청소 */}
+                          <div className="grid grid-cols-2 gap-3">
+                            <label className="flex items-center gap-2 text-xs font-semibold cursor-pointer select-none">
+                              <input
+                                type="checkbox"
+                                checked={wizardOptions.phytoncide > 0}
+                                onChange={(e) => setWizardOptions(prev => ({ ...prev, phytoncide: e.target.checked ? 1 : 0 }))}
+                                className="w-3.5 h-3.5 text-purple-600 border-gray-300 rounded focus:ring-purple-500 cursor-pointer"
+                              />
+                              <span>피톤치드 연무 (+평당 1k)</span>
+                            </label>
+                            <label className="flex items-center gap-2 text-xs font-semibold cursor-pointer select-none">
+                              <input
+                                type="checkbox"
+                                checked={wizardOptions.veranda > 0}
+                                onChange={(e) => setWizardOptions(prev => ({ ...prev, veranda: e.target.checked ? 1 : 0 }))}
+                                className="w-3.5 h-3.5 text-purple-600 border-gray-300 rounded focus:ring-purple-500 cursor-pointer"
+                              />
+                              <span>비확장 거실베란다 (+40k)</span>
+                            </label>
+                          </div>
+                          
+                          {/* 가전 내부 청소 */}
+                          <div>
+                            <p className="text-[10px] font-black text-purple-700/80 mb-1.5">가전 내부 청소 (개당 +30,000원)</p>
+                            <div className="grid grid-cols-2 gap-2">
+                              {[
+                                { id: 'refrigerator', name: '냉장고' },
+                                { id: 'washer', name: '세탁기' },
+                                { id: 'ac', name: '에어컨' },
+                                { id: 'dishwasher', name: '식기세척기' },
+                                { id: 'oven', name: '오븐' },
+                              ].map(item => (
+                                <div key={item.id} className="flex items-center justify-between bg-white border border-purple-100 rounded-lg px-2.5 py-1">
+                                  <span className="text-xs font-medium">{item.name}</span>
+                                  <div className="flex items-center gap-2 select-none">
+                                    <button
+                                      type="button"
+                                      onClick={() => setWizardOptions(prev => ({ ...prev, [item.id]: Math.max(0, (prev[item.id] || 0) - 1) }))}
+                                      className="w-5 h-5 bg-slate-100 hover:bg-slate-200 font-black rounded text-xs flex items-center justify-center"
+                                    >
+                                      -
+                                    </button>
+                                    <span className="text-xs font-bold w-4 text-center">{wizardOptions[item.id] || 0}</span>
+                                    <button
+                                      type="button"
+                                      onClick={() => setWizardOptions(prev => ({ ...prev, [item.id]: (prev[item.id] || 0) + 1 }))}
+                                      className="w-5 h-5 bg-slate-100 hover:bg-slate-200 font-black rounded text-xs flex items-center justify-center"
+                                    >
+                                      +
+                                    </button>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                          
+                          {/* 특수 오염 제거 */}
+                          <div>
+                            <p className="text-[10px] font-black text-purple-700/80 mb-1.5">특수 오염 제거 (개당 +40,000원)</p>
+                            <div className="grid grid-cols-2 gap-2">
+                              {[
+                                { id: 'mold', name: '곰팡이 제거' },
+                                { id: 'sticker', name: '스티커 제거' },
+                                { id: 'insulation', name: '단열 뽁뽁이 제거' },
+                              ].map(item => (
+                                <div key={item.id} className="flex items-center justify-between bg-white border border-purple-100 rounded-lg px-2.5 py-1">
+                                  <span className="text-xs font-medium">{item.name}</span>
+                                  <div className="flex items-center gap-2 select-none">
+                                    <button
+                                      type="button"
+                                      onClick={() => setWizardOptions(prev => ({ ...prev, [item.id]: Math.max(0, (prev[item.id] || 0) - 1) }))}
+                                      className="w-5 h-5 bg-slate-100 hover:bg-slate-200 font-black rounded text-xs flex items-center justify-center"
+                                    >
+                                      -
+                                    </button>
+                                    <span className="text-xs font-bold w-4 text-center">{wizardOptions[item.id] || 0}</span>
+                                    <button
+                                      type="button"
+                                      onClick={() => setWizardOptions(prev => ({ ...prev, [item.id]: (prev[item.id] || 0) + 1 }))}
+                                      className="w-5 h-5 bg-slate-100 hover:bg-slate-200 font-black rounded text-xs flex items-center justify-center"
+                                    >
+                                      +
+                                    </button>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div>
+                        <h4 className="text-xs font-black text-purple-900 border-b border-purple-200/60 pb-1.5 mb-2.5">
+                          2. 현장 할증 및 할인
+                        </h4>
+                        <div className="space-y-3">
+                          {/* 오염도 및 엘리베이터 */}
+                          <div className="grid grid-cols-2 gap-3 text-xs">
+                            <div>
+                              <p className="text-[10px] font-black text-purple-700/80 mb-1">현장 오염도 할증</p>
+                              <div className="flex gap-2 mt-1">
+                                {[
+                                  { value: 'normal', label: '보통(0%)' },
+                                  { value: 'high', label: '심함(10%)' },
+                                  { value: 'severe', label: '매우(30%)' },
+                                ].map(opt => (
+                                  <label key={opt.value} className="flex items-center gap-1 cursor-pointer font-semibold select-none">
+                                    <input
+                                      type="radio"
+                                      name="wizardContamination"
+                                      value={opt.value}
+                                      checked={contaminationLevel === opt.value}
+                                      onChange={() => setContaminationLevel(opt.value as any)}
+                                      className="text-purple-600 focus:ring-purple-500 cursor-pointer"
+                                    />
+                                    <span>{opt.label}</span>
+                                  </label>
+                                ))}
+                              </div>
+                            </div>
+                            
+                            <div>
+                              <p className="text-[10px] font-black text-purple-700/80 mb-1">승강기 없는 고층</p>
+                              <label className="flex items-center gap-2 cursor-pointer font-semibold mt-1.5 select-none">
+                                <input
+                                  type="checkbox"
+                                  checked={hasNoElevatorSurcharge}
+                                  onChange={(e) => setHasNoElevatorSurcharge(e.target.checked)}
+                                  className="w-3.5 h-3.5 text-purple-600 border-gray-300 rounded focus:ring-purple-500 cursor-pointer"
+                                />
+                                <span>엘리베이터 없는 4층 이상 (+30k)</span>
+                              </label>
+                            </div>
+                          </div>
+                          
+                          {/* 직접 조정 금액 */}
+                          <div>
+                            <label className="block text-[10px] font-black text-purple-700/80 mb-1">
+                              직접 할인 / 단가 조정액 (-원)
+                            </label>
+                            <input
+                              type="number"
+                              value={customDiscount}
+                              onChange={(e) => setCustomDiscount(e.target.value)}
+                              placeholder="예: 20000 (할인할 금액 입력)"
+                              className="w-full border border-purple-200 rounded-lg px-3 py-1.5 text-xs outline-none focus:border-purple-500 text-gray-800 bg-white"
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* 실시간 계산서 영수증 */}
+                      <div className="bg-white border border-purple-200 rounded-xl p-3.5 space-y-2 text-xs">
+                        <div className="flex justify-between font-semibold text-slate-600">
+                          <span>기본 청소비 ({newQuoteForm.size ? `${newQuoteForm.size}평` : '평수 미입력'})</span>
+                          <span>{calcs.baseCleanPrice.toLocaleString()}원</span>
+                        </div>
+                        {calcs.optionsTotal > 0 && (
+                          <div className="flex justify-between font-semibold text-slate-600">
+                            <span>추가 옵션 합계</span>
+                            <span className="text-purple-600">+{calcs.optionsTotal.toLocaleString()}원</span>
+                          </div>
+                        )}
+                        {calcs.contaminationSurcharge > 0 && (
+                          <div className="flex justify-between font-semibold text-slate-600">
+                            <span>오염도 할증 (+{calcs.contaminationRate}%)</span>
+                            <span className="text-rose-600">+{calcs.contaminationSurcharge.toLocaleString()}원</span>
+                          </div>
+                        )}
+                        {calcs.elevatorSurcharge > 0 && (
+                          <div className="flex justify-between font-semibold text-slate-600">
+                            <span>엘리베이터 무 고층 할증</span>
+                            <span className="text-rose-600">+{calcs.elevatorSurcharge.toLocaleString()}원</span>
+                          </div>
+                        )}
+                        {calcs.discountVal > 0 && (
+                          <div className="flex justify-between font-semibold text-slate-600">
+                            <span>임의 추가 할인</span>
+                            <span className="text-blue-600">-{calcs.discountVal.toLocaleString()}원</span>
+                          </div>
+                        )}
+                        
+                        <div className="border-t border-dashed border-slate-200 my-2 pt-2 flex justify-between items-center text-sm font-black text-slate-900">
+                          <span>최종 합계 (VAT 포함)</span>
+                          <span className="text-purple-700 text-base">{calcs.grandTotal.toLocaleString()}원</span>
+                        </div>
+                        
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (!newQuoteForm.size) {
+                              alert("평수를 먼저 입력해야 견적이 정상 계산됩니다.");
+                              return;
+                            }
+                            
+                            // 1. 가격 입력
+                            setNewQuoteForm(prev => ({
+                              ...prev,
+                              price: calcs.grandTotal.toLocaleString() + '원'
+                            }));
+                            
+                            // 2. 특이사항(메모)에 상세 내역 덧붙이기
+                            let wizardSummary = `[견적 마법사 자동 산출 내역]\n`;
+                            wizardSummary += `- 기본 청소비: ${calcs.baseCleanPrice.toLocaleString()}원 (${newQuoteForm.size}평)\n`;
+                            if (calcs.selectedOptLabels.length > 0) {
+                              wizardSummary += `- 선택 옵션:\n  * ${calcs.selectedOptLabels.join('\n  * ')}\n`;
+                            }
+                            if (calcs.contaminationSurcharge > 0) {
+                              wizardSummary += `- 할증: 오염도 ${contaminationLevel === 'high' ? '심함(+10%)' : '매우 심함(+30%)'} (+${calcs.contaminationSurcharge.toLocaleString()}원)\n`;
+                            }
+                            if (calcs.elevatorSurcharge > 0) {
+                              wizardSummary += `- 할증: 엘리베이터 없는 고층 (+30,000원)\n`;
+                            }
+                            if (calcs.discountVal > 0) {
+                              wizardSummary += `- 할인: 특별 할인 조정 (-${calcs.discountVal.toLocaleString()}원)\n`;
+                            }
+                            wizardSummary += `- 최종 합계액: ${calcs.grandTotal.toLocaleString()}원 (부가세 포함)\n`;
+                            wizardSummary += `--------------------------------------\n`;
+                            
+                            setNewQuoteForm(prev => ({
+                              ...prev,
+                              detail: prev.detail ? wizardSummary + prev.detail : wizardSummary
+                            }));
+                            
+                            // 3. Firestore options에 저장할 옵션 텍스트들 매핑
+                            const finalOptions = calcs.selectedOptLabels.map(label => label.split(' (')[0]);
+                            if (contaminationLevel !== 'normal') {
+                              finalOptions.push(`오염도 ${contaminationLevel === 'high' ? '심함' : '매우 심함'}`);
+                            }
+                            if (hasNoElevatorSurcharge) {
+                              finalOptions.push(`엘리베이터 없음 (고층)`);
+                            }
+                            setSelectedWizardOptions(finalOptions);
+                            
+                            alert("마법사 견적가와 산출 내역이 입력 폼에 적용되었습니다.");
+                          }}
+                          className="w-full py-2 bg-purple-600 hover:bg-purple-700 text-white font-black rounded-lg text-xs shadow transition-all mt-1 active:scale-[0.98]"
+                        >
+                          ⚡ 마법사 가격 및 상세 내역 폼에 적용하기
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
 
               <div>

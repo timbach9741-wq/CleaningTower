@@ -3,8 +3,27 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import DaumPostcode from 'react-daum-postcode';
 import { db } from '../firebase';
-import { collection, addDoc, getDocs, query, where } from 'firebase/firestore';
+import { collection, addDoc, getDocs, query, where, onSnapshot } from 'firebase/firestore';
 import { sendTelegramAlert } from '../telegramService';
+
+interface Order {
+  id: string;
+  isB2B?: boolean;
+  b2bLoginId?: string;
+  date?: string;
+  time?: string;
+  name?: string;
+  type?: string;
+  house?: string;
+  size?: number;
+  location?: string;
+  price?: string;
+  detail?: string;
+  options?: string[];
+  status?: string;
+  paybackStatus?: string;
+  createdAt?: string;
+}
 
 const optionCategories = [
   {
@@ -40,6 +59,70 @@ const optionCategories = [
 
 const optionsList = optionCategories.flatMap(cat => cat.items);
 
+// B2B 파트너 정산액 계산 함수 (AdminDashboard.tsx의 getPlatformRevenue와 일치)
+const getPartnerPayout = (quote: Order) => {
+  if (!quote || !quote.price) return 0;
+  
+  const customerPrice = parseInt(String(quote.price).replace(/[^0-9]/g, ''), 10) || 0;
+  
+  // 파트너 예상 지급액 계산
+  let unitPrice = 10000;
+  const isPremium = quote.type?.includes('프리미엄') || false;
+  const isOccupied = quote.options?.includes('거주 청소 (짐 있음)') || false;
+  const isBetween = quote.options?.includes('당일 이사 (사이청소)') || false;
+  
+  if (isPremium) {
+    unitPrice = 14000;
+  } else if (isOccupied) {
+    unitPrice = 12000;
+  }
+  
+  const size = typeof quote.size === 'number' ? quote.size : parseInt(quote.size || '0', 10) || 0;
+  let partnerPrice = unitPrice * size;
+  
+  if (isBetween) {
+    partnerPrice += 70000;
+  }
+  
+  const optionsPriceMap: Record<string, number> = {
+    '냉장고': 30000,
+    '세탁기': 30000,
+    '에어컨': 30000,
+    '식기세척기': 30000,
+    '오븐': 30000,
+    '곰팡이 제거 (공간당)': 40000,
+    '스티커 제거 (공간당)': 40000,
+    '단열재 제거 (공간당)': 40000,
+    '니코틴 제거 (공간당)': 40000,
+    '[필수] 현장 상황에 따라 추가 비용이 발생할 수 있습니다.': 0,
+    '거실 비확장형 베란다 청소': 40000,
+    '피톤치드 연무소독 (평당)': 1000,
+    '엘리베이터 없음 (3층 이상)': 30000,
+  };
+  
+  if (quote.options && Array.isArray(quote.options)) {
+    quote.options.forEach((optLabel: string) => {
+      const match = optLabel.match(/^(.*?)(?:\s*\((\d+)개\))?$/);
+      if (match) {
+        const baseLabel = match[1].trim();
+        const count = match[2] ? parseInt(match[2], 10) : 1;
+        
+        if (optionsPriceMap[baseLabel] !== undefined) {
+          const optPrice = optionsPriceMap[baseLabel];
+          if (baseLabel === '거실바닥 친환경 (평당)' || baseLabel === '피톤치드 연무소독 (평당)') {
+            partnerPrice += (optPrice * size * count) * 0.7;
+          } else {
+            partnerPrice += (optPrice * count) * 0.7;
+          }
+        }
+      }
+    });
+  }
+  
+  const roundedPartnerPrice = Math.ceil(partnerPrice / 1000) * 1000;
+  return roundedPartnerPrice;
+};
+
 /**
  * 사업자 전용 앱 - 모바일 퍼스트 설계 (Funnel 버전)
  * 
@@ -54,6 +137,29 @@ export default function Quote() {
   const [isB2BLoggedIn, setIsB2BLoggedIn] = useState(() => {
     return sessionStorage.getItem('b2b_logged_in') === 'true';
   });
+  const [b2bTab, setB2bTab] = useState<'apply' | 'history'>('apply');
+  const [b2bQuotes, setB2bQuotes] = useState<Order[]>([]);
+  const [isQuotesLoading, setIsQuotesLoading] = useState(false);
+  const loggedInId = sessionStorage.getItem('b2b_login_id');
+
+  useEffect(() => {
+    if (isB2BLoggedIn && loggedInId && db) {
+      setIsQuotesLoading(true);
+      const q = query(
+        collection(db, 'quotes'),
+        where('isB2B', '==', true),
+        where('b2bLoginId', '==', loggedInId)
+      );
+      const unsubscribe = onSnapshot(q, (snapshot) => {
+        const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Order[];
+        data.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
+        setB2bQuotes(data);
+        setIsQuotesLoading(false);
+      });
+      return () => unsubscribe();
+    }
+  }, [isB2BLoggedIn, loggedInId]);
+
   const [b2bLoginForm, setB2bLoginForm] = useState({ id: '', password: '' });
   const [b2bLoginError, setB2bLoginError] = useState('');
   const [b2bLoginLoading, setB2bLoginLoading] = useState(false);
@@ -93,6 +199,10 @@ export default function Quote() {
       }
       sessionStorage.setItem('b2b_logged_in', 'true');
       sessionStorage.setItem('b2b_business_name', accountData.businessName || accountData.name || '');
+      sessionStorage.setItem('b2b_login_id', accountData.loginId || b2bLoginForm.id);
+      sessionStorage.setItem('b2b_bank_name', accountData.bankName || '');
+      sessionStorage.setItem('b2b_account_number', accountData.accountNumber || '');
+      sessionStorage.setItem('b2b_account_holder', accountData.accountHolder || '');
       setBusinessName(accountData.businessName || accountData.name || '');
       setIsB2BLoggedIn(true);
       setShowB2BLoginModal(false);
@@ -386,8 +496,10 @@ export default function Quote() {
 
     try {
       if (db) {
+        const loggedInPhone = sessionStorage.getItem('b2b_login_id') || contactInfo;
         const docRef = await addDoc(collection(db, 'quotes'), {
           isB2B: true, // 사업자 전용 앱 주문 플래그
+          b2bLoginId: loggedInPhone,
           date: cleaningDate || '미정',
           time: cleaningTime || '시간협의',
           name: businessName || '기본고객',
@@ -461,6 +573,31 @@ export default function Quote() {
       console.error('결제창 호출 실패:', error);
       alert('결제창을 여는 도중 에러가 발생했습니다.');
     }
+  };
+
+  const handleRemittance = (type: 'toss' | 'kakao') => {
+    const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    
+    if (!isMobileDevice) {
+      alert("모바일 기기에서 토스/카카오톡 앱이 설치되어 있어야 즉시 송금이 가능합니다. PC 환경이시라면 아래 계좌 정보 복사 기능을 이용해 이체해 주세요!");
+      return;
+    }
+
+    if (type === 'toss') {
+      const tossUrl = `supertoss://send?bank=신협&account=131022991902&amount=${depositAmount}`;
+      window.location.href = tossUrl;
+    } else {
+      const kakaoUrl = `kakaotalk://kakaopay/money/to/bank?bank_code=048&account_no=131022991902&amount=${depositAmount}`;
+      window.location.href = kakaoUrl;
+    }
+  };
+
+  const handleCopyAccount = () => {
+    navigator.clipboard.writeText('131-022-991902').then(() => {
+      alert('계좌번호(신협 131-022-991902)가 복사되었습니다. 주거래 은행 앱에 붙여넣기 하여 이체해 주세요.');
+    }).catch(err => {
+      console.error('Failed to copy', err);
+    });
   };
 
   // 로그인 성공 후 자동 제출
@@ -557,6 +694,34 @@ export default function Quote() {
         </div>
       </header>
 
+      {/* B2B 파트너 전용 탭 */}
+      {isB2BLoggedIn && (
+        <div className="bg-white border-b border-slate-200 sticky top-[49px] z-40">
+          <div className="max-w-2xl mx-auto flex">
+            <button
+              onClick={() => setB2bTab('apply')}
+              className={`flex-1 py-3 text-center font-bold text-sm border-b-2 transition-all ${
+                b2bTab === 'apply'
+                  ? 'border-blue-600 text-blue-600'
+                  : 'border-transparent text-slate-500 hover:text-slate-700'
+              }`}
+            >
+              견적 신청하기
+            </button>
+            <button
+              onClick={() => setB2bTab('history')}
+              className={`flex-1 py-3 text-center font-bold text-sm border-b-2 transition-all ${
+                b2bTab === 'history'
+                  ? 'border-blue-600 text-blue-600'
+                  : 'border-transparent text-slate-500 hover:text-slate-700'
+              }`}
+            >
+              의뢰 및 페이백 내역 ({b2bQuotes.length})
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* PWA 설치 유도 배너 */}
       {!isInstalled && showInstallBanner && (
         <div className="bg-slate-900 text-white px-4 py-3 text-xs flex items-center justify-between sticky top-[49px] z-40 border-b border-slate-800 shadow-md">
@@ -581,10 +746,10 @@ export default function Quote() {
         </div>
       )}
 
-      <main className={`flex-1 w-full mx-auto ${step === 0 ? 'max-w-6xl p-0 pb-24' : 'max-w-2xl p-5 pb-28 lg:p-8 lg:pb-32'} flex flex-col relative overflow-hidden`}>
+      <main className={`flex-1 w-full mx-auto ${b2bTab === 'history' ? 'max-w-2xl p-5 pb-24' : step === 0 ? 'max-w-6xl p-0 pb-24' : 'max-w-2xl p-5 pb-28 lg:p-8 lg:pb-32'} flex flex-col relative overflow-hidden`}>
         
-        {/* Progress Bar (step 0에서는 숨김) */}
-        {step > 0 && (
+        {/* Progress Bar (step 0 및 history 탭에서는 숨김) */}
+        {step > 0 && b2bTab === 'apply' && (
         <div className="mb-6">
           <div className="flex justify-between text-[11px] font-bold text-slate-500 mb-2.5 px-1">
             <span className={step >= 1 ? 'text-blue-600' : ''}>면적/단가</span>
@@ -608,8 +773,151 @@ export default function Quote() {
         <div className="flex-1 relative w-full h-full">
           <AnimatePresence mode="wait">
 
+            {/* B2B 의뢰 및 정산 내역 탭 */}
+            {b2bTab === 'history' && (
+              <motion.div
+                key="history"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.3 }}
+                className="flex flex-col h-full space-y-6 pt-2 pb-12"
+              >
+                <div className="bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-100 rounded-2xl p-4 shadow-sm text-left">
+                  <h3 className="font-extrabold text-blue-900 text-base mb-1.5 flex items-center gap-1.5">
+                    <span className="material-symbols-outlined text-[20px]">account_balance_wallet</span>
+                    나의 정산 계좌
+                  </h3>
+                  <p className="text-sm text-slate-700 font-medium leading-relaxed">
+                    정산 은행: <strong>{sessionStorage.getItem('b2b_bank_name') || '미등록'}</strong><br />
+                    계좌 번호: <strong>{sessionStorage.getItem('b2b_account_number') || '미등록'}</strong><br />
+                    예금주명: <strong>{sessionStorage.getItem('b2b_account_holder') || '미등록'}</strong>
+                  </p>
+                  <p className="text-[11px] text-slate-500 leading-normal mt-2">
+                    ※ 계좌 변경은 청소타워 고객센터(031-499-9509)로 연락해 주세요.
+                  </p>
+                </div>
+
+                {/* 정산 안내 배너 */}
+                <div className="bg-amber-50/80 border border-amber-200/60 rounded-2xl p-4 shadow-sm text-left">
+                  <h3 className="font-extrabold text-amber-950 text-[14px] mb-2 flex items-center gap-1.5">
+                    <span className="material-symbols-outlined text-[18px]">info</span>
+                    💰 B2B 페이백 지급일정 안내
+                  </h3>
+                  <ul className="text-xs text-amber-900 space-y-1 font-medium leading-relaxed break-keep">
+                    <li>• 청소타워의 B2B 파트너 페이백은 수동 정산으로 일괄 지급됩니다.</li>
+                    <li>• <strong>시공 완료일 기준 다음 주 화요일</strong>에 등록된 정산 계좌로 입금됩니다.</li>
+                    <li>• 공휴일 등의 영향으로 입금일이 다소 지연될 경우 별도 안내해 드립니다.</li>
+                  </ul>
+                </div>
+
+                {/* 의뢰 목록 */}
+                <div className="space-y-4">
+                  <h3 className="font-extrabold text-slate-800 text-base text-left">
+                    의뢰 내역 총 {b2bQuotes.length}건
+                  </h3>
+                  
+                  {isQuotesLoading ? (
+                    <div className="py-12 text-center text-slate-400">
+                      <span className="material-symbols-outlined animate-spin text-3xl">sync</span>
+                      <p className="text-xs font-bold mt-2">의뢰 내역을 불러오는 중입니다...</p>
+                    </div>
+                  ) : b2bQuotes.length === 0 ? (
+                    <div className="py-16 text-center bg-white border border-slate-200 rounded-2xl">
+                      <span className="material-symbols-outlined text-slate-300 text-5xl">folder_open</span>
+                      <p className="text-sm font-bold text-slate-500 mt-3">아직 신청된 견적서가 없습니다.</p>
+                      <button
+                        onClick={() => setB2bTab('apply')}
+                        className="mt-4 px-5 py-2 bg-blue-600 text-white text-xs font-bold rounded-lg shadow active:scale-95 transition-all"
+                      >
+                        첫 견적 신청하기
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {b2bQuotes.map(quote => {
+                        const partnerPrice = getPartnerPayout(quote);
+                        const paybackAmount = Math.floor(partnerPrice * 0.1);
+                        
+                        let statusLabel = '승인 대기';
+                        let statusColorClass = 'bg-slate-100 text-slate-600 border-slate-200';
+                        let paybackStatusText = '페이백 정산 대기 (작업 완료 후)';
+                        let paybackColorClass = 'text-slate-500';
+                        
+                        if (quote.status === '취소됨' || quote.status === 'canceled') {
+                          statusLabel = '의뢰 취소';
+                          statusColorClass = 'bg-rose-50 text-rose-600 border-rose-100';
+                          paybackStatusText = '정산 불가 (취소된 의뢰)';
+                          paybackColorClass = 'text-rose-500';
+                        } else if (quote.status === '정산대기' || quote.status === '완료') {
+                          statusLabel = '작업 완료';
+                          statusColorClass = 'bg-emerald-50 text-emerald-700 border-emerald-100 font-extrabold';
+                          
+                          if (quote.paybackStatus === 'completed') {
+                            paybackStatusText = `✓ 10% 페이백 지급 완료 (${paybackAmount.toLocaleString()}원)`;
+                            paybackColorClass = 'text-emerald-600 font-black';
+                          } else {
+                            paybackStatusText = `⏳ 10% 페이백 정산 예정 (${paybackAmount.toLocaleString()}원) - 화요일 지급`;
+                            paybackColorClass = 'text-amber-600 font-bold';
+                          }
+                        } else if (quote.status === '상담완료' || quote.status === '진행중') {
+                          statusLabel = '승인 완료';
+                          statusColorClass = 'bg-indigo-50 text-indigo-700 border-indigo-100 font-extrabold';
+                          paybackStatusText = `⏳ 10% 페이백 정산 예정 (${paybackAmount.toLocaleString()}원)`;
+                          paybackColorClass = 'text-blue-600 font-medium';
+                        }
+
+                        return (
+                          <div 
+                            key={quote.id} 
+                            className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm text-left hover:shadow-md transition-shadow relative overflow-hidden"
+                          >
+                            <div className="flex justify-between items-center mb-3">
+                              <span className={`text-[11px] font-bold px-2.5 py-1 rounded-full border ${statusColorClass}`}>
+                                {statusLabel}
+                              </span>
+                              <span className="text-xs text-slate-400 font-bold">
+                                {quote.createdAt ? new Date(quote.createdAt).toLocaleDateString() : '날짜 미상'}
+                              </span>
+                            </div>
+                            
+                            <div className="space-y-1.5 mb-4">
+                              <h4 className="font-extrabold text-slate-800 text-[15px] break-keep leading-snug">
+                                {quote.type} · {quote.size}평 ({quote.house})
+                              </h4>
+                              <p className="text-xs text-slate-500 font-semibold leading-relaxed flex items-center gap-1">
+                                <span className="material-symbols-outlined text-[14px]">map</span>
+                                {quote.location}
+                              </p>
+                              <p className="text-xs text-slate-500 font-semibold flex items-center gap-1">
+                                <span className="material-symbols-outlined text-[14px]">calendar_month</span>
+                                시공 희망일: {quote.date} ({quote.time})
+                              </p>
+                            </div>
+                            
+                            <div className="flex justify-between items-center pt-3 border-t border-slate-100">
+                              <div className="flex flex-col">
+                                <span className="text-[10px] text-slate-400 font-bold">총 결제 금액 (VAT 포함)</span>
+                                <span className="text-[15px] font-black text-slate-700">{quote.price}</span>
+                              </div>
+                              <div className="text-right">
+                                <span className="text-[10px] text-slate-400 font-bold block">B2B 10% 혜택</span>
+                                <span className={`text-xs ${paybackColorClass}`}>
+                                  {paybackStatusText}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              </motion.div>
+            )}
+
             {/* ================= STEP 0: 서비스 안내 (보수 서비스 강조) ================= */}
-            {step === 0 && (
+            {b2bTab === 'apply' && step === 0 && (
               <motion.div
                 key="step0"
                 initial={{ opacity: 0, y: 20 }}
@@ -785,8 +1093,123 @@ export default function Quote() {
                   </div>
                 </div>
 
+                {/* (서브 섹션 2) B2B 파트너사를 위한 강력한 윈윈(Win-Win) 혜택 */}
+                <div className="px-5 lg:px-8 py-12 bg-slate-50 border-y border-slate-200/60 w-full">
+                  <div className="max-w-4xl mx-auto">
+                    <div className="text-center mb-8">
+                      <span className="text-xs font-black text-amber-600 bg-amber-50 border border-amber-200 px-3 py-1 rounded-full uppercase tracking-wider">
+                        BENEFITS
+                      </span>
+                      <h2 className="text-xl lg:text-3xl font-black text-slate-900 tracking-tight mt-3">
+                        2. B2B 파트너사를 위한 강력한 윈윈(Win-Win) 혜택
+                      </h2>
+                      <p className="text-xs lg:text-sm text-slate-500 font-semibold leading-relaxed mt-2.5 break-keep">
+                        청소타워는 파트너 사장님들의 현장 퀄리티를 높여드릴 뿐만 아니라, 확실한 추가 수익 기회까지 보장해 드립니다.
+                      </p>
+                    </div>
+
+                    {/* 10% 페이백 메인 배너 */}
+                    <div className="bg-gradient-to-br from-blue-900 to-slate-950 text-white rounded-3xl p-6 md:p-8 border border-blue-900 shadow-xl shadow-blue-950/20 mb-6 text-center md:text-left relative overflow-hidden">
+                      <div className="absolute top-0 right-0 w-80 h-80 bg-blue-500/10 rounded-full blur-[80px] pointer-events-none" />
+                      
+                      <div className="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+                        <div className="text-left">
+                          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-400 text-amber-950 text-[10px] md:text-xs font-black tracking-wider mb-3">
+                            💰 10% 파트너 인센티브 (페이백) 제도
+                          </div>
+                          <h3 className="text-lg md:text-2xl font-black leading-tight text-white break-keep">
+                            소개 및 직접 의뢰 시 계약 금액의 10% 지급
+                          </h3>
+                          <p className="text-xs md:text-sm text-slate-300 font-semibold mt-2.5 break-keep">
+                            소개 및 직접 의뢰 시 청소 계약 금액의 10%를 파트너사 마케팅 지원금(인센티브)으로 즉시 정산해 드립니다.
+                          </p>
+                        </div>
+                        <button
+                          onClick={() => navigate('/b2b/signup')}
+                          className="shrink-0 bg-white hover:bg-slate-100 text-blue-950 font-black text-xs md:text-sm px-6 py-3.5 rounded-xl shadow-md transition-all whitespace-nowrap hover:-translate-y-0.5 active:translate-y-0"
+                        >
+                          파트너 신청하기
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* 대상별 카드 2열 */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="bg-white border border-slate-100 p-5 rounded-2xl shadow-sm text-left">
+                        <div className="w-9 h-9 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center mb-3">
+                          <span className="material-symbols-outlined text-[20px]">real_estate_agent</span>
+                        </div>
+                        <h4 className="font-extrabold text-slate-800 text-sm md:text-base mb-1">부동산 대표님</h4>
+                        <p className="text-xs text-slate-500 leading-relaxed break-keep font-medium">
+                          이사/입주 앞둔 계약 고객을 소개만 해주셔도 고정 부가 수익 창출!
+                        </p>
+                      </div>
+
+                      <div className="bg-white border border-slate-100 p-5 rounded-2xl shadow-sm text-left">
+                        <div className="w-9 h-9 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center mb-3">
+                          <span className="material-symbols-outlined text-[20px]">chair</span>
+                        </div>
+                        <h4 className="font-extrabold text-slate-800 text-sm md:text-base mb-1">인테리어 사장님</h4>
+                        <p className="text-xs text-slate-500 leading-relaxed break-keep font-medium">
+                          마감 청소 비용 부담은 낮추고, 완벽한 검수로 잔금 회수율 100% 달성!
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* (서브 섹션 3) 안심하고 맡기는 3대 보장제 */}
+                <div className="px-5 lg:px-8 py-12 max-w-4xl mx-auto w-full">
+                  <div className="text-center mb-8">
+                    <span className="text-xs font-black text-emerald-600 bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-full uppercase tracking-wider">
+                      TRUST
+                    </span>
+                    <h2 className="text-xl lg:text-3xl font-black text-slate-900 tracking-tight mt-3">
+                      3. 안심하고 맡기는 3대 보장제
+                    </h2>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                    <div className="bg-white border border-slate-100 p-5 rounded-2xl shadow-sm text-left flex flex-col justify-between h-full hover:shadow-md transition-shadow">
+                      <div>
+                        <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-4">
+                          <span className="material-symbols-outlined text-[22px]">verified_user</span>
+                        </div>
+                        <h4 className="font-extrabold text-slate-800 text-sm md:text-base mb-1.5">A/S 제로 목표 보장</h4>
+                        <p className="text-xs text-slate-500 leading-relaxed break-keep font-medium">
+                          사장님 현장에 민원이 발생하지 않도록 철저한 검수 후 작업 완료 사진 전송
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="bg-white border border-slate-100 p-5 rounded-2xl shadow-sm text-left flex flex-col justify-between h-full hover:shadow-md transition-shadow">
+                      <div>
+                        <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center mb-4">
+                          <span className="material-symbols-outlined text-[22px]">group</span>
+                        </div>
+                        <h4 className="font-extrabold text-slate-800 text-sm md:text-base mb-1.5">베테랑 반장 전담 배치</h4>
+                        <p className="text-xs text-slate-500 leading-relaxed break-keep font-medium">
+                          검증된 지역별 프리미엄 전문 인력 우선 매칭
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="bg-white border border-slate-100 p-5 rounded-2xl shadow-sm text-left flex flex-col justify-between h-full hover:shadow-md transition-shadow">
+                      <div>
+                        <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center mb-4">
+                          <span className="material-symbols-outlined text-[22px]">payments</span>
+                        </div>
+                        <h4 className="font-extrabold text-slate-800 text-sm md:text-base mb-1.5">간편한 정산 및 오더 시스템</h4>
+                        <p className="text-xs text-slate-500 leading-relaxed break-keep font-medium">
+                          복잡한 절차 없이 웹에서 실시간 의뢰 및 정산 내역 확인 가능
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
                 {/* 실리콘 · 마루콕 전/후 사진 카드 */}
-                <div className="px-5 lg:px-8 mb-6 mt-8">
+                <div className="px-5 lg:px-8 mb-6 mt-8 max-w-4xl mx-auto w-full">
                   <div className="text-center mb-6">
                     <motion.div 
                       initial={{ opacity: 0, y: 10 }}
@@ -1025,142 +1448,23 @@ export default function Quote() {
                   </div>
                 </div>
 
-                {/* (서브 섹션 2) B2B 파트너사를 위한 강력한 윈윈(Win-Win) 혜택 */}
-                <div className="px-5 lg:px-8 py-12 bg-slate-50 border-y border-slate-200/60 w-full">
-                  <div className="max-w-4xl mx-auto">
-                    <div className="text-center mb-8">
-                      <span className="text-xs font-black text-amber-600 bg-amber-50 border border-amber-200 px-3 py-1 rounded-full uppercase tracking-wider">
-                        BENEFITS
-                      </span>
-                      <h2 className="text-xl lg:text-3xl font-black text-slate-900 tracking-tight mt-3">
-                        2. B2B 파트너사를 위한 강력한 윈윈(Win-Win) 혜택
-                      </h2>
-                      <p className="text-xs lg:text-sm text-slate-500 font-semibold leading-relaxed mt-2.5 break-keep">
-                        청소타워는 파트너 사장님들의 현장 퀄리티를 높여드릴 뿐만 아니라, 확실한 추가 수익 기회까지 보장해 드립니다.
-                      </p>
-                    </div>
-
-                    {/* 10% 페이백 메인 배너 */}
-                    <div className="bg-gradient-to-br from-blue-900 to-slate-950 text-white rounded-3xl p-6 md:p-8 border border-blue-900 shadow-xl shadow-blue-950/20 mb-6 text-center md:text-left relative overflow-hidden">
-                      <div className="absolute top-0 right-0 w-80 h-80 bg-blue-500/10 rounded-full blur-[80px] pointer-events-none" />
-                      
-                      <div className="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-6">
-                        <div className="text-left">
-                          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-400 text-amber-950 text-[10px] md:text-xs font-black tracking-wider mb-3">
-                            💰 10% 파트너 인센티브 (페이백) 제도
-                          </div>
-                          <h3 className="text-lg md:text-2xl font-black leading-tight text-white break-keep">
-                            소개 및 직접 의뢰 시 계약 금액의 10% 지급
-                          </h3>
-                          <p className="text-xs md:text-sm text-slate-300 font-semibold mt-2.5 break-keep">
-                            소개 및 직접 의뢰 시 청소 계약 금액의 10%를 파트너사 마케팅 지원금(인센티브)으로 즉시 정산해 드립니다.
-                          </p>
-                        </div>
-                        <button
-                          onClick={() => navigate('/b2b/signup')}
-                          className="shrink-0 bg-white hover:bg-slate-100 text-blue-950 font-black text-xs md:text-sm px-6 py-3.5 rounded-xl shadow-md transition-all whitespace-nowrap hover:-translate-y-0.5 active:translate-y-0"
-                        >
-                          파트너 신청하기
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* 대상별 카드 2열 */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="bg-white border border-slate-100 p-5 rounded-2xl shadow-sm text-left">
-                        <div className="w-9 h-9 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center mb-3">
-                          <span className="material-symbols-outlined text-[20px]">real_estate_agent</span>
-                        </div>
-                        <h4 className="font-extrabold text-slate-800 text-sm md:text-base mb-1">부동산 대표님</h4>
-                        <p className="text-xs text-slate-500 leading-relaxed break-keep font-medium">
-                          이사/입주 앞둔 계약 고객을 소개만 해주셔도 고정 부가 수익 창출!
-                        </p>
-                      </div>
-
-                      <div className="bg-white border border-slate-100 p-5 rounded-2xl shadow-sm text-left">
-                        <div className="w-9 h-9 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center mb-3">
-                          <span className="material-symbols-outlined text-[20px]">chair</span>
-                        </div>
-                        <h4 className="font-extrabold text-slate-800 text-sm md:text-base mb-1">인테리어 사장님</h4>
-                        <p className="text-xs text-slate-500 leading-relaxed break-keep font-medium">
-                          마감 청소 비용 부담은 낮추고, 완벽한 검수로 잔금 회수율 100% 달성!
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* (서브 섹션 3) 안심하고 맡기는 3대 보장제 */}
-                <div className="px-5 lg:px-8 py-12 max-w-4xl mx-auto w-full">
-                  <div className="text-center mb-8">
-                    <span className="text-xs font-black text-emerald-600 bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-full uppercase tracking-wider">
-                      TRUST
-                    </span>
-                    <h2 className="text-xl lg:text-3xl font-black text-slate-900 tracking-tight mt-3">
-                      3. 안심하고 맡기는 3대 보장제
-                    </h2>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-                    <div className="bg-white border border-slate-100 p-5 rounded-2xl shadow-sm text-left flex flex-col justify-between h-full hover:shadow-md transition-shadow">
-                      <div>
-                        <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-4">
-                          <span className="material-symbols-outlined text-[22px]">verified_user</span>
-                        </div>
-                        <h4 className="font-extrabold text-slate-800 text-sm md:text-base mb-1.5">A/S 제로 목표 보장</h4>
-                        <p className="text-xs text-slate-500 leading-relaxed break-keep font-medium">
-                          사장님 현장에 민원이 발생하지 않도록 철저한 검수 후 작업 완료 사진 전송
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="bg-white border border-slate-100 p-5 rounded-2xl shadow-sm text-left flex flex-col justify-between h-full hover:shadow-md transition-shadow">
-                      <div>
-                        <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center mb-4">
-                          <span className="material-symbols-outlined text-[22px]">group</span>
-                        </div>
-                        <h4 className="font-extrabold text-slate-800 text-sm md:text-base mb-1.5">베테랑 반장 전담 배치</h4>
-                        <p className="text-xs text-slate-500 leading-relaxed break-keep font-medium">
-                          검증된 지역별 프리미엄 전문 인력 우선 매칭
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="bg-white border border-slate-100 p-5 rounded-2xl shadow-sm text-left flex flex-col justify-between h-full hover:shadow-md transition-shadow">
-                      <div>
-                        <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center mb-4">
-                          <span className="material-symbols-outlined text-[22px]">payments</span>
-                        </div>
-                        <h4 className="font-extrabold text-slate-800 text-sm md:text-base mb-1.5">간편한 정산 및 오더 시스템</h4>
-                        <p className="text-xs text-slate-500 leading-relaxed break-keep font-medium">
-                          복잡한 절차 없이 웹에서 실시간 의뢰 및 정산 내역 확인 가능
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
                 {/* 하단 가입 유도 배너 */}
                 <div className="px-5 lg:px-8 mb-12 w-full">
                   <div className="bg-gradient-to-br from-amber-50 to-yellow-100 border border-amber-200 rounded-3xl py-8 px-6 text-center max-w-4xl mx-auto shadow-md">
                     <span className="text-2xl mb-2 block">⚡</span>
-                    <h3 className="text-lg md:text-xl lg:text-2xl font-black text-amber-950 mb-4 break-keep">
+                    <h3 className="text-lg md:text-xl lg:text-2xl font-black text-amber-950 mb-2 break-keep">
                       지금 가입하고 우리 동네 프리미엄 오더와 혜택을 선점하세요!
                     </h3>
-                    <button
-                      onClick={() => navigate('/b2b/signup')}
-                      className="inline-flex items-center gap-2 bg-slate-900 hover:bg-slate-800 text-white font-black text-sm md:text-base px-8 py-4 rounded-xl shadow-lg active:scale-95 transition-all"
-                    >
-                      <span>인테리어/부동산 파트너 신청하기 (3초 완료)</span>
-                      <span className="material-symbols-outlined text-[18px]">arrow_right_alt</span>
-                    </button>
+                    <p className="text-xs md:text-sm text-amber-850 font-bold mb-1 break-keep">
+                      하단 플로팅 바의 '파트너 신청' 버튼을 통해 즉시 가입하실 수 있습니다.
+                    </p>
                   </div>
                 </div>
               </motion.div>
             )}
             
             {/* ================= STEP 1: 주거 형태 및 평수 ================= */}
-            {step === 1 && (
+            {b2bTab === 'apply' && step === 1 && (
               <motion.div
                 key="step1"
                 initial={{ opacity: 0, x: 30 }}
@@ -1353,7 +1657,7 @@ export default function Quote() {
             )}
 
             {/* ================= STEP 2: 세부사항 선택 ================= */}
-            {step === 2 && (
+            {b2bTab === 'apply' && step === 2 && (
               <motion.div
                 key="step2_details"
                 initial={{ opacity: 0, x: 30 }}
@@ -1469,7 +1773,7 @@ export default function Quote() {
             )}
 
             {/* ================= STEP 3: 일정 및 주소 ================= */}
-            {step === 3 && (
+            {b2bTab === 'apply' && step === 3 && (
               <motion.div
                 key="step3"
                 initial={{ opacity: 0, x: 30 }}
@@ -1608,7 +1912,7 @@ export default function Quote() {
             )}
 
             {/* ================= STEP 4: 연락처 및 메모 ================= */}
-            {step === 4 && (
+            {b2bTab === 'apply' && step === 4 && (
               <motion.div
                 key="step4"
                 initial={{ opacity: 0, x: 30 }}
@@ -1802,7 +2106,7 @@ export default function Quote() {
             )}
 
             {/* ================= STEP 5: 견적 결과 (최종 완료 화면) ================= */}
-            {step === 5 && (
+            {b2bTab === 'apply' && step === 5 && (
               <motion.div
                 key="step5"
                 initial={{ opacity: 0, scale: 0.95 }}
@@ -1921,6 +2225,62 @@ export default function Quote() {
                    </div>
                 </div>
 
+                {/* 계약금 입금 안내 */}
+                <div className="bg-blue-50/70 rounded-xl p-4 mb-4 border border-blue-100 text-left">
+                  <p className="text-blue-600 text-[13px] font-bold mb-1.5 flex items-center gap-1.5">
+                    <span className="material-symbols-outlined text-[16px]">info</span>
+                    예약 확정을 위한 계약금 입금 안내
+                  </p>
+                  <p className="text-xs text-slate-600 leading-relaxed mb-3">
+                    원활한 서비스 진행과 노쇼 방지를 위해{' '}
+                    <strong className="text-rose-600 font-bold">
+                      계약금 {depositAmount.toLocaleString()}원
+                    </strong>
+                    (최종 예상 결제액의 10%)을 아래 방법으로 입금해 주시면 예약이 최종 확정됩니다.
+                  </p>
+
+                  {/* 간편 송금 버튼 그룹 */}
+                  <div className="grid grid-cols-2 gap-2 mb-3">
+                    <button
+                      type="button"
+                      onClick={() => handleRemittance('toss')}
+                      className="py-2.5 bg-[#3182F6] hover:bg-[#206FE5] text-white font-bold rounded-xl text-xs transition-all flex items-center justify-center gap-1.5 shadow active:scale-95"
+                    >
+                      <span className="font-sans font-black tracking-tighter text-[11px]">toss</span>
+                      토스 간편송금
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleRemittance('kakao')}
+                      className="py-2.5 bg-[#FFEB00] hover:bg-[#FADA00] text-[#1A1A1C] font-bold rounded-xl text-xs transition-all flex items-center justify-center gap-1.5 shadow active:scale-95"
+                    >
+                      <span className="material-symbols-outlined text-[13px] font-bold">chat</span>
+                      카카오페이 송금
+                    </button>
+                  </div>
+
+                  {/* 계좌 정보 */}
+                  <div className="bg-white p-2.5 rounded-lg border border-slate-200 flex flex-col gap-1">
+                    <div className="flex justify-between items-center text-[11px]">
+                      <span className="text-slate-500">입금 계좌</span>
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-bold text-slate-700 tracking-wide select-all">신협 131-022-991902</span>
+                        <button
+                          type="button"
+                          onClick={handleCopyAccount}
+                          className="px-1.5 py-0.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded text-[9px] font-bold transition-all border border-slate-300 active:scale-95"
+                        >
+                          복사
+                        </button>
+                      </div>
+                    </div>
+                    <div className="flex justify-between items-center text-[11px]">
+                      <span className="text-slate-500">예금주</span>
+                      <span className="text-slate-700 font-semibold">주식회사 청소타워</span>
+                    </div>
+                  </div>
+                </div>
+
                 {/* 신뢰도 문구 */}
                 <div className="bg-white/80 rounded-xl p-4 mb-6 flex flex-col gap-1.5">
                   <p className="text-[13px] text-slate-600 leading-relaxed text-center font-medium break-keep">
@@ -1973,16 +2333,33 @@ export default function Quote() {
                 )}
               </AnimatePresence>
               
-              <button
-                onClick={handleNext}
-                className={`w-full font-bold py-4 rounded-xl text-lg transition-all active:scale-[0.98] ${
-                  step === 0
-                    ? 'bg-gradient-to-r from-amber-500 to-amber-600 active:from-amber-600 active:to-amber-700 text-slate-900 shadow-[0_8px_16px_rgba(245,158,11,0.3)]'
-                    : 'bg-blue-600 active:bg-blue-700 text-white shadow-[0_8px_16px_rgba(37,99,235,0.25)]'
-                }`}
-              >
-                {step === 0 ? '견적 시작하기 →' : step === 4 ? '다음' : '다음 단계로'}
-              </button>
+              {step === 0 ? (
+                <div className="flex gap-2 w-full">
+                  <button
+                    onClick={() => navigate('/b2b/signup')}
+                    className="flex-1 bg-slate-900 hover:bg-slate-800 text-white font-bold py-4 rounded-xl text-[14px] md:text-base transition-all active:scale-[0.98] shadow-md whitespace-nowrap"
+                  >
+                    파트너 신청 (3초)
+                  </button>
+                  <button
+                    onClick={handleNext}
+                    className="flex-[1.4] bg-gradient-to-r from-amber-500 to-amber-600 active:from-amber-600 active:to-amber-700 text-slate-900 font-bold py-4 rounded-xl text-[14px] md:text-base transition-all active:scale-[0.98] shadow-[0_8px_16px_rgba(245,158,11,0.3)] flex items-center justify-center gap-1 whitespace-nowrap"
+                  >
+                    견적 시작하기 →
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={handleNext}
+                  className={`w-full font-bold py-4 rounded-xl text-lg transition-all active:scale-[0.98] ${
+                    step === 0
+                      ? 'bg-gradient-to-r from-amber-500 to-amber-600 active:from-amber-600 active:to-amber-700 text-slate-900 shadow-[0_8px_16px_rgba(245,158,11,0.3)]'
+                      : 'bg-blue-600 active:bg-blue-700 text-white shadow-[0_8px_16px_rgba(37,99,235,0.25)]'
+                  }`}
+                >
+                  {step === 0 ? '견적 시작하기 →' : step === 4 ? '다음' : '다음 단계로'}
+                </button>
+              )}
             </div>
           </motion.div>
         )}

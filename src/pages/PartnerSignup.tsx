@@ -121,6 +121,7 @@ export default function PartnerSignup() {
         ...(location.state?.snsProfile?.provider === 'naver' ? { naverId: location.state.snsProfile.id } : {})
       };
 
+      let docId = '';
       const dbInstance = getDb();
       if (dbInstance) {
         // ★ 중복 가입 방지: 같은 전화번호(loginId)로 이미 가입된 계정이 있는지 확인
@@ -133,7 +134,8 @@ export default function PartnerSignup() {
           alert('이미 해당 연락처로 가입된 계정이 존재합니다.\n파트너스 페이지에서 기존 계정으로 로그인해주세요.');
           return;
         }
-        await addDoc(collection(dbInstance, 'partners'), firestoreData);
+        const docRef = await addDoc(collection(dbInstance, 'partners'), firestoreData);
+        docId = docRef.id;
 
         // 텔레그램 알림 발송 (비동기)
         try {
@@ -166,7 +168,16 @@ export default function PartnerSignup() {
         status: formData.plan === 'exclusive' ? 'pending' : 'active',
         password: actualPassword
       }));
-      setStep(4); // 완료 화면
+      
+      navigate('/partners/checkout', {
+        state: {
+          partnerId: docId || 'local_test_id',
+          plan: formData.plan,
+          cycle: location.state?.cycle || '1month',
+          phone: formData.phone,
+          name: formData.managerName || formData.name || '미기재'
+        }
+      });
     } catch (e) {
       console.error(e);
       alert(`신청 중 오류가 발생했습니다: ${e instanceof Error ? e.message : '알 수 없는 오류'}`);

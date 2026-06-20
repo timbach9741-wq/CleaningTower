@@ -14,6 +14,8 @@
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.2.2",
+    "@tosspayments/payment-sdk": "^1.9.3",
+    "@tosspayments/payment-widget-sdk": "^0.12.2",
     "firebase": "^12.12.1",
     "framer-motion": "^12.38.0",
     "lucide-react": "^1.8.0",

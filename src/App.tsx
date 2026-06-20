@@ -26,6 +26,9 @@ const ReviewWrite = lazy(() => import('./pages/ReviewWrite'));
 const LocalSEO = lazy(() => import('./pages/LocalSEO'));
 const PaymentSuccess = lazy(() => import('./pages/PaymentSuccess'));
 const PaymentFail = lazy(() => import('./pages/PaymentFail'));
+const PartnerCheckout = lazy(() => import('./pages/PartnerCheckout'));
+const PartnerCheckoutSuccess = lazy(() => import('./pages/PartnerCheckoutSuccess'));
+const PartnerCheckoutFail = lazy(() => import('./pages/PartnerCheckoutFail'));
 
 // 페이지 전환 시 보여줄 로딩 스피너 (최소한의 인라인 스타일로 별도 CSS 없이 동작)
 function PageLoader() {
@@ -65,6 +68,9 @@ function App() {
           <Route path="/partners" element={<PartnerList />} />
           <Route path="/partners/join" element={<PartnerLanding />} />
           <Route path="/partners/register" element={<PartnerSignup />} />
+          <Route path="/partners/checkout" element={<PartnerCheckout />} />
+          <Route path="/partners/checkout/success" element={<PartnerCheckoutSuccess />} />
+          <Route path="/partners/checkout/fail" element={<PartnerCheckoutFail />} />
           <Route path="/partner-dashboard" element={<PartnerDashboard />} />
           <Route path="/partner" element={<Navigate to="/partner-dashboard" replace />} />
           <Route path="/admin" element={<AdminDashboard />} />

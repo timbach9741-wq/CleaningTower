@@ -259,29 +259,34 @@ export default function PartnerLanding() {
 
                     {/* 카드 내 개월수 선택 컨트롤러 */}
                     <div className="mb-6 flex flex-col gap-2">
-                      <span className={`text-[11px] font-bold ${isPremium ? 'text-slate-400' : 'text-slate-500'}`}>가입 기간 선택</span>
+                      <span className={`text-xs font-bold ${isPremium ? 'text-slate-400' : 'text-slate-500'}`}>가입 기간 선택</span>
                       <div className={`grid grid-cols-3 gap-1 p-1 rounded-xl ${isPremium ? 'bg-slate-800' : 'bg-slate-100'}`}>
                         {['1month', '3month', '6month'].map((cycle) => {
                           const discountText = cycle === '1month' ? '정상가' : cycle === '3month' ? (key === 'premium' ? '13% 할인' : '10% 할인') : '20% 할인';
                           const isSelected = billingCycle === cycle;
+                          
+                          // 선택 여부 및 플랜 종류에 따른 서브 텍스트(할인 정보) 색상 지정
+                          const discountColor = cycle === '1month' 
+                            ? (isSelected ? 'text-white' : (isPremium ? 'text-slate-400' : 'text-slate-500'))
+                            : (isSelected ? 'text-rose-200' : 'text-rose-600 font-extrabold');
                           
                           return (
                             <button
                               key={cycle}
                               type="button"
                               onClick={() => handleCycleChange(key, cycle)}
-                              className={`py-2 px-1 rounded-lg text-[10px] sm:text-xs font-bold transition-all text-center ${
+                              className={`py-2 px-1 rounded-lg text-xs sm:text-sm font-bold transition-all text-center ${
                                 isSelected
                                   ? isPremium 
-                                    ? 'bg-blue-600 text-white shadow' 
-                                    : 'bg-white text-blue-950 shadow'
+                                    ? 'bg-blue-600 text-white shadow scale-[1.03]' 
+                                    : 'bg-white text-blue-950 shadow scale-[1.03]'
                                   : isPremium
-                                    ? 'text-slate-400 hover:text-slate-200'
-                                    : 'text-slate-600 hover:text-slate-900'
+                                    ? 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'
+                                    : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
                               }`}
                             >
                               <div>{cycle === '1month' ? '1개월' : cycle === '3month' ? '3개월' : '6개월'}</div>
-                              <div className={`text-[8px] mt-0.5 opacity-80 ${isSelected ? 'font-extrabold' : 'font-normal'}`}>
+                              <div className={`text-[10px] sm:text-[11px] mt-0.5 ${discountColor}`}>
                                 {discountText}
                               </div>
                             </button>
@@ -309,15 +314,15 @@ export default function PartnerLanding() {
                         {/* 할인 이전 원가 및 할인율 표기 */}
                         {pricing.discount > 0 ? (
                           <div className="flex items-center gap-2 mb-1">
-                            <span className={`text-xs line-through opacity-60 ${isPremium ? 'text-slate-400' : 'text-slate-500'}`}>
+                            <span className={`text-sm line-through opacity-65 ${isPremium ? 'text-slate-400' : 'text-slate-500'}`}>
                               ₩{key === 'basic' ? '50,000' : key === 'premium' ? '150,000' : '300,000'}
                             </span>
-                            <span className="text-[10px] font-black px-2 py-0.5 rounded bg-rose-500 text-white">
-                              {pricing.discount}% OFF
+                            <span className="text-xs font-black px-2.5 py-0.5 rounded-md bg-rose-600 text-white shadow-sm animate-pulse">
+                              {pricing.discount}% 할인
                             </span>
                           </div>
                         ) : (
-                          <div className="h-5" />
+                          <div className="h-6" />
                         )}
 
                         {/* 월별 환산 요금 */}

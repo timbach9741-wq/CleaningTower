@@ -101,6 +101,8 @@ export interface PartnerUser {
   bankName?: string;
   accountNumber?: string;
   accountHolder?: string;
+  plan?: string;
+  createdAt?: string;
 }
 
 export default function Partner() {
@@ -1951,6 +1953,40 @@ export default function Partner() {
                   <span className="material-symbols-outlined text-[18px]">edit_document</span>
                   내 홍보 정보 수정 (포트폴리오/리뷰/행사)
                 </button>
+              </div>
+
+              {/* 멤버십 & 결제 안내 카드 */}
+              <div className="bg-gradient-to-br from-slate-900 to-slate-800 text-white p-5 rounded-2xl shadow-md border border-slate-700 text-left">
+                <div className="flex justify-between items-center mb-3">
+                  <span className="text-xs font-black tracking-wider text-amber-400 bg-amber-400/10 px-2.5 py-1 rounded-md border border-amber-400/20 uppercase">
+                    MEMBERSHIP
+                  </span>
+                  <span className="text-xs font-bold text-slate-300">
+                    3개월 무료 체험 중
+                  </span>
+                </div>
+                <h3 className="text-lg font-black text-white mb-1">
+                  {currentUser?.plan === 'premium' ? '프리미엄 파트너' : currentUser?.plan === 'exclusive' ? '지역 독점 파트너' : '일반 파트너'}
+                </h3>
+                <p className="text-xs text-slate-300 leading-relaxed font-medium mb-4">
+                  현재 신규 파트너 3개월 무료 프로모션 혜택을 받고 계십니다. 무료 혜택 기간 동안 오더 매칭을 제한 없이 이용하실 수 있습니다.
+                </p>
+                <div className="h-px bg-slate-700 w-full mb-4"></div>
+                <div className="flex justify-between items-center text-xs">
+                  <span className="text-slate-400 font-bold">체험 만료 예정일</span>
+                  <span className="font-extrabold text-amber-300">
+                    {currentUser?.createdAt ? (
+                      (() => {
+                        const date = new Date(currentUser.createdAt);
+                        date.setMonth(date.getMonth() + 3);
+                        return `${date.getFullYear()}년 ${date.getMonth() + 1}월 ${date.getDate()}일`;
+                      })()
+                    ) : '가입일로부터 3개월 후'}
+                  </span>
+                </div>
+                <div className="mt-4 bg-slate-800/80 p-3 rounded-xl border border-slate-700 text-[11px] text-slate-300 leading-relaxed font-medium">
+                  💡 무료 체험 기간 종료 시점에 카드를 등록하고 결제를 갱신하실 수 있도록 별도 안내해 드립니다. (토스페이먼츠 심사 완료 후 적용 예정)
+                </div>
               </div>
 
               <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 mb-4">

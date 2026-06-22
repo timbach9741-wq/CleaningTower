@@ -30,6 +30,11 @@ const PartnerCheckout = lazy(() => import('./pages/PartnerCheckout'));
 const PartnerCheckoutSuccess = lazy(() => import('./pages/PartnerCheckoutSuccess'));
 const PartnerCheckoutFail = lazy(() => import('./pages/PartnerCheckoutFail'));
 
+const Login = lazy(() => import('./pages/Login'));
+const ConsumerDashboard = lazy(() => import('./pages/ConsumerDashboard'));
+const InteriorDashboard = lazy(() => import('./pages/InteriorDashboard'));
+const RealEstateDashboard = lazy(() => import('./pages/RealEstateDashboard'));
+
 // 페이지 전환 시 보여줄 로딩 스피너 (최소한의 인라인 스타일로 별도 CSS 없이 동작)
 function PageLoader() {
   return (
@@ -63,6 +68,10 @@ function App() {
         <ScrollToAnchor />
         <Suspense fallback={<PageLoader />}>
           <Routes>
+          <Route path="/login" element={<Login />} />
+          <Route path="/consumer-dashboard" element={<ConsumerDashboard />} />
+          <Route path="/interior-dashboard" element={<InteriorDashboard />} />
+          <Route path="/realestate-dashboard" element={<RealEstateDashboard />} />
           <Route path="/" element={<CleaningHome />} />
           <Route path="/service" element={<ServiceGuide />} />
           <Route path="/partners" element={<PartnerList />} />

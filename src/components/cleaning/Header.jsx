@@ -57,8 +57,10 @@ export default function Header({ onOpenQuote, theme = 'light', hideQuoteButton =
           </span>
         </Link>
 
-        {/* Desktop Navigation */}
-        <nav className="hidden lg:flex items-center gap-8">
+        {/* Right Section: Nav & Actions */}
+        <div className="flex items-center gap-4 lg:gap-8">
+          {/* Desktop Navigation */}
+          <nav className="hidden lg:flex items-center gap-8">
           {navLinks.map((link) => {
             const isAnchor = link.href.startsWith('#');
             const commonClasses = `font-medium transition-colors hover:text-blue-600 ${
@@ -111,35 +113,9 @@ export default function Header({ onOpenQuote, theme = 'light', hideQuoteButton =
         </nav>
 
         {/* Action Button & Mobile Menu Toggle */}
-        <div className="flex items-center gap-4 z-50">
-          <button 
-            onClick={() => navigate('/b2b/quote')}
-            className={`hidden sm:flex px-4 py-2.5 rounded-full font-bold text-sm transition-all duration-300 items-center gap-1.5 hover:-translate-y-0.5 ${
-              isScrolled || isMobileMenuOpen
-                ? 'text-blue-600 hover:text-blue-700' 
-                : (theme === 'dark'
-                    ? 'text-blue-300 hover:text-white'
-                    : 'text-blue-600 hover:text-blue-700')
-            }`}
-          >
-            🏢 업체 전용
-          </button>
-          <button 
-            onClick={() => navigate('/partner-dashboard', { state: { showLogin: true } })}
-            className={`hidden sm:flex px-4 py-2.5 rounded-full font-bold text-sm transition-all duration-300 items-center gap-1.5 hover:-translate-y-0.5 ${
-              isScrolled || isMobileMenuOpen
-                ? 'text-slate-700 hover:text-blue-600' 
-                : (theme === 'dark'
-                    ? 'text-white/90 hover:text-white'
-                    : 'text-slate-700 hover:text-blue-600')
-            }`}
-          >
-            파트너스 로그인
-          </button>
-
-          {!hideQuoteButton && (
+          <div className="flex items-center gap-4 z-50">
             <button 
-              onClick={() => navigate('/partners')}
+              onClick={() => navigate('/login')}
               className={`hidden sm:flex px-5 py-2.5 rounded-full font-bold text-sm transition-all duration-300 shadow-md items-center gap-2 hover:-translate-y-0.5 ${
                 isScrolled || isMobileMenuOpen
                   ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-blue-600/30' 
@@ -148,16 +124,16 @@ export default function Header({ onOpenQuote, theme = 'light', hideQuoteButton =
                       : 'bg-white text-blue-600 hover:bg-blue-50 shadow-black/10')
               }`}
             >
-              바로 전문가 찾기
+              회원가입 및 로그인
             </button>
-          )}
-          
-          <button 
-            className={`lg:hidden p-2 ${isScrolled || isMobileMenuOpen ? 'text-slate-800' : (theme === 'dark' ? 'text-white' : 'text-slate-800')}`}
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-          >
-            {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-          </button>
+            
+            <button 
+              className={`lg:hidden p-2 ${isScrolled || isMobileMenuOpen ? 'text-slate-800' : (theme === 'dark' ? 'text-white' : 'text-slate-800')}`}
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            >
+              {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            </button>
+          </div>
         </div>
       </div>
 
@@ -217,33 +193,15 @@ export default function Header({ onOpenQuote, theme = 'light', hideQuoteButton =
               </Link>
             );
           })}
-          <button 
-            onClick={() => {
-              setIsMobileMenuOpen(false);
-              navigate('/b2b/quote');
-            }}
-            className="mt-2 w-full px-5 py-3 rounded-xl font-bold text-sm bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 flex justify-center items-center gap-1.5"
-          >
-            🏢 업체 전용 로그인
-          </button>
-          <button 
-            onClick={() => {
-              setIsMobileMenuOpen(false);
-              navigate('/partner-dashboard', { state: { showLogin: true } });
-            }}
-            className="w-full px-5 py-3 rounded-xl font-bold text-sm bg-slate-100 hover:bg-slate-200 text-slate-700 flex justify-center items-center gap-1.5"
-          >
-            파트너스 로그인
-          </button>
-          <button 
-            onClick={() => {
-              setIsMobileMenuOpen(false);
-              navigate('/partners');
-            }}
-            className="w-full px-5 py-3 rounded-xl font-bold text-sm bg-blue-600 text-white shadow-md flex justify-center items-center"
-          >
-            바로 전문가 찾기
-          </button>
+            <button 
+              onClick={() => {
+                setIsMobileMenuOpen(false);
+                navigate('/login');
+              }}
+              className="w-full px-5 py-3 rounded-xl font-bold text-sm bg-blue-600 text-white shadow-md flex justify-center items-center"
+            >
+              회원가입 및 로그인
+            </button>
         </nav>
       </div>
     </header>

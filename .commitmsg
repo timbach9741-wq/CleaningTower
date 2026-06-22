@@ -1,6 +1,5 @@
-fix: Firestore rules + SW cache + calendar error
+fix: remove mock settlement data, use real completed orders
 
-- Open partners/quotes update rules for custom auth (not Firebase Auth)
-- Bump service worker cache to v5 for forced refresh
-- Optimistic calendar date toggle with rollback on failure
-- Granular notification error handling (no more generic popup)
+Replace hardcoded dummy settlement entries (Gangnam, Seocho, Bundang)
+with actual completed orders from Firestore quotes collection.
+New partners will now see empty settlement history until they complete jobs.

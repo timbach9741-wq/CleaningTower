@@ -133,6 +133,44 @@ export default function Quote() {
   const [isAgreedPersonalInfo, setIsAgreedPersonalInfo] = useState(false);
   const [showPrivacyModal, setShowPrivacyModal] = useState(false);
   
+  const [referralCode, setReferralCode] = useState('');
+  const [isReferralApplied, setIsReferralApplied] = useState(false);
+  const handleApplyReferral = () => {
+    const trimmed = referralCode.trim();
+    if (trimmed.length > 0) {
+      const myOwnCode = localStorage.getItem('myReferralCode');
+      if (myOwnCode && trimmed === myOwnCode) {
+        alert("자신의 추천인 코드는 사용할 수 없습니다. 친구의 추천인 코드를 입력해 주세요.");
+        return;
+      }
+      setIsReferralApplied(true);
+      alert("추천인 코드가 적용되어 10,000원이 할인되었습니다.");
+    }
+  };
+
+  const [myCoupons, setMyCoupons] = useState<number>(0);
+  const [isCouponApplied, setIsCouponApplied] = useState(false);
+  
+  useEffect(() => {
+    const storedCoupons = localStorage.getItem('myCoupons');
+    if (storedCoupons !== null) {
+      setMyCoupons(parseInt(storedCoupons, 10) || 0);
+    } else {
+      setMyCoupons(1);
+      localStorage.setItem('myCoupons', '1');
+    }
+  }, []);
+
+  const handleApplyCoupon = () => {
+    if (myCoupons > 0) {
+      setIsCouponApplied(true);
+    }
+  };
+
+  const handleCancelCoupon = () => {
+    setIsCouponApplied(false);
+  };
+  
   const handleBetweenCleaningToggle = () => {
     const nextState = !isBetweenCleaning;
     setIsBetweenCleaning(nextState);
@@ -196,11 +234,11 @@ export default function Quote() {
     return total;
   }, [cleaningType, size, isBetweenCleaning, selectedOptions, elevator, isHighFloorWithoutElevator]);
 
-  const vatPrice = Math.floor(estimatedPrice * 0.1);
-  const totalPriceIncVat = estimatedPrice + vatPrice;
-  const depositAmount = (cleaningType === '정기' || cleaningType === '가전')
-    ? 50000
-    : Math.floor((totalPriceIncVat * 0.1) / 100) * 100; // 100원 단위 절사
+  const referralDiscount = isReferralApplied ? 10000 : 0;
+  const couponDiscount = isCouponApplied ? 10000 : 0;
+  const depositAmount = 50000; // 고정 매칭비 5만원
+  // 현장 결제 예상 잔금 (총 비용 - 매칭비 - 쿠폰)
+  const onSitePaymentAmount = Math.max(0, estimatedPrice - depositAmount - referralDiscount - couponDiscount);
 
   const handleSizeChange = (e: ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
@@ -312,7 +350,7 @@ export default function Quote() {
       address,
       contactInfo,
       memo: memoText,
-      totalPrice: totalPriceIncVat,
+      totalPrice: estimatedPrice,
       status: '대기중',
       createdAt: new Date(),
 
@@ -352,9 +390,21 @@ export default function Quote() {
       const docRef = await addDoc(collection(db!, 'quotes'), {
         ...payload,
         assignedTo: assignedToId || null,
-        designatedPartnerName: assignedPartnerName || null
+        designatedPartnerName: assignedPartnerName || null,
+        couponApplied: isCouponApplied,
+        referralApplied: isReferralApplied,
+        discountAmount: referralDiscount + couponDiscount,
+        finalPrice: onSitePaymentAmount, // 현장 결제 예상 잔금
+        depositAmount: depositAmount // 매칭비(예약금)
       });
       setCreatedQuoteId(docRef.id);
+
+      // 쿠폰 사용 시 보유 쿠폰 차감
+      if (isCouponApplied) {
+        const nextCoupons = Math.max(0, myCoupons - 1);
+        localStorage.setItem('myCoupons', nextCoupons.toString());
+        setMyCoupons(nextCoupons);
+      }
 
       // 정기 구독 및 가전 분해 세척 전용 텔레그램 알림 전송
       if (cleaningType === '정기' || cleaningType === '가전') {
@@ -973,19 +1023,11 @@ export default function Quote() {
                     </div>
                   ) : (
                     <>
-                      <div className="flex justify-between items-center text-sm">
-                        <span className="text-slate-400 font-medium">원래 금액 (공급가액)</span>
-                        <span className="text-slate-200 font-medium">{estimatedPrice.toLocaleString()}원</span>
-                      </div>
-                      <div className="flex justify-between items-center text-sm pb-3 border-b border-white/10">
-                        <span className="text-rose-400 font-medium">부가세 10%</span>
-                        <span className="text-rose-400 font-medium">+{vatPrice.toLocaleString()}원</span>
-                      </div>
                       <div className="flex justify-between items-end pt-1">
-                        <span className="text-blue-300 font-bold text-[15px] mb-1">총 결제 예정 금액</span>
+                        <span className="text-blue-300 font-bold text-[15px] mb-1">총 청소 비용 (예상)</span>
                         <div className="text-right">
                           <span className="text-white font-black text-2xl drop-shadow-md">
-                            {totalPriceIncVat.toLocaleString()}
+                            {estimatedPrice.toLocaleString()}
                           </span>
                           <span className="text-blue-200 text-sm ml-1 font-bold">원</span>
                         </div>
@@ -1489,6 +1531,19 @@ export default function Quote() {
                            <span className="text-white font-bold text-[15px]">{cleaningType} 청소</span>
                            <span className="text-slate-400 text-xs mt-1">{houseSubType ? `${houseType} (${houseSubType})` : houseType} · {size}평</span>
                         </div>
+                        {isReferralApplied && cleaningType !== '정기' && cleaningType !== '가전' && (
+                         <div className="flex justify-between items-center mt-3">
+                            <span className="text-emerald-400 text-sm font-bold">추천인 코드 할인</span>
+                            <span className="text-emerald-400 font-bold">-{referralDiscount.toLocaleString()}원</span>
+                         </div>
+                       )}
+
+                       {isCouponApplied && cleaningType !== '정기' && cleaningType !== '가전' && (
+                         <div className="flex justify-between items-center mt-2">
+                            <span className="text-emerald-400 text-sm font-bold">할인 쿠폰 적용</span>
+                            <span className="text-emerald-400 font-bold">-{couponDiscount.toLocaleString()}원</span>
+                         </div>
+                       )}
                      </div>
                      
                      <div className="space-y-3 pb-4 border-b border-dashed border-white/10 mb-4">
@@ -1553,26 +1608,98 @@ export default function Quote() {
                        </div>
 
                        <div className="flex justify-between items-center pt-3 border-t border-white/10 mt-2">
-                           <span className="text-slate-400 text-sm font-bold">총 공급가액</span>
+                           <span className="text-slate-400 text-sm font-bold">총 청소 요금 (현장 결제 예상액)</span>
                            <span className="text-slate-200 font-bold">{cleaningType === '정기' || cleaningType === '가전' ? '상담 후 결정' : `${estimatedPrice.toLocaleString()}원`}</span>
                        </div>
-                       <div className="flex justify-between items-center mt-2">
-                          <span className="text-rose-400 text-sm font-medium">부가세 (10%)</span>
-                          <span className="text-rose-400 font-medium">{cleaningType === '정기' || cleaningType === '가전' ? '상담 후 결정' : `+${vatPrice.toLocaleString()}원`}</span>
+
+                       <div className="flex justify-between items-center mt-2 border-b border-white/10 pb-3">
+                           <span className="text-blue-300 text-sm font-bold">플랫폼 예약금 (오늘 결제)</span>
+                           <span className="text-blue-300 font-bold">{cleaningType === '정기' || cleaningType === '가전' ? '50,000원' : `${depositAmount.toLocaleString()}원`}</span>
                        </div>
+                       
+                       {isReferralApplied && cleaningType !== '정기' && cleaningType !== '가전' && (
+                         <div className="flex justify-between items-center mt-3">
+                            <span className="text-emerald-400 text-sm font-bold">추천인 코드 할인</span>
+                            <span className="text-emerald-400 font-bold">-{referralDiscount.toLocaleString()}원 (현장 차감)</span>
+                         </div>
+                       )}
+
+                       {isCouponApplied && cleaningType !== '정기' && cleaningType !== '가전' && (
+                         <div className="flex justify-between items-center mt-2">
+                            <span className="text-emerald-400 text-sm font-bold">할인 쿠폰 적용</span>
+                            <span className="text-emerald-400 font-bold">-{couponDiscount.toLocaleString()}원 (현장 차감)</span>
+                         </div>
+                       )}
                      </div>
 
-                     <div className="flex justify-between items-end pt-2">
-                        <span className="text-blue-300 text-base font-bold mb-1">최종 예상 결제액</span>
-                        <div className="text-right">
-                          <span className="text-[32px] font-black text-white leading-none shadow-blue-500/50 drop-shadow-md">
-                            {cleaningType === '정기' || cleaningType === '가전' ? '상담 후 결정' : totalPriceIncVat.toLocaleString()}
-                          </span>
-                          {cleaningType !== '정기' && cleaningType !== '가전' && <span className="text-blue-200 text-base ml-1 font-bold">원</span>}
+                     <div className="flex flex-col gap-1 pt-2 mt-2">
+                        <div className="flex justify-between items-end">
+                          <span className="text-rose-300 text-base font-bold mb-1">예상 현장 결제 잔금</span>
+                          <div className="text-right">
+                            <span className="text-[32px] font-black text-rose-400 leading-none shadow-rose-500/50 drop-shadow-md">
+                              {cleaningType === '정기' || cleaningType === '가전' ? '상담 후 결정' : onSitePaymentAmount.toLocaleString()}
+                            </span>
+                            {cleaningType !== '정기' && cleaningType !== '가전' && <span className="text-rose-300 text-base ml-1 font-bold">원</span>}
+                          </div>
                         </div>
+                        <p className="text-xs text-slate-400 text-right mt-1">* 예약금과 쿠폰 할인이 모두 차감된 최종 금액입니다.</p>
                      </div>
                    </div>
                 </div>
+
+                {/* 보유 할인 쿠폰 사용 */}
+                {cleaningType !== '정기' && cleaningType !== '가전' && myCoupons > 0 && (
+                  <div className="bg-slate-800/80 rounded-xl p-4 mb-4 border border-white/5 flex flex-col gap-2">
+                    <span className="text-[13px] text-slate-300 font-bold flex items-center gap-1.5">
+                      <span className="material-symbols-outlined text-[16px]">confirmation_number</span>
+                      보유 할인 쿠폰
+                    </span>
+                    <div className="flex justify-between items-center bg-slate-900/60 p-3 rounded-xl border border-slate-700/60">
+                      <div className="flex flex-col">
+                        <span className="text-sm font-bold text-white">친구 추천 1만원 할인 쿠폰</span>
+                        <span className="text-xs text-slate-400">보유 수량: {myCoupons}장</span>
+                      </div>
+                      <button 
+                        type="button"
+                        onClick={isCouponApplied ? handleCancelCoupon : handleApplyCoupon}
+                        className={`font-bold py-1.5 px-3.5 rounded-xl text-xs sm:text-sm transition-all ${
+                          isCouponApplied 
+                            ? 'bg-rose-600 hover:bg-rose-500 text-white shadow-lg shadow-rose-600/30' 
+                            : 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-600/30'
+                        }`}
+                      >
+                        {isCouponApplied ? '적용 취소' : '쿠폰 적용'}
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* 추천인 코드 입력란 */}
+                {cleaningType !== '정기' && cleaningType !== '가전' && (
+                  <div className="bg-slate-800/80 rounded-xl p-4 mb-4 border border-white/5 flex flex-col gap-2">
+                    <span className="text-[13px] text-slate-300 font-bold flex items-center gap-1.5">
+                      <span className="material-symbols-outlined text-[16px]">redeem</span>
+                      추천인 코드
+                    </span>
+                    <div className="flex gap-2">
+                      <input 
+                        type="text" 
+                        placeholder="추천인 코드를 입력하세요"
+                        value={referralCode}
+                        onChange={(e) => setReferralCode(e.target.value)}
+                        disabled={isReferralApplied}
+                        className="flex-1 bg-slate-900 border border-slate-700 text-white text-sm rounded-xl px-3 py-2 focus:outline-none focus:border-blue-500 disabled:opacity-50"
+                      />
+                      <button 
+                        onClick={handleApplyReferral}
+                        disabled={isReferralApplied || referralCode.trim().length === 0}
+                        className="bg-blue-600 hover:bg-blue-500 disabled:bg-slate-700 disabled:text-slate-500 text-white font-bold py-2 px-4 rounded-xl text-sm transition-all"
+                      >
+                        {isReferralApplied ? '적용 완료' : '적용'}
+                      </button>
+                    </div>
+                  </div>
+                )}
 
                 {/* 계약금 입금 안내 */}
                 <div className="bg-blue-950/40 rounded-xl p-4 mb-4 border border-blue-500/20 text-left">
@@ -1583,11 +1710,9 @@ export default function Quote() {
                   <p className="text-xs text-slate-300 leading-relaxed mb-3">
                     원활한 서비스 진행과 노쇼 방지를 위해{' '}
                     <strong className="text-rose-400 font-bold">
-                      계약금 {depositAmount.toLocaleString()}원
+                      플랫폼 예약금 {depositAmount.toLocaleString()}원
                     </strong>
-                    {cleaningType === '정기' || cleaningType === '가전'
-                      ? '을 입금해 주시면 예약이 최종 확정됩니다.'
-                      : '(최종 예상 결제액의 10%)을 아래 방법으로 입금해 주시면 예약이 최종 확정됩니다.'}
+                    을 아래 방법으로 입금해 주시면 예약이 최종 확정됩니다.
                   </p>
 
                   {/* 간편 송금 버튼 그룹 */}

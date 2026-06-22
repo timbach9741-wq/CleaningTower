@@ -68,6 +68,9 @@ export interface Order {
   houseSubType?: string;     // ★ Quote 원본 필드
   designatedPartnerName?: string;
   totalPrice?: number;
+  finalPrice?: number;
+  couponApplied?: boolean;
+  referralApplied?: boolean;
   createdAt?: string;
   [key: string]: unknown;    // ★ Firestore에서 오는 추가 필드 허용
 }
@@ -98,6 +101,7 @@ export interface PartnerUser {
   password?: string;
   loginPassword?: string;
   loginId?: string;
+  acceptCoupons?: boolean;
   bankName?: string;
   accountNumber?: string;
   accountHolder?: string;
@@ -146,7 +150,8 @@ export default function Partner() {
     image: '',
     bankName: '',
     accountNumber: '',
-    accountHolder: ''
+    accountHolder: '',
+    acceptCoupons: false
   });
   const [customService, setCustomService] = useState('');
   const serviceExamples = ['입주청소', '거주청소', '상가청소', '쓰레기집', '에어컨청소', '새집증후군', '줄눈시공'];
@@ -409,7 +414,16 @@ export default function Partner() {
     
   // 대기중인 오더: 긴급 오더 최우선, 그 다음 최신 생성일 순
   const remainingOrders = [...quotes]
-    .filter(o => !o.isB2B && (o.status === '대기중' || o.status === 'pending') && (!o.assignedTo || o.assignedTo === currentUser?.id) && o.cleaningType !== '정기' && o.cleaningType !== '가전')
+    .filter(o => {
+      if (o.isB2B || o.status !== '대기중' && o.status !== 'pending') return false;
+      if (o.assignedTo && o.assignedTo !== currentUser?.id) return false;
+      if (o.cleaningType === '정기' || o.cleaningType === '가전') return false;
+      // 쿠폰 오더 필터링 (미동의 파트너에게는 숨김)
+      if (!currentUser?.acceptCoupons && (o.couponApplied || o.referralApplied)) {
+        return false;
+      }
+      return true;
+    })
     .sort((a, b) => {
       if (a.isUrgent && !b.isUrgent) return -1;
       if (!a.isUrgent && b.isUrgent) return 1;
@@ -493,14 +507,16 @@ export default function Partner() {
   const getPartnerPrice = (order: Order | null) => {
     if (!order) return "0";
     
-    // 견적 마법사에서 넘어온 총 결제 금액(부가세 포함)을 기반으로 계산
+    // 신규 버전 (현장 결제 예상 잔금이 finalPrice에 저장됨)
+    if (order.finalPrice !== undefined) {
+      return order.finalPrice.toLocaleString();
+    }
+
+    // 구버전 호환: 견적 마법사에서 넘어온 총 결제 금액(부가세 포함)을 기반으로 계산
     if (order.price) {
       const numericPrice = parseInt(order.price.replace(/[^0-9]/g, ''), 10);
       if (!isNaN(numericPrice)) {
-        // 예: 부가세를 제외한 공급가액(원래 금액) 계산
         const supplyPrice = Math.round(numericPrice / 1.1);
-        
-        // 공급가의 70%를 파트너 수익으로 책정 (천원 단위 올림 처리)
         const partnerPrice = Math.ceil((supplyPrice * 0.7) / 1000) * 1000;
         return partnerPrice.toLocaleString();
       }
@@ -1013,7 +1029,8 @@ export default function Partner() {
       image: currentUser?.image || getDeterministicDefaultImage(currentUser?.id),
       bankName: currentUser?.bankName || '',
       accountNumber: currentUser?.accountNumber || '',
-      accountHolder: currentUser?.accountHolder || ''
+      accountHolder: currentUser?.accountHolder || '',
+      acceptCoupons: currentUser?.acceptCoupons || false
     });
     setCustomService('');
     setShowEditProfileModal(true);
@@ -1037,7 +1054,8 @@ export default function Partner() {
         image: editProfileForm.image,
         bankName: editProfileForm.bankName,
         accountNumber: editProfileForm.accountNumber,
-        accountHolder: editProfileForm.accountHolder
+        accountHolder: editProfileForm.accountHolder,
+        acceptCoupons: editProfileForm.acceptCoupons
       });
       alert('홍보 정보가 성공적으로 저장되었습니다.');
       setShowEditProfileModal(false);
@@ -1701,6 +1719,11 @@ export default function Partner() {
                         {order.assignedTo === currentUser?.id && (
                           <span className="bg-emerald-500 text-white font-black text-[10px] px-2 py-0.5 rounded-full mb-2 ml-1 inline-flex items-center gap-1 shadow-sm">
                             🎯 지정 견적 대기
+                          </span>
+                        )}
+                        {(order.couponApplied || order.referralApplied) && (
+                          <span className="bg-amber-400 text-amber-900 font-black text-[10px] px-2 py-0.5 rounded-full mb-2 ml-1 inline-flex items-center gap-1 shadow-sm border border-amber-300">
+                            🎟️ 1만원 쿠폰 적용 건
                           </span>
                         )}
                         <div className="flex justify-between items-start mb-4">
@@ -2748,6 +2771,29 @@ export default function Partner() {
                         placeholder="계좌번호 (- 없이 숫자만 입력)"
                         className="w-full border border-slate-200 rounded-xl p-3 text-sm outline-none focus:border-blue-500"
                       />
+                    </div>
+                    
+                    {/* 쿠폰 오더 수락 여부 */}
+                    <div className="pt-2 border-t border-slate-100 mt-4">
+                      <label className="flex items-start gap-3 cursor-pointer group bg-blue-50/50 p-4 rounded-xl border border-blue-100 hover:bg-blue-50 transition-colors">
+                        <div className="relative inline-flex items-center cursor-pointer shrink-0 mt-0.5">
+                          <input 
+                            type="checkbox" 
+                            className="sr-only peer" 
+                            checked={editProfileForm.acceptCoupons}
+                            onChange={(e) => setEditProfileForm({...editProfileForm, acceptCoupons: e.target.checked})}
+                          />
+                          <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                        </div>
+                        <div className="flex flex-col">
+                          <span className="text-sm font-bold text-slate-800 flex items-center gap-1.5">
+                            할인 쿠폰 사용 오더 수락하기 <span className="text-[10px] bg-rose-100 text-rose-600 px-1.5 py-0.5 rounded font-black tracking-tighter">추천</span>
+                          </span>
+                          <span className="text-xs text-slate-500 mt-1 leading-relaxed break-keep">
+                            체크 시 쿠폰을 쓰는 더 많은 고객과 우선 매칭됩니다. 단, 쿠폰 할인 금액(예: 1만 원)은 파트너님의 현장 결제 잔금에서 차감하여 수령하셔야 합니다.
+                          </span>
+                        </div>
+                      </label>
                     </div>
                   </div>
                 </div>

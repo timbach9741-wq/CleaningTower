@@ -143,11 +143,40 @@
           navigator.serviceWorker.register('/sw.js', { scope: '/' }).then(
             (registration) => {
               console.log('[PWA] 서비스워커 등록 성공, scope:', registration.scope);
+              
+              // 주기적으로 서비스 워커 업데이트 체크 (1시간마다)
+              setInterval(() => {
+                registration.update();
+              }, 60 * 60 * 1000);
+
+              // 새로운 서비스 워커가 설치 및 활성화되어 대기 중일 때 자동 반영
+              registration.addEventListener('updatefound', () => {
+                const newWorker = registration.installing;
+                if (newWorker) {
+                  newWorker.addEventListener('statechange', () => {
+                    if (newWorker.state === 'installed') {
+                      if (navigator.serviceWorker.controller) {
+                        console.log('[PWA] 새로운 업데이트가 감지되었습니다. 페이지를 새로고침합니다.');
+                        window.location.reload();
+                      }
+                    }
+                  });
+                }
+              });
             },
             (err) => {
               console.error('[PWA] 서비스워커 등록 실패:', err);
             }
           );
+        });
+
+        // 서비스 워커 제어권이 변경되었을 때 새로고침
+        let refreshing = false;
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+          if (!refreshing) {
+            refreshing = true;
+            window.location.reload();
+          }
         });
       }
     </script>

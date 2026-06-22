@@ -385,35 +385,7 @@ export default function Partner() {
     }
   }, [partnerId]);
 
-  const mockSettlements = [
-    {
-      id: 1,
-      date: '2026-04-10',
-      location: '서울 강남구 역삼동 푸르지오',
-      totalPrice: 350000,
-      fee: 245000,
-      settledAmount: 105000,
-      status: '입금 완료',
-    },
-    {
-      id: 2,
-      date: '2026-04-12',
-      location: '서울 서초구 반포동 래미안',
-      totalPrice: 420000,
-      fee: 294000,
-      settledAmount: 126000,
-      status: '입금 완료',
-    },
-    {
-      id: 3,
-      date: '2026-04-15',
-      location: '경기 성남시 분당구 정자동',
-      totalPrice: 280000,
-      fee: 196000,
-      settledAmount: 84000,
-      status: '정산 대기',
-    }
-  ];
+
 
   // 내 일정: 날짜 오름차순(가까운 날짜부터), '상담완료' 상태인 오더만
   const myJobs = [...quotes]
@@ -556,6 +528,21 @@ export default function Partner() {
     const roundedPrice = Math.ceil(partnerPrice / 1000) * 1000;
     return roundedPrice.toLocaleString();
   };
+
+  // ★ 정산 내역: 실제 완료된 오더 기반으로 계산
+  // '작업완료' 상태이고, 현재 파트너에게 배정된 오더만 정산 내역으로 표시
+  const settlements = quotes
+    .filter(q => !q.isB2B && q.assignedTo === currentUser?.id && q.status === '작업완료')
+    .map((q, idx) => ({
+      id: q.id || idx,
+      date: q.completedAt || q.date || q.cleaningDate || '-',
+      location: q.location || q.address || '주소 미상',
+      settledAmount: parseInt(String(getPartnerPrice(q)).replace(/[^0-9]/g, '')) || 0,
+      status: q.settlementStatus || '정산 대기',
+    }))
+    .sort((a, b) => {
+      return new Date(b.date).getTime() - new Date(a.date).getTime();
+    });
 
   const handleOpenDetail = (order: Order) => {
     setSelectedOrder(order);
@@ -2328,20 +2315,20 @@ export default function Partner() {
                 <p className="text-sm text-slate-500 mt-1">완료된 오더의 정산 내역을 보여줍니다.</p>
               </div>
               <div className="p-0 overflow-y-auto flex-1 bg-slate-50 relative">
-                {mockSettlements.length === 0 ? (
+                {settlements.length === 0 ? (
                   <div className="flex flex-col items-center justify-center h-full text-slate-400 space-y-3 p-6">
                     <Briefcase size={48} className="opacity-20" />
                     <p className="font-bold">현재 정산 가능한 내역이 없습니다.</p>
                   </div>
                 ) : (
                   <div className="divide-y divide-slate-100">
-                    {mockSettlements.map((item) => (
+                    {settlements.map((item) => (
                       <div key={item.id} className="p-5 bg-white mb-2 shadow-sm border-y border-slate-100">
                         <div className="flex justify-between items-center mb-3">
                           <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${item.status === '입금 완료' ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'}`}>
-                            {item.status}
+                            {String(item.status)}
                           </span>
-                          <span className="text-slate-400 text-sm font-medium">{item.date}</span>
+                          <span className="text-slate-400 text-sm font-medium">{String(item.date)}</span>
                         </div>
                         <h3 className="font-bold text-slate-900 mb-3">{item.location}</h3>
                         

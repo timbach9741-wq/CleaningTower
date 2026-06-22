@@ -1,5 +1,6 @@
-fix: granular error handling for notification permission and FCM token
+fix: Firestore rules + SW cache + calendar error
 
-Rewrote requestNotificationPermission and handleToggleNotification
-to handle each failure point individually instead of one big try/catch.
-No more generic scary error popup on any browser.
+- Open partners/quotes update rules for custom auth (not Firebase Auth)
+- Bump service worker cache to v5 for forced refresh
+- Optimistic calendar date toggle with rollback on failure
+- Granular notification error handling (no more generic popup)

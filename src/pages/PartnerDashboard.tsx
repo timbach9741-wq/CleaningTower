@@ -246,6 +246,11 @@ export default function Partner() {
 
   const requestNotificationPermission = async () => {
     try {
+      // ★ 방어 코드: Notification API 미지원 브라우저(카카오톡 인앱, 일부 모바일 웹뷰 등) 예외 처리
+      if (typeof Notification === 'undefined') {
+        alert('현재 브라우저 환경에서는 푸시 알림을 지원하지 않습니다.\n크롬(Chrome) 또는 삼성 인터넷 브라우저에서 접속해주세요.');
+        return;
+      }
       const permission = await Notification.requestPermission();
       if (permission === 'granted') {
         const messaging = await getMessagingInstance();
@@ -297,7 +302,7 @@ export default function Partner() {
             const newQuote = change.doc.data();
             const loggedInId = localStorage.getItem('partnerId');
             if (newQuote.status === '대기중' && (!newQuote.assignedTo || newQuote.assignedTo === loggedInId)) {
-              if (Notification.permission === 'granted') {
+              if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
                 const partnerName = newQuote.designatedPartnerName ? `[지정예약] ` : '';
                 const title = '새로운 청소 오더 도착!';
                 const options = {
@@ -587,6 +592,11 @@ export default function Partner() {
       let updateData: any = { isNotificationEnabled: newStatus };
       
       if (newStatus) {
+        // ★ 방어 코드: Notification API 미지원 브라우저 예외 처리
+        if (typeof Notification === 'undefined') {
+          alert('현재 브라우저 환경에서는 푸시 알림을 지원하지 않습니다.\n크롬(Chrome) 또는 삼성 인터넷 브라우저에서 접속해주세요.');
+          return;
+        }
         // ★ 알림을 켤 때: 브라우저 권한이 없으면 먼저 요청
         let permission = Notification.permission;
         if (permission !== 'granted') {
@@ -1473,7 +1483,7 @@ export default function Partner() {
         )}
         
         {/* 푸시 알림 유도 배너 - FCM 토큰이 없거나 알림이 미설정일 때 표시 */}
-        {currentUser && !isSuspended && (!currentUser.isNotificationEnabled || !currentUser.fcmTokens || currentUser.fcmTokens?.length === 0) && (
+        {typeof Notification !== 'undefined' && currentUser && !isSuspended && (!currentUser.isNotificationEnabled || !currentUser.fcmTokens || currentUser.fcmTokens?.length === 0) && (
           <div className="mb-8 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-2xl p-4 shadow-sm flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="bg-blue-100 p-2 rounded-xl">
@@ -1601,7 +1611,7 @@ export default function Partner() {
         )}
         
         {/* 푸시 알림 유도 배너 - FCM 토큰이 없거나 알림이 미설정일 때 표시 */}
-        {currentUser && (!currentUser.isNotificationEnabled || !currentUser.fcmTokens || currentUser.fcmTokens?.length === 0) && (
+        {typeof Notification !== 'undefined' && currentUser && (!currentUser.isNotificationEnabled || !currentUser.fcmTokens || currentUser.fcmTokens?.length === 0) && (
           <div className="mb-5 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-2xl p-4 shadow-sm flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="bg-blue-100 p-2 rounded-xl">

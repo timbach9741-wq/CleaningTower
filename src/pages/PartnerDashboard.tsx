@@ -245,47 +245,69 @@ export default function Partner() {
   };
 
   const requestNotificationPermission = async () => {
-    try {
-      // ★ 방어 코드: Notification API 미지원 브라우저(카카오톡 인앱, 일부 모바일 웹뷰 등) 예외 처리
-      if (typeof Notification === 'undefined') {
-        alert('현재 브라우저 환경에서는 푸시 알림을 지원하지 않습니다.\n크롬(Chrome) 또는 삼성 인터넷 브라우저에서 접속해주세요.');
-        return;
-      }
-      const permission = await Notification.requestPermission();
-      if (permission === 'granted') {
-        const messaging = await getMessagingInstance();
-        if (messaging && currentUser && db) {
-          let currentToken = '';
-          // ★ VAPID 키: Firebase Console > Cloud Messaging > 웹 푸시 인증서에서 생성
-          const VAPID_KEY = 'BKbWKFBpXccjAXlskLV4VmXNG55f3fsywzuo2enZDr2huMcJmnyyvHP_0VVsEdDdH50ZuYVd2F-apJOJYpobwtQ';
-          try {
-            // ★ 핵심 수정: 이미 등록된 sw.js(통합 서비스 워커)를 가져와 FCM에 전달
-            // 이렇게 해야 FCM이 별도의 firebase-messaging-sw.js를 찾지 않고
-            // 기존 sw.js를 통해 정상적으로 토큰을 발급받습니다.
-            const swRegistration = await navigator.serviceWorker.ready;
-            currentToken = await getToken(messaging, {
-              vapidKey: VAPID_KEY,
-              serviceWorkerRegistration: swRegistration
-            });
-          } catch (e) {
-            console.error('Token error:', e);
-            alert('푸시 알림 토큰을 발급받지 못했습니다. 브라우저 환경 설정 문제가 있을 수 있습니다.');
-          }
+    // ★ 방어 코드 1: Notification API 자체가 없는 환경 (카카오톡 인앱, 일부 모바일 웹뷰 등)
+    if (typeof Notification === 'undefined') {
+      alert('현재 브라우저 환경에서는 푸시 알림을 지원하지 않습니다.\n크롬(Chrome) 또는 삼성 인터넷 브라우저에서 접속해주세요.');
+      return;
+    }
 
-          await updateDoc(doc(db, 'partners', currentUser.id), {
-             isNotificationEnabled: true,
-             ...(currentToken ? { fcmTokens: [currentToken] } : {})
-          });
-          alert('알림 설정이 켜졌습니다. 백그라운드에서도 새 오더 알림을 받을 수 있습니다!');
-        }
-      } else {
-        alert('알림 권한이 거부되었습니다. 브라우저 설정에서 알림 권한을 허용해주세요.');
+    // ★ 방어 코드 2: 알림 권한 요청 시도
+    let permission = 'default';
+    try {
+      permission = await Notification.requestPermission();
+    } catch (e) {
+      console.warn('Notification.requestPermission() failed:', e);
+      // 일부 브라우저에서 requestPermission 자체가 에러 — 조용히 설정만 저장
+      if (currentUser && db) {
+        try {
+          await updateDoc(doc(db, 'partners', currentUser.id), { isNotificationEnabled: true });
+        } catch (_) { /* ignore */ }
+      }
+      alert('이 브라우저에서는 푸시 알림 권한을 요청할 수 없습니다.\n크롬(Chrome) 브라우저에서 다시 시도해주세요.');
+      return;
+    }
+
+    if (permission !== 'granted') {
+      alert('알림 권한이 거부되었습니다. 브라우저 설정에서 알림 권한을 허용해주세요.');
+      return;
+    }
+
+    // ★ 권한 승인됨 → FCM 토큰 발급 시도 (실패해도 알림 설정은 저장)
+    let currentToken = '';
+    try {
+      const messaging = await getMessagingInstance();
+      if (messaging && 'serviceWorker' in navigator) {
+        const VAPID_KEY = 'BKbWKFBpXccjAXlskLV4VmXNG55f3fsywzuo2enZDr2huMcJmnyyvHP_0VVsEdDdH50ZuYVd2F-apJOJYpobwtQ';
+        const swRegistration = await navigator.serviceWorker.ready;
+        currentToken = await getToken(messaging, {
+          vapidKey: VAPID_KEY,
+          serviceWorkerRegistration: swRegistration
+        });
       }
     } catch (e) {
-      console.error(e);
-      alert('알림 설정 중 오류가 발생했습니다. 브라우저 환경을 확인해주세요.');
+      console.warn('FCM token acquisition failed (non-critical):', e);
+      // FCM 토큰 발급 실패는 치명적이지 않음 — 알림 설정만 저장 진행
+    }
+
+    // ★ Firestore에 알림 설정 저장 (토큰 유무와 무관하게)
+    if (currentUser && db) {
+      try {
+        await updateDoc(doc(db, 'partners', currentUser.id), {
+          isNotificationEnabled: true,
+          ...(currentToken ? { fcmTokens: [currentToken] } : {})
+        });
+        if (currentToken) {
+          alert('알림 설정이 켜졌습니다. 백그라운드에서도 새 오더 알림을 받을 수 있습니다!');
+        } else {
+          alert('알림 설정이 저장되었습니다.\n(일부 브라우저에서는 백그라운드 푸시가 제한될 수 있습니다.)');
+        }
+      } catch (e) {
+        console.error('Firestore update failed:', e);
+        alert('알림 설정 저장에 실패했습니다. 잠시 후 다시 시도해주세요.');
+      }
     }
   };
+
 
   const isInitialQuotesLoad = React.useRef(true);
 
@@ -587,53 +609,58 @@ export default function Partner() {
 
   const handleToggleNotification = async (currentStatus: boolean) => {
     if (!db || !currentUser) return;
-    try {
-      const newStatus = !currentStatus;
-      let updateData: any = { isNotificationEnabled: newStatus };
-      
-      if (newStatus) {
-        // ★ 방어 코드: Notification API 미지원 브라우저 예외 처리
-        if (typeof Notification === 'undefined') {
-          alert('현재 브라우저 환경에서는 푸시 알림을 지원하지 않습니다.\n크롬(Chrome) 또는 삼성 인터넷 브라우저에서 접속해주세요.');
-          return;
-        }
-        // ★ 알림을 켤 때: 브라우저 권한이 없으면 먼저 요청
-        let permission = Notification.permission;
+    const newStatus = !currentStatus;
+    let updateData: any = { isNotificationEnabled: newStatus };
+    
+    if (newStatus) {
+      // ★ 방어 코드: Notification API 미지원 브라우저 예외 처리
+      if (typeof Notification === 'undefined') {
+        alert('현재 브라우저 환경에서는 푸시 알림을 지원하지 않습니다.\n크롬(Chrome) 또는 삼성 인터넷 브라우저에서 접속해주세요.');
+        return;
+      }
+      // ★ 알림을 켤 때: 브라우저 권한이 없으면 먼저 요청
+      let permission = 'default';
+      try {
+        permission = Notification.permission;
         if (permission !== 'granted') {
           permission = await Notification.requestPermission();
         }
-        
-        if (permission === 'granted') {
+      } catch (e) {
+        console.warn('Notification permission request failed:', e);
+        // 권한 요청 실패해도 설정은 저장 진행
+      }
+      
+      if (permission === 'granted') {
+        try {
           const messaging = await getMessagingInstance();
-          if (messaging) {
-            try {
-              // ★ VAPID 키 필수: 없으면 FCM 토큰 발급 실패
-              const VAPID_KEY = 'BKbWKFBpXccjAXlskLV4VmXNG55f3fsywzuo2enZDr2huMcJmnyyvHP_0VVsEdDdH50ZuYVd2F-apJOJYpobwtQ';
-              // ★ 통합 서비스 워커(sw.js)를 통해 토큰 발급
-              const swRegistration = await navigator.serviceWorker.ready;
-              const currentToken = await getToken(messaging, {
-                vapidKey: VAPID_KEY,
-                serviceWorkerRegistration: swRegistration
-              });
-              if (currentToken) {
-                updateData.fcmTokens = [currentToken];
-              }
-            } catch (e) {
-              console.error('Token error:', e);
+          if (messaging && 'serviceWorker' in navigator) {
+            const VAPID_KEY = 'BKbWKFBpXccjAXlskLV4VmXNG55f3fsywzuo2enZDr2huMcJmnyyvHP_0VVsEdDdH50ZuYVd2F-apJOJYpobwtQ';
+            const swRegistration = await navigator.serviceWorker.ready;
+            const currentToken = await getToken(messaging, {
+              vapidKey: VAPID_KEY,
+              serviceWorkerRegistration: swRegistration
+            });
+            if (currentToken) {
+              updateData.fcmTokens = [currentToken];
             }
           }
-        } else {
-          alert('알림 권한이 거부되었습니다. 브라우저 설정에서 알림 권한을 허용해주세요.');
-          return; // 권한 거부 시 설정 변경 안 함
+        } catch (e) {
+          console.warn('FCM token error (non-critical):', e);
         }
+      } else if (permission === 'denied') {
+        alert('알림 권한이 거부되었습니다. 브라우저 설정에서 알림 권한을 허용해주세요.');
+        return;
       }
+    }
 
+    try {
       await updateDoc(doc(db, 'partners', currentUser.id), updateData);
     } catch (e) {
-      console.error(e);
-      alert('설정 변경 중 오류가 발생했습니다.');
+      console.error('Firestore update failed:', e);
+      alert('설정 변경 저장에 실패했습니다. 잠시 후 다시 시도해주세요.');
     }
   };
+
 
   const handleSaveRegions = async (regionsArray: string[]) => {
     if (!db || !currentUser) return;

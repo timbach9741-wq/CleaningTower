@@ -1,0 +1,4 @@
+fix: guard Notification API for unsupported browsers
+
+Prevent TypeError crashes in KakaoTalk in-app browser and other
+environments where the Notification API is undefined.

@@ -1,13 +1,53 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { User, Briefcase, Building, Home, ArrowRight, Lock, Mail } from 'lucide-react';
+import { saveSocialUser } from '../lib/authHelpers';
 
 type TabType = 'consumer' | 'interior' | 'realestate' | 'cleaner';
 
 export default function Login() {
   const [activeTab, setActiveTab] = useState<TabType>('consumer');
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const naver = (window as any).naver;
+    if (naver && !(window as any).naverLoginInitialized) {
+      const naverLogin = new naver.LoginWithNaverId({
+        clientId: 'gFD6VZbXXIFFXTy81OB0',
+        callbackUrl: window.location.origin + '/login',
+        isPopup: false,
+        loginButton: { color: "green", type: 3, height: 60 }
+      });
+      naverLogin.init();
+      (window as any).naverLoginInitialized = true;
+
+      naverLogin.getLoginStatus(async function (status: boolean) {
+        if (status) {
+          const email = naverLogin.user.getEmail();
+          const name = naverLogin.user.getName() || naverLogin.user.getNickname();
+          const profileImage = naverLogin.user.getProfileImage();
+          const id = naverLogin.user.getId();
+          
+          if (id) {
+            const user = {
+              id: `naver_${id}`,
+              name: name || '네이버 유저',
+              email: email || '',
+              provider: 'naver' as const,
+              profileImage: profileImage || '',
+            };
+            const success = await saveSocialUser(user);
+            if (success) {
+              navigate('/consumer-dashboard');
+            } else {
+              alert('회원가입/로그인 처리 중 오류가 발생했습니다.');
+            }
+          }
+        }
+      });
+    }
+  }, [navigate]);
 
   const handlePartnerLogin = (e: React.FormEvent, type: TabType) => {
     e.preventDefault();
@@ -22,6 +62,56 @@ export default function Login() {
       case 'cleaner':
         navigate('/partner-dashboard');
         break;
+    }
+  };
+
+  const handleKakaoLogin = () => {
+    const kakao = (window as any).Kakao;
+    if (!kakao || !kakao.isInitialized()) {
+      alert('카카오 SDK가 아직 로드되지 않았습니다. 새로고침 후 다시 시도해주세요.');
+      return;
+    }
+    
+    kakao.Auth.login({
+      success: function (authObj: any) {
+        // 프로필 정보 요청
+        kakao.API.request({
+          url: '/v2/user/me',
+          success: async function (res: any) {
+            const user = {
+              id: `kakao_${res.id}`,
+              name: res.kakao_account?.profile?.nickname || '카카오 유저',
+              email: res.kakao_account?.email || '',
+              provider: 'kakao' as const,
+              profileImage: res.kakao_account?.profile?.profile_image_url || '',
+            };
+            
+            const success = await saveSocialUser(user);
+            if (success) {
+              navigate('/consumer-dashboard');
+            } else {
+              alert('회원가입/로그인 처리 중 오류가 발생했습니다.');
+            }
+          },
+          fail: function (error: any) {
+            console.error('Kakao profile request failed:', error);
+            alert('카카오 프로필 정보를 가져오는데 실패했습니다.');
+          },
+        });
+      },
+      fail: function (err: any) {
+        console.error('Kakao login failed:', err);
+        // 사용자가 취소한 경우 등
+      },
+    });
+  };
+
+  const handleNaverLoginClick = () => {
+    const naverLoginBtn = document.getElementById('naverIdLogin')?.firstChild as HTMLElement;
+    if (naverLoginBtn) {
+      naverLoginBtn.click();
+    } else {
+      alert('네이버 로그인 SDK 로딩 중입니다. 새로고침 후 다시 시도해주세요.');
     }
   };
 
@@ -89,7 +179,7 @@ export default function Login() {
                   </div>
                   
                   <button 
-                    onClick={() => navigate('/consumer-dashboard')}
+                    onClick={handleKakaoLogin}
                     className="w-full flex items-center justify-center gap-3 bg-[#FEE500] hover:bg-[#E6CF00] text-[#000000] font-bold rounded-xl py-4 transition-colors"
                   >
                     <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
@@ -98,8 +188,11 @@ export default function Login() {
                     카카오 로그인
                   </button>
                   
+                  {/* Naver SDK renders its button here, but we hide it */}
+                  <div id="naverIdLogin" style={{ display: 'none' }}></div>
+
                   <button 
-                    onClick={() => navigate('/consumer-dashboard')}
+                    onClick={handleNaverLoginClick}
                     className="w-full flex items-center justify-center gap-3 bg-[#03C75A] hover:bg-[#02B351] text-white font-bold rounded-xl py-4 transition-colors"
                   >
                     <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">

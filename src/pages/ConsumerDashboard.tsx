@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Home, Receipt, Edit3, MessageSquare, LogOut, ChevronRight, Sparkles, AlertCircle, Clock, MapPin, Building2, CalendarSync, Gift, Copy, X, Calendar } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { getCurrentUser, type SocialUser, logoutUser } from '../lib/authHelpers';
 
 export default function ConsumerDashboard() {
   const navigate = useNavigate();
@@ -13,8 +14,13 @@ export default function ConsumerDashboard() {
   
   const [myReferralCode, setMyReferralCode] = useState('');
   const [myCoupons, setMyCoupons] = useState(0);
+  const [user, setUser] = useState<SocialUser | null>(null);
 
   useEffect(() => {
+    const currentUser = getCurrentUser();
+    if (currentUser) {
+      setUser(currentUser);
+    }
     let code = localStorage.getItem('myReferralCode');
     if (!code) {
       code = 'TOWER' + Math.floor(1000 + Math.random() * 9000);
@@ -39,6 +45,7 @@ export default function ConsumerDashboard() {
   };
 
   const handleLogout = () => {
+    logoutUser();
     navigate('/login');
   };
 
@@ -48,14 +55,23 @@ export default function ConsumerDashboard() {
       <div className="bg-white px-6 py-8 border-b border-slate-100">
         <div className="max-w-3xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <div className="w-14 h-14 sm:w-16 sm:h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center font-black text-xl sm:text-2xl shadow-inner">
-              고객
-            </div>
+            {user?.profileImage ? (
+              <img src={user.profileImage} alt="Profile" className="w-14 h-14 sm:w-16 sm:h-16 rounded-full shadow-inner object-cover" />
+            ) : (
+              <div className="w-14 h-14 sm:w-16 sm:h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center font-black text-xl sm:text-2xl shadow-inner">
+                {user?.name ? user.name.charAt(0) : '고객'}
+              </div>
+            )}
             <div>
-              <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">반갑습니다, 고객님!</h1>
+              <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">반갑습니다, {user?.name || '고객'}님!</h1>
               <div className="flex items-center gap-2 mt-1.5">
-                <span className="bg-[#FEE500] text-[#000000] text-xs font-bold px-2 py-0.5 rounded-md">카카오 연동</span>
-                <p className="text-slate-500 font-medium text-sm">test@kakao.com</p>
+                {user?.provider === 'kakao' && (
+                  <span className="bg-[#FEE500] text-[#000000] text-xs font-bold px-2 py-0.5 rounded-md">카카오 연동</span>
+                )}
+                {user?.provider === 'naver' && (
+                  <span className="bg-[#03C75A] text-white text-xs font-bold px-2 py-0.5 rounded-md">네이버 연동</span>
+                )}
+                <p className="text-slate-500 font-medium text-sm">{user?.email || ''}</p>
               </div>
             </div>
           </div>

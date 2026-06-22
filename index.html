@@ -122,6 +122,20 @@
     
     <!-- Toss Payments 결제 SDK -->
     <script src="https://js.tosspayments.com/v1/"></script>
+
+    <!-- Kakao SDK -->
+    <script src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.2/kakao.min.js" integrity="sha384-TiCmbV6AUn82HkmGzO0el7470e/3Q7aB8SjU2eTf5l4i0aU7F5F+S/7eO73D4L7s" crossorigin="anonymous"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        if (window.Kakao && !window.Kakao.isInitialized()) {
+          window.Kakao.init('2917cea7b9da592c919c09e14da2277b');
+          console.log('[Kakao] SDK Initialized successfully.');
+        }
+      });
+    </script>
+
+    <!-- Naver SDK -->
+    <script src="https://static.nid.naver.com/js/naveridlogin_js_sdk_2.0.2.js" charset="utf-8"></script>
   </head>
   <body class="antialiased text-gray-900 bg-white">
     <div id="root"></div>

@@ -891,26 +891,34 @@ export default function Partner() {
   const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
 
   const handleToggleAvailableDate = async (dateStr: string) => {
-    if (!db || !currentUser) return;
+    if (!db || !currentUser) {
+      console.warn('handleToggleAvailableDate: db or currentUser missing', { db: !!db, currentUser: !!currentUser });
+      return;
+    }
     
     const currentDates = currentUser.unavailableDates || [];
     let updatedDates: string[] = [];
     
     if (currentDates.includes(dateStr)) {
-      // 이미 휴무(마감) 상태인 경우 -> 예약 가능으로 변경 (배열에서 제거)
       updatedDates = currentDates.filter(d => d !== dateStr);
     } else {
-      // 예약 가능 상태인 경우 -> 휴무(마감) 상태로 변경 (배열에 추가)
       updatedDates = [...currentDates, dateStr];
     }
+    
+    // ★ 낙관적 업데이트: 로컬 상태를 먼저 반영하여 즉각적인 UI 피드백 제공
+    setCurrentUser(prev => prev ? { ...prev, unavailableDates: updatedDates } : prev);
     
     try {
       await updateDoc(doc(db, 'partners', currentUser.id), {
         unavailableDates: updatedDates
       });
-    } catch (e) {
-      console.error("Failed to update unavailable dates", e);
-      alert("일정 변경 중 오류가 발생했습니다.");
+    } catch (e: any) {
+      console.error("Failed to update unavailable dates:", e);
+      // ★ Firestore 실패 시 로컬 상태 롤백
+      setCurrentUser(prev => prev ? { ...prev, unavailableDates: currentDates } : prev);
+      // 상세 에러 메시지 표시 (디버깅용)
+      const errMsg = e?.message || e?.code || '알 수 없는 오류';
+      alert(`일정 변경 저장에 실패했습니다.\n(${errMsg})\n\n네트워크 연결을 확인하시고 다시 시도해주세요.`);
     }
   };
 

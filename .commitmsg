@@ -1,4 +1,5 @@
-fix: guard Notification API for unsupported browsers
+fix: granular error handling for notification permission and FCM token
 
-Prevent TypeError crashes in KakaoTalk in-app browser and other
-environments where the Notification API is undefined.
+Rewrote requestNotificationPermission and handleToggleNotification
+to handle each failure point individually instead of one big try/catch.
+No more generic scary error popup on any browser.

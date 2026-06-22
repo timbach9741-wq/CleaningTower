@@ -19,7 +19,7 @@ firebase.initializeApp({
 const messaging = firebase.messaging();
 
 // ─── PWA: 설치 + 캐시 관리 ───
-const CACHE_NAME = 'cleanpartners-v4';
+const CACHE_NAME = 'cleanpartners-v5';
 
 // ★ 설치: 즉시 활성화 (무거운 캐싱 작업 없음)
 self.addEventListener('install', (event) => {

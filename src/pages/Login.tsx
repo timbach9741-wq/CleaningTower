@@ -14,7 +14,7 @@ export default function Login() {
     const naver = (window as any).naver;
     if (naver && !(window as any).naverLoginInitialized) {
       const naverLogin = new naver.LoginWithNaverId({
-        clientId: 'gFD6VZbXXIFFXTy81OB0',
+        clientId: 'gFD6VZbxXIFFXTy81OB0',
         callbackUrl: window.location.origin + '/login',
         isPopup: false,
         loginButton: { color: "green", type: 3, height: 60 }
@@ -47,6 +47,81 @@ export default function Login() {
         }
       });
     }
+
+    // Kakao SDK Init fallback
+    const loadKakao = () => {
+      const kakao = (window as any).Kakao;
+      if (kakao && !kakao.isInitialized()) {
+        kakao.init('2917cea7b9da592c919c09e14da2277b');
+      }
+    };
+    
+    if (!(window as any).Kakao) {
+      const script = document.createElement('script');
+      script.src = 'https://t1.kakaocdn.net/kakao_js_sdk/2.7.2/kakao.min.js';
+      script.onload = loadKakao;
+      document.head.appendChild(script);
+    } else {
+      loadKakao();
+    }
+
+    // Kakao OAuth Callback Handler
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get('code');
+    const state = params.get('state');
+
+    if (code && state === 'kakao_login') {
+      const handleKakaoCallback = async () => {
+        try {
+          const tokenResponse = await fetch('https://kauth.kakao.com/oauth/token', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/x-www-form-urlencoded;charset=utf-8',
+            },
+            body: new URLSearchParams({
+              grant_type: 'authorization_code',
+              client_id: 'db7b104910102aaf2650f235e0ff2f19',
+              redirect_uri: window.location.origin + '/login',
+              code: code,
+            }),
+          });
+
+          const tokenData = await tokenResponse.json();
+          if (!tokenData.access_token) {
+            throw new Error('토큰 발급 실패');
+          }
+
+          const userResponse = await fetch('https://kapi.kakao.com/v2/user/me', {
+            method: 'GET',
+            headers: {
+              Authorization: `Bearer ${tokenData.access_token}`,
+              'Content-Type': 'application/x-www-form-urlencoded;charset=utf-8',
+            },
+          });
+
+          const userData = await userResponse.json();
+          const user = {
+            id: `kakao_${userData.id}`,
+            name: userData.kakao_account?.profile?.nickname || '카카오 유저',
+            email: userData.kakao_account?.email || '',
+            provider: 'kakao' as const,
+            profileImage: userData.kakao_account?.profile?.profile_image_url || '',
+          };
+          
+          const success = await saveSocialUser(user);
+          if (success) {
+            navigate('/consumer-dashboard', { replace: true });
+          } else {
+            alert('회원가입/로그인 처리 중 오류가 발생했습니다.');
+          }
+        } catch (error) {
+          console.error('Kakao callback error:', error);
+          alert('카카오 로그인 중 오류가 발생했습니다.');
+        }
+      };
+      
+      handleKakaoCallback();
+    }
   }, [navigate]);
 
   const handlePartnerLogin = (e: React.FormEvent, type: TabType) => {
@@ -67,42 +142,16 @@ export default function Login() {
 
   const handleKakaoLogin = () => {
     const kakao = (window as any).Kakao;
-    if (!kakao || !kakao.isInitialized()) {
-      alert('카카오 SDK가 아직 로드되지 않았습니다. 새로고침 후 다시 시도해주세요.');
+    if (!kakao) {
+      alert('카카오 로그인 도구를 불러오는 중입니다. 잠시 후 다시 시도해주세요.');
       return;
     }
-    
-    kakao.Auth.login({
-      success: function (authObj: any) {
-        // 프로필 정보 요청
-        kakao.API.request({
-          url: '/v2/user/me',
-          success: async function (res: any) {
-            const user = {
-              id: `kakao_${res.id}`,
-              name: res.kakao_account?.profile?.nickname || '카카오 유저',
-              email: res.kakao_account?.email || '',
-              provider: 'kakao' as const,
-              profileImage: res.kakao_account?.profile?.profile_image_url || '',
-            };
-            
-            const success = await saveSocialUser(user);
-            if (success) {
-              navigate('/consumer-dashboard');
-            } else {
-              alert('회원가입/로그인 처리 중 오류가 발생했습니다.');
-            }
-          },
-          fail: function (error: any) {
-            console.error('Kakao profile request failed:', error);
-            alert('카카오 프로필 정보를 가져오는데 실패했습니다.');
-          },
-        });
-      },
-      fail: function (err: any) {
-        console.error('Kakao login failed:', err);
-        // 사용자가 취소한 경우 등
-      },
+    if (!kakao.isInitialized()) {
+      kakao.init('2917cea7b9da592c919c09e14da2277b');
+    }
+    kakao.Auth.authorize({
+      redirectUri: window.location.origin + '/login',
+      state: 'kakao_login',
     });
   };
 
@@ -123,8 +172,11 @@ export default function Login() {
   ] as const;
 
   return (
-    <div className="min-h-screen bg-slate-50 pt-24 pb-12 px-4 sm:px-6 lg:px-8 flex flex-col items-center justify-center">
-      <div className="w-full max-w-xl">
+    <div className="min-h-screen pt-20 pb-12 bg-slate-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+      {/* Naver SDK renders its button here, but we hide it globally so it's not destroyed by tab switches */}
+      <div id="naverIdLogin" style={{ display: 'none' }}></div>
+
+      <div className="w-full max-w-xl mx-auto">
         <div className="text-center mb-8">
           <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-slate-900 mb-2">
             환영합니다
@@ -188,8 +240,7 @@ export default function Login() {
                     카카오 로그인
                   </button>
                   
-                  {/* Naver SDK renders its button here, but we hide it */}
-                  <div id="naverIdLogin" style={{ display: 'none' }}></div>
+                  {/* Naver Login UI is rendered globally now to prevent React re-render issues */}
 
                   <button 
                     onClick={handleNaverLoginClick}
@@ -273,7 +324,13 @@ export default function Login() {
                       아직 파트너 회원이 아니신가요?
                     </p>
                     <button 
-                      onClick={() => navigate('/partners/register')}
+                      onClick={() => {
+                        if (activeTab === 'interior' || activeTab === 'realestate') {
+                          navigate('/b2b/signup');
+                        } else {
+                          navigate('/partners/register');
+                        }
+                      }}
                       className="text-blue-600 font-bold hover:text-blue-700 hover:underline underline-offset-4"
                     >
                       무료로 가입하고 혜택 받기

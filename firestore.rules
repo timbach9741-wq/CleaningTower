@@ -59,6 +59,11 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    // ===== 고객 (소셜 로그인 연동) =====
+    match /users/{userId} {
+      allow read, write: if true; // 커스텀 소셜 로그인을 위해 임시 허용
+    }
+
     // ===== 기타 컬렉션 기본 차단 =====
     match /{document=**} {
       allow read, write: if isAdmin();

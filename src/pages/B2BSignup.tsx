@@ -20,6 +20,8 @@ export default function Signup() {
     bankName: '',
     accountNumber: '',
     accountHolder: '',
+    companyName: '',
+    address: '',
   });
 
   const [agreements, setAgreements] = useState({
@@ -117,6 +119,8 @@ export default function Signup() {
         phone: formData.phone,
         email: formData.email,
         businessNumber: formData.businessNumber,
+        companyName: formData.companyName,
+        address: formData.address,
         isAutoApproved: true
       };
       
@@ -140,6 +144,8 @@ export default function Signup() {
           phone: formData.phone,
           email: formData.email,
           businessNumber: formData.businessNumber,
+          companyName: formData.companyName,
+          address: formData.address,
           status: 'active',
           bankName: formData.bankName,
           accountNumber: formData.accountNumber,
@@ -152,10 +158,13 @@ export default function Signup() {
         await addDoc(collection(db, "b2bAccounts"), {
           loginId: formData.phone,
           password: formData.password,
-          businessName: formData.name,
+          businessName: formData.companyName, // 대표자명이 아닌 상호로 저장
+          representativeName: formData.name, // 대표자 성함 분리 저장
           phone: formData.phone,
           email: formData.email,
           businessNumber: formData.businessNumber,
+          companyName: formData.companyName,
+          address: formData.address,
           bankName: formData.bankName,
           accountNumber: formData.accountNumber,
           accountHolder: formData.accountHolder,
@@ -414,6 +423,32 @@ export default function Signup() {
 
                   <div>
                     <label className="block text-sm font-bold text-slate-700 mb-2 flex items-center gap-1">
+                      <span className="material-symbols-outlined text-[16px]">storefront</span> 상호 (회사명)
+                    </label>
+                    <input
+                      type="text"
+                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                      placeholder="상호(회사명)를 입력해주세요"
+                      value={formData.companyName}
+                      onChange={e => setFormData({ ...formData, companyName: e.target.value })}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-bold text-slate-700 mb-2 flex items-center gap-1">
+                      <span className="material-symbols-outlined text-[16px]">location_on</span> 회사 주소
+                    </label>
+                    <input
+                      type="text"
+                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                      placeholder="상세 주소를 입력해주세요"
+                      value={formData.address}
+                      onChange={e => setFormData({ ...formData, address: e.target.value })}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-bold text-slate-700 mb-2 flex items-center gap-1">
                       <Smartphone size={16} /> 연락처 (휴대폰 번호)
                     </label>
                     <input
@@ -482,52 +517,6 @@ export default function Signup() {
                     )}
                   </div>
 
-                  <div className="pt-4 border-t border-slate-100 mt-4">
-                    <label className="block text-sm font-bold text-blue-600 mb-3 flex items-center gap-1.5">
-                      <span className="material-symbols-outlined text-[18px]">payments</span>
-                      페이백 정산 계좌 등록
-                    </label>
-                    <div className="space-y-3">
-                      <div className="grid grid-cols-2 gap-3">
-                        <div>
-                          <label className="block text-xs font-bold text-slate-600 mb-1">정산 은행</label>
-                          <input
-                            type="text"
-                            required
-                            className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-                            placeholder="예) 국민은행"
-                            value={formData.bankName}
-                            onChange={e => setFormData({ ...formData, bankName: e.target.value })}
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-xs font-bold text-slate-600 mb-1">예금주명 (또는 상호)</label>
-                          <input
-                            type="text"
-                            required
-                            className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-                            placeholder="예) 홍길동"
-                            value={formData.accountHolder}
-                            onChange={e => setFormData({ ...formData, accountHolder: e.target.value })}
-                          />
-                        </div>
-                      </div>
-                      <div>
-                        <label className="block text-xs font-bold text-slate-600 mb-1">계좌 번호</label>
-                        <input
-                          type="text"
-                          required
-                          className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-                          placeholder="숫자만 입력 (- 제외)"
-                          value={formData.accountNumber}
-                          onChange={e => setFormData({ ...formData, accountNumber: e.target.value.replace(/[^0-9]/g, '') })}
-                        />
-                      </div>
-                      <p className="text-[11px] text-slate-500 leading-relaxed break-keep mt-1">
-                        ※ 최종 청소 시공이 완료되면, 위 계좌로 시공 최종 금액의 10% 페이백이 정산 지급됩니다.
-                      </p>
-                    </div>
-                  </div>
                 </div>
 
                 <div className="mt-8 flex gap-3">
@@ -539,7 +528,7 @@ export default function Signup() {
                   </button>
                   <button 
                     onClick={handleSubmit}
-                    disabled={!formData.name || !formData.phone || !formData.email || !formData.password || formData.password !== formData.passwordConfirm || !formData.bankName || !formData.accountNumber || !formData.accountHolder || isSubmitting}
+                    disabled={!formData.name || !formData.companyName || !formData.address || !formData.phone || !formData.email || !formData.password || formData.password !== formData.passwordConfirm || isSubmitting}
                     className="flex-1 py-4 bg-slate-900 hover:bg-slate-800 disabled:bg-slate-300 disabled:cursor-not-allowed text-white font-bold rounded-xl shadow-xl active:scale-[0.98] transition-all flex items-center justify-center"
                   >
                     {isSubmitting ? <Loader2 size={18} className="animate-spin" /> : '가입 완료'}

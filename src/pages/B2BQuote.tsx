@@ -845,8 +845,9 @@ export default function Quote() {
                   ) : (
                     <div className="space-y-4">
                       {b2bQuotes.map(quote => {
-                        const partnerPrice = getPartnerPayout(quote);
-                        const paybackAmount = Math.floor(partnerPrice * 0.1);
+                        const totalStr = String(quote.price || '0').replace(/[^0-9]/g, '');
+                        const totalPrice = parseInt(totalStr, 10) || 0;
+                        const paybackAmount = Math.floor(Math.max(0, totalPrice - 50000) * 0.1);
                         
                         let statusLabel = '승인 대기';
                         let statusColorClass = 'bg-slate-100 text-slate-600 border-slate-200';
@@ -2211,7 +2212,7 @@ export default function Quote() {
                             페이백 금액 (10%)
                           </span>
                           <span className="text-amber-600 font-bold text-xl">
-                            {(totalPriceIncVat * 0.1).toLocaleString()}원
+                            {(Math.max(0, totalPriceIncVat - 50000) * 0.1).toLocaleString()}원
                           </span>
                        </div>
                      )}

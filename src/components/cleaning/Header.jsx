@@ -113,7 +113,19 @@ export default function Header({ onOpenQuote, theme = 'light', hideQuoteButton =
         </nav>
 
         {/* Action Button & Mobile Menu Toggle */}
-          <div className="flex items-center gap-4 z-50">
+          <div className="flex items-center gap-2 lg:gap-3 z-50">
+            <button 
+              onClick={() => navigate('/login')}
+              className={`hidden sm:flex px-4 py-2 rounded-full font-bold text-sm transition-all duration-300 items-center hover:-translate-y-0.5 ${
+                isScrolled || isMobileMenuOpen
+                  ? 'text-slate-600 hover:text-blue-600 hover:bg-blue-50' 
+                  : (theme === 'dark'
+                      ? 'text-white/90 hover:text-white hover:bg-white/10'
+                      : 'text-slate-600 hover:text-blue-600 hover:bg-white/50')
+              }`}
+            >
+              회원 로그인
+            </button>
             <button 
               onClick={() => navigate('/login')}
               className={`hidden sm:flex px-5 py-2.5 rounded-full font-bold text-sm transition-all duration-300 shadow-md items-center gap-2 hover:-translate-y-0.5 ${
@@ -124,7 +136,7 @@ export default function Header({ onOpenQuote, theme = 'light', hideQuoteButton =
                       : 'bg-white text-blue-600 hover:bg-blue-50 shadow-black/10')
               }`}
             >
-              회원가입 및 로그인
+              처음이신가요? 회원가입
             </button>
             
             <button 
@@ -193,15 +205,26 @@ export default function Header({ onOpenQuote, theme = 'light', hideQuoteButton =
               </Link>
             );
           })}
-            <button 
-              onClick={() => {
-                setIsMobileMenuOpen(false);
-                navigate('/login');
-              }}
-              className="w-full px-5 py-3 rounded-xl font-bold text-sm bg-blue-600 text-white shadow-md flex justify-center items-center"
-            >
-              회원가입 및 로그인
-            </button>
+            <div className="flex flex-col gap-2 w-full pt-2">
+              <button 
+                onClick={() => {
+                  setIsMobileMenuOpen(false);
+                  navigate('/login');
+                }}
+                className="w-full px-5 py-3 rounded-xl font-bold text-sm bg-blue-50 text-blue-600 border border-blue-100 flex justify-center items-center"
+              >
+                회원 로그인
+              </button>
+              <button 
+                onClick={() => {
+                  setIsMobileMenuOpen(false);
+                  navigate('/login');
+                }}
+                className="w-full px-5 py-3 rounded-xl font-bold text-sm bg-blue-600 text-white shadow-md flex justify-center items-center"
+              >
+                처음이신가요? 회원가입
+              </button>
+            </div>
         </nav>
       </div>
     </header>

@@ -188,7 +188,7 @@ export default function Admin() {
     detail: '',
   });
   
-  const [isManualB2B, setIsManualB2B] = useState(false);
+  const [manualOrderType, setManualOrderType] = useState<'general' | 'interior' | 'realestate'>('general');
   const [selectedB2BPartnerId, setSelectedB2BPartnerId] = useState('');
   
   // 견적 계산 마법사 상태값
@@ -233,7 +233,7 @@ export default function Admin() {
     const sizeNum = Number(size);
     if (!sizeNum || isNaN(sizeNum) || sizeNum <= 0) return 0;
     
-    const isB2B = forceB2B !== undefined ? forceB2B : isManualB2B;
+    const isB2B = forceB2B !== undefined ? forceB2B : manualOrderType !== 'general';
     
     let pricePerPyeong = 15000;
     if (isB2B) {
@@ -677,7 +677,7 @@ export default function Admin() {
     }
     
     try {
-      const selectedB2BPartner = isManualB2B ? partners.find(p => p.id === selectedB2BPartnerId) : null;
+      const selectedB2BPartner = manualOrderType !== 'general' ? partners.find(p => p.id === selectedB2BPartnerId) : null;
       
       const docData: any = {
         ...newQuoteForm,
@@ -709,7 +709,7 @@ export default function Admin() {
         name: '', realPhone: '', type: '일반 청소', house: '아파트', houseSubType: '',
         size: '', location: '', date: '', time: '시간협의', price: '', detail: ''
       });
-      setIsManualB2B(false);
+      setManualOrderType('general');
       setSelectedB2BPartnerId('');
       setIsQuoteWizardOpen(true);
       setWizardOptions({
@@ -4322,7 +4322,7 @@ export default function Admin() {
                   <label className="block text-xs font-bold text-gray-600 mb-1">서비스 종류</label>
                   <select 
                     value={newQuoteForm.type}
-                    disabled={isManualB2B}
+                    disabled={manualOrderType !== 'general'}
                     onChange={e => {
                       const nextType = e.target.value;
                       const calculated = calculateEstimatedPrice(nextType, newQuoteForm.size);

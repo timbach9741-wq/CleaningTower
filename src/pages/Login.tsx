@@ -190,6 +190,13 @@ export default function Login() {
       sessionStorage.setItem('b2b_partner_type', type);
       sessionStorage.setItem('partner_id', querySnapshot.docs[0].id);
 
+      // 청소 파트너스는 PartnerDashboard에서 localStorage의 'partnerId'를 기준으로 로그인 여부를 판단함
+      if (type === 'cleaner') {
+        localStorage.setItem('partnerId', querySnapshot.docs[0].id);
+      } else {
+        localStorage.setItem('b2bPartnerId', querySnapshot.docs[0].id);
+      }
+
       switch (type) {
         case 'interior':
           navigate('/interior-dashboard');

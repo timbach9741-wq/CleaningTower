@@ -1718,23 +1718,23 @@ export default function Quote() {
                   {/* 간편 송금 버튼 제거됨 */}
 
                   {/* 계좌 정보 */}
-                  <div className="bg-slate-900/50 p-2.5 rounded-lg border border-white/5 flex flex-col gap-1">
-                    <div className="flex justify-between items-center text-[11px]">
-                      <span className="text-slate-400">입금 계좌</span>
-                      <div className="flex items-center gap-1.5">
-                        <span className="font-bold text-slate-200 tracking-wide select-all">신협 131-022-991902</span>
+                  <div className="bg-slate-900/50 p-3.5 rounded-xl border border-white/5 flex flex-col gap-2.5">
+                    <div className="flex justify-between items-center text-[13px]">
+                      <span className="text-slate-400 font-medium">입금 계좌</span>
+                      <div className="flex items-center gap-2">
+                        <span className="font-black text-slate-100 tracking-wider select-all text-base">신협 131-022-991902</span>
                         <button
                           type="button"
                           onClick={handleCopyAccount}
-                          className="px-1.5 py-0.5 bg-white/10 hover:bg-white/20 text-slate-300 rounded text-[9px] font-bold transition-all border border-white/10 active:scale-95"
+                          className="px-2 py-1 bg-white/10 hover:bg-white/20 text-slate-300 rounded-md text-[11px] font-bold transition-all border border-white/10 active:scale-95"
                         >
                           복사
                         </button>
                       </div>
                     </div>
-                    <div className="flex justify-between items-center text-[11px]">
-                      <span className="text-slate-400">예금주</span>
-                      <span className="text-slate-200 font-semibold">주식회사 청소타워</span>
+                    <div className="flex justify-between items-center text-[13px]">
+                      <span className="text-slate-400 font-medium">예금주</span>
+                      <span className="text-slate-200 font-bold text-[15px]">주식회사 청소타워</span>
                     </div>
                   </div>
                 </div>
@@ -1985,10 +1985,15 @@ export default function Quote() {
                 <p className="text-sm text-slate-600 leading-relaxed mb-3">
                   원활한 서비스 진행과 노쇼 방지를 위해 <strong className="text-rose-500 font-black">계약금 {depositAmount.toLocaleString()}원</strong>만 입금해주시면 예약이 최종 확정됩니다.
                 </p>
-                <div className="bg-white p-3 rounded-lg border border-blue-100">
-                  <p className="text-xs text-slate-500 mb-1">입금 계좌</p>
-                  <p className="font-bold text-slate-800 tracking-wide">신협 131-022-991902</p>
-                  <p className="text-xs text-slate-500 mt-1">예금주: 주식회사 청소타워</p>
+                <div className="bg-white p-4 rounded-xl border border-blue-100 flex flex-col gap-2">
+                  <div className="flex justify-between items-center">
+                    <span className="text-[13px] text-slate-500 font-medium">입금 계좌</span>
+                    <span className="font-black text-slate-800 tracking-wider text-base select-all">신협 131-022-991902</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-[13px] text-slate-500 font-medium">예금주</span>
+                    <span className="font-bold text-slate-800 text-[15px]">주식회사 청소타워</span>
+                  </div>
                 </div>
 
                 {/* 에스크로 심사 완료 후 활성화 예정

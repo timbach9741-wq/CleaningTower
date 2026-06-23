@@ -2238,23 +2238,23 @@ export default function Quote() {
                   {/* 간편 송금 버튼 제거됨 */}
 
                   {/* 계좌 정보 */}
-                  <div className="bg-white p-2.5 rounded-lg border border-slate-200 flex flex-col gap-1">
-                    <div className="flex justify-between items-center text-[11px]">
-                      <span className="text-slate-500">입금 계좌</span>
-                      <div className="flex items-center gap-1.5">
-                        <span className="font-bold text-slate-700 tracking-wide select-all">신협 131-022-991902</span>
+                  <div className="bg-white p-3.5 rounded-xl border border-slate-200 flex flex-col gap-2.5">
+                    <div className="flex justify-between items-center text-[13px]">
+                      <span className="text-slate-500 font-medium">입금 계좌</span>
+                      <div className="flex items-center gap-2">
+                        <span className="font-black text-slate-800 tracking-wider select-all text-base">신협 131-022-991902</span>
                         <button
                           type="button"
                           onClick={handleCopyAccount}
-                          className="px-1.5 py-0.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded text-[9px] font-bold transition-all border border-slate-300 active:scale-95"
+                          className="px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-md text-[11px] font-bold transition-all border border-slate-300 active:scale-95"
                         >
                           복사
                         </button>
                       </div>
                     </div>
-                    <div className="flex justify-between items-center text-[11px]">
-                      <span className="text-slate-500">예금주</span>
-                      <span className="text-slate-700 font-semibold">주식회사 청소타워</span>
+                    <div className="flex justify-between items-center text-[13px]">
+                      <span className="text-slate-500 font-medium">예금주</span>
+                      <span className="text-slate-800 font-bold text-[15px]">주식회사 청소타워</span>
                     </div>
                   </div>
                 </div>

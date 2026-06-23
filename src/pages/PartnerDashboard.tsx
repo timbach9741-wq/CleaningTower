@@ -77,6 +77,7 @@ export interface Order {
 
 export interface PartnerUser {
   id: string;
+  b2bPartnerType?: 'interior' | 'realestate';
   businessType?: 'business' | 'freelancer';
   companyName?: string;
   managerName?: string;

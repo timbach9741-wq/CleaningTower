@@ -50,9 +50,8 @@ export default function HeroSection({ onOpenQuote }) {
             
             {/* Subtext */}
             <p className="text-lg sm:text-xl text-slate-600 font-medium mb-8 max-w-xl leading-relaxed break-keep">
-              입주청소, 새집증후군, 가전 분해청소, 정기청소까지.<br className="hidden sm:block" />
-              <strong className="font-bold text-slate-800">분야별 전문 팀</strong>이 <br className="hidden lg:block" />
-              당신의 새로운 시작과 일상을 완벽하게 관리합니다.
+              입주청소, 새집증후군, 가전 분해청소, 정기청소까지.<br />
+              <strong className="font-bold text-slate-800">분야별 전문 팀</strong>이 당신의 새로운 시작과 일상을 완벽하게 관리합니다.
             </p>
 
             {/* Checkpoints */}

@@ -116,7 +116,7 @@ export default function Header({ onOpenQuote, theme = 'light', hideQuoteButton =
           <div className="flex items-center gap-1 sm:gap-2 lg:gap-3 z-50">
             <button 
               onClick={() => navigate('/login')}
-              className={`flex px-2 sm:px-4 py-1.5 sm:py-2 rounded-full font-bold text-[13px] sm:text-sm transition-all duration-300 items-center hover:-translate-y-0.5 ${
+              className={`flex px-1.5 sm:px-4 py-1.5 sm:py-2 rounded-full font-bold text-[11px] sm:text-sm transition-all duration-300 items-center hover:-translate-y-0.5 ${
                 isScrolled || isMobileMenuOpen
                   ? 'text-slate-600 hover:text-blue-600 hover:bg-blue-50' 
                   : (theme === 'dark'
@@ -124,11 +124,11 @@ export default function Header({ onOpenQuote, theme = 'light', hideQuoteButton =
                       : 'text-slate-600 hover:text-blue-600 hover:bg-white/50')
               }`}
             >
-              <span className="hidden sm:inline">회원 </span>로그인
+              회원로그인
             </button>
             <button 
               onClick={() => navigate('/login')}
-              className={`flex px-3 sm:px-5 py-1.5 sm:py-2.5 rounded-full font-bold text-[13px] sm:text-sm transition-all duration-300 shadow-md items-center gap-1 sm:gap-2 hover:-translate-y-0.5 ${
+              className={`flex px-2 sm:px-5 py-1.5 sm:py-2.5 rounded-full font-bold text-[11px] sm:text-sm transition-all duration-300 shadow-md items-center hover:-translate-y-0.5 ${
                 isScrolled || isMobileMenuOpen
                   ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-blue-600/30' 
                   : (theme === 'dark'
@@ -136,7 +136,7 @@ export default function Header({ onOpenQuote, theme = 'light', hideQuoteButton =
                       : 'bg-white text-blue-600 hover:bg-blue-50 shadow-black/10')
               }`}
             >
-              <span className="hidden sm:inline">처음이신가요? </span>회원가입
+              처음이신가요? 회원가입
             </button>
             
             <button 

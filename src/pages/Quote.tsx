@@ -1718,23 +1718,23 @@ export default function Quote() {
                   {/* 간편 송금 버튼 제거됨 */}
 
                   {/* 계좌 정보 */}
-                  <div className="bg-slate-900/50 p-3.5 rounded-xl border border-white/5 flex flex-col gap-2.5">
-                    <div className="flex justify-between items-center text-[13px]">
-                      <span className="text-slate-400 font-medium">입금 계좌</span>
-                      <div className="flex items-center gap-2">
-                        <span className="font-black text-slate-100 tracking-wider select-all text-base">신협 131-022-991902</span>
+                  <div className="bg-slate-900/50 p-4 rounded-xl border border-white/10 flex flex-col gap-4">
+                    <div className="flex flex-col gap-2">
+                      <span className="text-slate-400 font-medium text-sm">입금 계좌</span>
+                      <div className="flex items-center gap-3">
+                        <span className="font-black text-amber-400 tracking-wider select-all text-xl md:text-2xl">신협 131-022-991902</span>
                         <button
                           type="button"
                           onClick={handleCopyAccount}
-                          className="px-2 py-1 bg-white/10 hover:bg-white/20 text-slate-300 rounded-md text-[11px] font-bold transition-all border border-white/10 active:scale-95"
+                          className="px-3 py-1.5 bg-white/10 hover:bg-white/20 text-slate-100 rounded-lg text-sm font-bold transition-all border border-white/20 active:scale-95 whitespace-nowrap"
                         >
                           복사
                         </button>
                       </div>
                     </div>
-                    <div className="flex justify-between items-center text-[13px]">
-                      <span className="text-slate-400 font-medium">예금주</span>
-                      <span className="text-slate-200 font-bold text-[15px]">주식회사 청소타워</span>
+                    <div className="flex flex-col gap-2 border-t border-white/5 pt-3">
+                      <span className="text-slate-400 font-medium text-sm">예금주</span>
+                      <span className="text-slate-100 font-bold text-lg md:text-xl">주식회사 청소타워</span>
                     </div>
                   </div>
                 </div>
@@ -1985,14 +1985,16 @@ export default function Quote() {
                 <p className="text-sm text-slate-600 leading-relaxed mb-3">
                   원활한 서비스 진행과 노쇼 방지를 위해 <strong className="text-rose-500 font-black">계약금 {depositAmount.toLocaleString()}원</strong>만 입금해주시면 예약이 최종 확정됩니다.
                 </p>
-                <div className="bg-white p-4 rounded-xl border border-blue-100 flex flex-col gap-2">
-                  <div className="flex justify-between items-center">
-                    <span className="text-[13px] text-slate-500 font-medium">입금 계좌</span>
-                    <span className="font-black text-slate-800 tracking-wider text-base select-all">신협 131-022-991902</span>
+                <div className="bg-white p-4 rounded-xl border border-blue-200 flex flex-col gap-4 shadow-sm">
+                  <div className="flex flex-col gap-2">
+                    <span className="text-slate-500 font-medium text-sm">입금 계좌</span>
+                    <div className="flex items-center justify-between">
+                      <span className="font-black text-blue-700 tracking-wider text-xl md:text-2xl select-all">신협 131-022-991902</span>
+                    </div>
                   </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-[13px] text-slate-500 font-medium">예금주</span>
-                    <span className="font-bold text-slate-800 text-[15px]">주식회사 청소타워</span>
+                  <div className="flex flex-col gap-2 border-t border-slate-100 pt-3">
+                    <span className="text-slate-500 font-medium text-sm">예금주</span>
+                    <span className="font-bold text-slate-900 text-lg md:text-xl">주식회사 청소타워</span>
                   </div>
                 </div>
 

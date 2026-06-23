@@ -473,7 +473,39 @@ export default function Signup() {
                     />
                   </div>
 
-                  <div>
+                  {/* 페이백(인센티브) 수령 계좌 정보 */}
+                  <div className="pt-4 border-t border-slate-100">
+                    <label className="block text-sm font-bold text-slate-700 mb-4 flex items-center gap-1">
+                      <span className="text-amber-500">💰</span> 페이백(인센티브) 수령 계좌
+                    </label>
+                    <div className="space-y-3">
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          className="w-1/3 px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-sm"
+                          placeholder="은행명"
+                          value={formData.bankName}
+                          onChange={e => setFormData({ ...formData, bankName: e.target.value })}
+                        />
+                        <input
+                          type="text"
+                          className="w-2/3 px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-sm"
+                          placeholder="계좌번호 (숫자만)"
+                          value={formData.accountNumber}
+                          onChange={e => setFormData({ ...formData, accountNumber: e.target.value.replace(/[^0-9]/g, '') })}
+                        />
+                      </div>
+                      <input
+                        type="text"
+                        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-sm"
+                        placeholder="예금주 성함"
+                        value={formData.accountHolder}
+                        onChange={e => setFormData({ ...formData, accountHolder: e.target.value })}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="pt-4 border-t border-slate-100">
                     <label className="block text-sm font-bold text-slate-700 mb-2 flex items-center gap-1">
                       <Lock size={16} /> 비밀번호
                     </label>

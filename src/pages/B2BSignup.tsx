@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../firebase';
 import { sendTelegramAlert } from '../telegramService';
+import DaumPostcode from 'react-daum-postcode';
 
 export default function Signup() {
   const navigate = useNavigate();
@@ -22,7 +23,28 @@ export default function Signup() {
     accountHolder: '',
     companyName: '',
     address: '',
+    detailAddress: '',
   });
+
+  const [isPostcodeOpen, setIsPostcodeOpen] = useState(false);
+
+  const handleComplete = (data: any) => {
+    let fullAddress = data.address;
+    let extraAddress = '';
+
+    if (data.addressType === 'R') {
+      if (data.bname !== '') {
+        extraAddress += data.bname;
+      }
+      if (data.buildingName !== '') {
+        extraAddress += (extraAddress !== '' ? `, ${data.buildingName}` : data.buildingName);
+      }
+      fullAddress += (extraAddress !== '' ? ` (${extraAddress})` : '');
+    }
+
+    setFormData({ ...formData, address: fullAddress });
+    setIsPostcodeOpen(false);
+  };
 
   const [agreements, setAgreements] = useState({
     all: false,
@@ -114,13 +136,15 @@ export default function Signup() {
       // TODO: 발급받은 구글 앱스스크립트(Web App) URL을 입력하세요.
       const GOOGLE_SCRIPT_URL = import.meta.env.VITE_GOOGLE_SHEET_URL || "YOUR_GOOGLE_SCRIPT_URL_HERE";
       
+      const fullAddressString = `${formData.address} ${formData.detailAddress}`.trim();
+      
       const payload = {
         name: formData.name,
         phone: formData.phone,
         email: formData.email,
         businessNumber: formData.businessNumber,
         companyName: formData.companyName,
-        address: formData.address,
+        address: fullAddressString,
         isAutoApproved: true
       };
       
@@ -145,7 +169,7 @@ export default function Signup() {
           email: formData.email,
           businessNumber: formData.businessNumber,
           companyName: formData.companyName,
-          address: formData.address,
+          address: fullAddressString,
           status: 'active',
           bankName: formData.bankName,
           accountNumber: formData.accountNumber,
@@ -438,13 +462,59 @@ export default function Signup() {
                     <label className="block text-sm font-bold text-slate-700 mb-2 flex items-center gap-1">
                       <span className="material-symbols-outlined text-[16px]">location_on</span> 회사 주소
                     </label>
+                    <div className="flex gap-2 mb-2">
+                      <input
+                        type="text"
+                        className="flex-1 px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all cursor-pointer"
+                        placeholder="주소 검색을 클릭하세요"
+                        value={formData.address}
+                        readOnly
+                        onClick={() => setIsPostcodeOpen(true)}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setIsPostcodeOpen(true)}
+                        className="px-4 py-3 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-bold whitespace-nowrap transition-colors"
+                      >
+                        주소 검색
+                      </button>
+                    </div>
                     <input
                       type="text"
                       className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
                       placeholder="상세 주소를 입력해주세요"
-                      value={formData.address}
-                      onChange={e => setFormData({ ...formData, address: e.target.value })}
+                      value={formData.detailAddress}
+                      onChange={e => setFormData({ ...formData, detailAddress: e.target.value })}
                     />
+
+                    {/* Daum Postcode Modal */}
+                    <AnimatePresence>
+                      {isPostcodeOpen && (
+                        <motion.div
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          exit={{ opacity: 0 }}
+                          className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4"
+                          onClick={() => setIsPostcodeOpen(false)}
+                        >
+                          <motion.div
+                            initial={{ y: 50, opacity: 0 }}
+                            animate={{ y: 0, opacity: 1 }}
+                            exit={{ y: 50, opacity: 0 }}
+                            className="bg-white w-full max-w-md rounded-2xl overflow-hidden shadow-2xl relative"
+                            onClick={e => e.stopPropagation()}
+                          >
+                            <div className="flex justify-between items-center p-4 border-b border-slate-100">
+                              <h3 className="font-bold text-slate-800">주소 검색</h3>
+                              <button onClick={() => setIsPostcodeOpen(false)} className="text-slate-400 hover:text-slate-600">
+                                ✕
+                              </button>
+                            </div>
+                            <DaumPostcode onComplete={handleComplete} style={{ height: '400px' }} />
+                          </motion.div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
                   </div>
 
                   <div>
@@ -480,13 +550,34 @@ export default function Signup() {
                     </label>
                     <div className="space-y-3">
                       <div className="flex gap-2">
-                        <input
-                          type="text"
-                          className="w-1/3 px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-sm"
-                          placeholder="은행명"
+                        <select
+                          className="w-1/3 px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-sm appearance-none cursor-pointer"
                           value={formData.bankName}
                           onChange={e => setFormData({ ...formData, bankName: e.target.value })}
-                        />
+                        >
+                          <option value="">은행 선택</option>
+                          <option value="국민">국민</option>
+                          <option value="신한">신한</option>
+                          <option value="우리">우리</option>
+                          <option value="하나">하나</option>
+                          <option value="기업">기업</option>
+                          <option value="농협">농협</option>
+                          <option value="수협">수협</option>
+                          <option value="카카오뱅크">카카오뱅크</option>
+                          <option value="토스뱅크">토스뱅크</option>
+                          <option value="케이뱅크">케이뱅크</option>
+                          <option value="새마을">새마을</option>
+                          <option value="신협">신협</option>
+                          <option value="우체국">우체국</option>
+                          <option value="대구">대구</option>
+                          <option value="부산">부산</option>
+                          <option value="광주">광주</option>
+                          <option value="제주">제주</option>
+                          <option value="전북">전북</option>
+                          <option value="경남">경남</option>
+                          <option value="SC제일">SC제일</option>
+                          <option value="씨티">씨티</option>
+                        </select>
                         <input
                           type="text"
                           className="w-2/3 px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-sm"

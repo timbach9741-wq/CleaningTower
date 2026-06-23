@@ -498,8 +498,11 @@ export default function Quote() {
     try {
       if (db) {
         const loggedInPhone = sessionStorage.getItem('b2b_login_id') || contactInfo;
+        const b2bPartnerType = sessionStorage.getItem('b2b_partner_type') || 'realestate';
+        
         const docRef = await addDoc(collection(db, 'quotes'), {
           isB2B: true, // 사업자 전용 앱 주문 플래그
+          b2bPartnerType, // interior 또는 realestate 구분
           b2bLoginId: loggedInPhone,
           date: cleaningDate || '미정',
           time: cleaningTime || '시간협의',
@@ -521,7 +524,7 @@ export default function Quote() {
 
         // 텔레그램 관리자 알림
         const telegramMsg = [
-          `🏢 <b>[업체전용] 새 견적 접수</b>`,
+          `🏢 <b>[업체전용 - ${b2bPartnerType === 'interior' ? '인테리어' : '부동산'}] 새 견적 접수</b>`,
           ``,
           `📋 <b>업체명:</b> ${businessName || '미입력'}`,
           `🧹 <b>청소종류:</b> ${cleaningType} 청소`,
@@ -534,7 +537,9 @@ export default function Quote() {
           `📞 <b>연락처:</b> ${contactInfo || '미입력'}`,
           optionLabels.length > 0 ? `🔧 <b>옵션:</b> ${optionLabels.join(', ')}` : '',
           ``,
-          `⚠️ 파트너 앱에는 노출되지 않습니다. 직접 업체를 선정해주세요.`
+          b2bPartnerType === 'interior' 
+            ? `✅ 파트너 앱에 정상적으로 노출됩니다.` 
+            : `⚠️ 파트너 앱에는 노출되지 않습니다. 직접 업체를 선정해주세요.`
         ].filter(Boolean).join('\n');
         
         sendTelegramAlert(telegramMsg);

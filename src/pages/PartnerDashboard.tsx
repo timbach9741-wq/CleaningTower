@@ -327,6 +327,10 @@ export default function Partner() {
         snapshot.docChanges().forEach((change) => {
           if (change.type === 'added') {
             const newQuote = change.doc.data();
+            // 부동산 파트너스 오더는 파트너에게 알림을 보내지 않음 (지정 배정된 경우는 제외)
+            if (newQuote.isB2B && newQuote.b2bPartnerType === 'realestate' && !newQuote.assignedTo) {
+              return;
+            }
             const loggedInId = localStorage.getItem('partnerId');
             if (newQuote.status === '대기중' && (!newQuote.assignedTo || newQuote.assignedTo === loggedInId)) {
               if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
@@ -394,7 +398,7 @@ export default function Partner() {
 
   // 내 일정: 날짜 오름차순(가까운 날짜부터), '상담완료' 상태인 오더만
   const myJobs = [...quotes]
-    .filter(o => !o.isB2B && o.assignedTo === currentUser?.id && o.status === '상담완료')
+    .filter(o => !(o.isB2B && o.b2bPartnerType === 'realestate') && o.assignedTo === currentUser?.id && o.status === '상담완료')
     .sort((a, b) => {
       const dateA = a.date || a.cleaningDate || '';
       const dateB = b.date || b.cleaningDate || '';
@@ -415,7 +419,7 @@ export default function Partner() {
   // 대기중인 오더: 긴급 오더 최우선, 그 다음 최신 생성일 순
   const remainingOrders = [...quotes]
     .filter(o => {
-      if (o.isB2B || o.status !== '대기중' && o.status !== 'pending') return false;
+      if ((o.isB2B && o.b2bPartnerType === 'realestate') || (o.status !== '대기중' && o.status !== 'pending')) return false;
       if (o.assignedTo && o.assignedTo !== currentUser?.id) return false;
       if (o.cleaningType === '정기' || o.cleaningType === '가전') return false;
       // 쿠폰 오더 필터링 (미동의 파트너에게는 숨김)
@@ -548,7 +552,7 @@ export default function Partner() {
   // ★ 정산 내역: 실제 완료된 오더 기반으로 계산
   // '작업완료' 상태이고, 현재 파트너에게 배정된 오더만 정산 내역으로 표시
   const settlements = quotes
-    .filter(q => !q.isB2B && q.assignedTo === currentUser?.id && q.status === '작업완료')
+    .filter(q => !(q.isB2B && q.b2bPartnerType === 'realestate') && q.assignedTo === currentUser?.id && q.status === '작업완료')
     .map((q, idx) => ({
       id: q.id || idx,
       date: q.completedAt || q.date || q.cleaningDate || '-',

@@ -61,6 +61,9 @@ export interface Order {
 
 export interface PartnerUser {
   id: string;
+  address?: string;
+  totalOrders?: number;
+  totalPayback?: number;
   b2bPartnerType?: 'interior' | 'realestate';
   businessType?: 'business' | 'freelancer';
   companyName?: string;
@@ -2753,7 +2756,14 @@ export default function Admin() {
                         <th className="p-3 font-bold whitespace-nowrap">연락처</th>
                         <th className="p-3 font-bold whitespace-nowrap">이메일</th>
                         <th className="p-3 font-bold whitespace-nowrap">사업자번호</th>
-                        <th className="p-3 font-bold whitespace-nowrap">정산 계좌 정보</th>
+                        <th className="p-3 font-bold whitespace-nowrap">{activeTab === 'interiorPartners' ? '회사 주소' : '사무소 주소'}</th>
+                        <th className="p-3 font-bold whitespace-nowrap">누적 오더</th>
+                        {activeTab === 'realestatePartners' && (
+                          <>
+                            <th className="p-3 font-bold whitespace-nowrap">정산 계좌 정보</th>
+                            <th className="p-3 font-bold whitespace-nowrap">누적 페이백</th>
+                          </>
+                        )}
                         <th className="p-3 font-bold whitespace-nowrap">가입 상태</th>
                         <th className="p-3 font-bold text-center whitespace-nowrap">승인 관리</th>
                       </tr>
@@ -2761,7 +2771,7 @@ export default function Admin() {
                     <tbody className="divide-y divide-gray-100">
                       {filteredB2BPartnersList.filter(p => p.b2bPartnerType === (activeTab === 'interiorPartners' ? 'interior' : 'realestate')).length === 0 ? (
                         <tr>
-                          <td colSpan={8} className="p-12 text-center text-gray-400">
+                          <td colSpan={activeTab === 'interiorPartners' ? 9 : 11} className="p-12 text-center text-gray-400">
                             등록되거나 대기 중인 {activeTab === 'interiorPartners' ? '인테리어' : '부동산'} 파트너가 없습니다.
                           </td>
                         </tr>
@@ -2785,15 +2795,28 @@ export default function Admin() {
                             <td className="p-3 text-sm font-mono text-gray-600 whitespace-nowrap">
                               {partner.businessNumber || '-'}
                             </td>
-                            <td className="p-3 text-sm">
-                              {partner.bankName ? (
-                                <div className="text-xs text-gray-700">
-                                  <span className="font-bold">{partner.bankName}</span> {partner.accountNumber} <span className="text-gray-400">({partner.accountHolder})</span>
-                                </div>
-                              ) : (
-                                <span className="text-gray-400 text-xs">미등록</span>
-                              )}
+                            <td className="p-3 text-sm text-gray-600 whitespace-nowrap">
+                              {partner.address || '-'}
                             </td>
+                            <td className="p-3 text-sm font-bold text-blue-600 whitespace-nowrap">
+                              {partner.totalOrders || 0}건
+                            </td>
+                            {activeTab === 'realestatePartners' && (
+                              <>
+                                <td className="p-3 text-sm">
+                                  {partner.bankName ? (
+                                    <div className="text-xs text-gray-700">
+                                      <span className="font-bold">{partner.bankName}</span> {partner.accountNumber} <span className="text-gray-400">({partner.accountHolder})</span>
+                                    </div>
+                                  ) : (
+                                    <span className="text-gray-400 text-xs">미등록</span>
+                                  )}
+                                </td>
+                                <td className="p-3 text-sm font-bold text-purple-600 whitespace-nowrap">
+                                  {(partner.totalPayback || 0).toLocaleString()}원
+                                </td>
+                              </>
+                            )}
                             <td className="p-3 whitespace-nowrap">
                               <span className={`px-2 py-1 rounded-full text-xs font-bold border whitespace-nowrap ${
                                 partner.status === 'active' 
@@ -2903,13 +2926,29 @@ export default function Admin() {
                                 <p className="text-[10px] text-slate-400 font-bold mb-0.5">사업자 번호</p>
                                 <p className="text-slate-800 font-bold font-mono">{partner.businessNumber || '-'}</p>
                               </div>
+                              <div className="col-span-2">
+                                <p className="text-[10px] text-slate-400 font-bold mb-0.5">{activeTab === 'interiorPartners' ? '회사 주소' : '사무소 주소'}</p>
+                                <p className="text-slate-800 font-bold">{partner.address || '-'}</p>
+                              </div>
+                              <div>
+                                <p className="text-[10px] text-slate-400 font-bold mb-0.5">누적 오더</p>
+                                <p className="text-blue-600 font-bold">{partner.totalOrders || 0}건</p>
+                              </div>
+                              {activeTab === 'realestatePartners' && (
+                                <div>
+                                  <p className="text-[10px] text-purple-500 font-bold mb-0.5">누적 페이백</p>
+                                  <p className="text-purple-600 font-bold">{(partner.totalPayback || 0).toLocaleString()}원</p>
+                                </div>
+                              )}
                             </div>
-                            <div className="border-t border-slate-50 pt-2">
-                              <p className="text-[10px] text-emerald-500 font-bold mb-0.5">페이백 정산 계좌</p>
-                              <p className="text-slate-800 font-bold text-xs">
-                                {partner.bankName ? `${partner.bankName} ${partner.accountNumber} (${partner.accountHolder})` : '미등록'}
-                              </p>
-                            </div>
+                            {activeTab === 'realestatePartners' && (
+                              <div className="border-t border-slate-50 pt-2 mt-1">
+                                <p className="text-[10px] text-emerald-500 font-bold mb-0.5">페이백 정산 계좌</p>
+                                <p className="text-slate-800 font-bold text-xs">
+                                  {partner.bankName ? `${partner.bankName} ${partner.accountNumber} (${partner.accountHolder})` : '미등록'}
+                                </p>
+                              </div>
+                            )}
                           </div>
                           
                           <div className="mt-1 flex gap-2">

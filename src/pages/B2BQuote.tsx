@@ -403,8 +403,8 @@ export default function Quote() {
   };
 
   const estimatedPrice = getEstimatedPrice();
-  const vatPrice = Math.floor(estimatedPrice * 0.1);
-  const totalPriceIncVat = estimatedPrice + vatPrice;
+  const vatPrice = 0;
+  const totalPriceIncVat = estimatedPrice;
   const depositAmount = 50000; // 계약금 5만원 고정
 
   const handleSizeChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -1643,14 +1643,6 @@ export default function Quote() {
 
                 {/* 중간 견적 안내 박스 */}
                 <div className="mt-8 bg-gradient-to-r from-slate-800 to-slate-900 p-4 rounded-xl flex flex-col border border-slate-700 shadow-lg gap-3">
-                   <div className="flex justify-between items-center text-sm">
-                     <span className="text-slate-500 font-medium">원래 금액 (공급가액)</span>
-                     <span className="text-slate-200 font-medium">{estimatedPrice.toLocaleString()}원</span>
-                   </div>
-                   <div className="flex justify-between items-center text-sm pb-3 border-b border-slate-200">
-                     <span className="text-rose-400 font-medium">부가세 10%</span>
-                     <span className="text-rose-400 font-medium">+{vatPrice.toLocaleString()}원</span>
-                   </div>
                    <div className="flex justify-between items-end pt-1">
                      <span className="text-blue-400 font-bold text-[15px] mb-1">총 결제 예정 금액</span>
                      <div className="text-right">
@@ -2212,12 +2204,8 @@ export default function Quote() {
                         </div>
 
                         <div className="flex justify-between items-center pt-3 border-t border-slate-200 mt-2">
-                           <span className="text-slate-500 text-sm font-bold">총 공급가액</span>
+                           <span className="text-slate-500 text-sm font-bold">견적 금액</span>
                            <span className="text-slate-700 font-bold">{estimatedPrice.toLocaleString()}원</span>
-                        </div>
-                        <div className="flex justify-between items-center mt-2">
-                           <span className="text-rose-400 text-sm font-medium">부가세 (10%)</span>
-                           <span className="text-rose-400 font-medium">+{vatPrice.toLocaleString()}원</span>
                         </div>
                      </div>
 

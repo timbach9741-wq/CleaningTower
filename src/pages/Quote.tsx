@@ -1715,25 +1715,7 @@ export default function Quote() {
                     을 아래 방법으로 입금해 주시면 예약이 최종 확정됩니다.
                   </p>
 
-                  {/* 간편 송금 버튼 그룹 */}
-                  <div className="grid grid-cols-2 gap-2 mb-3">
-                    <button
-                      type="button"
-                      onClick={() => handleRemittance('toss')}
-                      className="py-2.5 bg-[#3182F6] hover:bg-[#206FE5] text-white font-bold rounded-xl text-xs transition-all flex items-center justify-center gap-1.5 shadow active:scale-95"
-                    >
-                      <span className="font-sans font-black tracking-tighter text-[11px]">toss</span>
-                      토스 간편송금
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleRemittance('kakao')}
-                      className="py-2.5 bg-[#FFEB00] hover:bg-[#FADA00] text-[#1A1A1C] font-bold rounded-xl text-xs transition-all flex items-center justify-center gap-1.5 shadow active:scale-95"
-                    >
-                      <span className="material-symbols-outlined text-[13px] font-bold">chat</span>
-                      카카오페이 송금
-                    </button>
-                  </div>
+                  {/* 간편 송금 버튼 제거됨 */}
 
                   {/* 계좌 정보 */}
                   <div className="bg-slate-900/50 p-2.5 rounded-lg border border-white/5 flex flex-col gap-1">
@@ -2001,7 +1983,7 @@ export default function Quote() {
                   예약 확정 안내
                 </p>
                 <p className="text-sm text-slate-600 leading-relaxed mb-3">
-                  원활한 서비스 진행과 노쇼 방지를 위해 <strong className="text-rose-500 font-black">계약금 {depositAmount.toLocaleString()}원</strong>(총 견적 금액의 10%)을 입금해주시면 예약이 최종 확정됩니다.
+                  원활한 서비스 진행과 노쇼 방지를 위해 <strong className="text-rose-500 font-black">계약금 {depositAmount.toLocaleString()}원</strong>만 입금해주시면 예약이 최종 확정됩니다.
                 </p>
                 <div className="bg-white p-3 rounded-lg border border-blue-100">
                   <p className="text-xs text-slate-500 mb-1">입금 계좌</p>

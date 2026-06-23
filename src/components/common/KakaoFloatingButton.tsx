@@ -30,7 +30,7 @@ export default function KakaoFloatingButton() {
   useEffect(() => {
     if (isExcluded) return;
 
-    if (pathname !== '/') {
+    if (pathname !== '/' && pathname !== '/service') {
       setIsHomeCtaVisible(false);
       return;
     }

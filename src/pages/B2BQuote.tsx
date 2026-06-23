@@ -135,7 +135,8 @@ export default function Quote() {
 
   // 업체 전용 로그인 상태
   const [isB2BLoggedIn, setIsB2BLoggedIn] = useState(() => {
-    return sessionStorage.getItem('b2b_logged_in') === 'true';
+    return sessionStorage.getItem('b2b_logged_in') === 'true' || 
+           (localStorage.getItem('isLoggedIn') === 'true' && localStorage.getItem('userType') === 'partner');
   });
   const [b2bTab, setB2bTab] = useState<'apply' | 'history'>('apply');
   const [b2bQuotes, setB2bQuotes] = useState<Order[]>([]);
@@ -684,6 +685,9 @@ export default function Quote() {
               onClick={() => {
                 sessionStorage.removeItem('b2b_logged_in');
                 sessionStorage.removeItem('b2b_business_name');
+                localStorage.removeItem('isLoggedIn');
+                localStorage.removeItem('userName');
+                localStorage.removeItem('userType');
                 setIsB2BLoggedIn(false);
               }}
               className="text-[11px] text-slate-500 font-bold px-2 py-1 rounded-lg hover:bg-slate-100 transition-colors whitespace-nowrap"

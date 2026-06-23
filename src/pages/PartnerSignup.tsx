@@ -35,9 +35,6 @@ export default function PartnerSignup() {
     status: '',
     loginId: '',
     password: '휴대폰 뒤 4자리',
-    bankName: '',
-    accountNumber: '',
-    accountHolder: '',
     createdAt: ''
   });
 
@@ -113,9 +110,6 @@ export default function PartnerSignup() {
         isNotificationEnabled: true,
         notificationRegions: finalRegionArray,
         image: randomImage, // 신규 가입 시 랜덤 기본 이미지 배정
-        bankName: formData.bankName,
-        accountNumber: formData.accountNumber,
-        accountHolder: formData.accountHolder,
         createdAt: new Date().toISOString(),
         ...(location.state?.snsProfile?.provider === 'kakao' ? { kakaoId: location.state.snsProfile.id } : {}),
         ...(location.state?.snsProfile?.provider === 'naver' ? { naverId: location.state.snsProfile.id } : {})
@@ -153,7 +147,6 @@ export default function PartnerSignup() {
             `📍 <b>주 활동지역:</b> ${firestoreData.region}\n` +
             `👥 <b>투입 규모:</b> ${firestoreData.teamSize || '미기재'}\n` +
             `🛠️ <b>주력 서비스:</b> ${firestoreData.mainServices.join(', ') || '미기재'}\n` +
-            `🏦 <b>정산 계좌:</b> ${firestoreData.bankName} ${firestoreData.accountNumber} (예금주: ${firestoreData.accountHolder})\n` +
             `⌛ <b>승인 상태:</b> ${statusText}`;
 
           sendTelegramAlert(message).catch(err => console.error("텔레그램 발송 오류:", err));
@@ -384,49 +377,7 @@ export default function PartnerSignup() {
                     </div>
                   </div>
 
-                  {/* 정산 계좌 정보 */}
-                  <div className="pt-4 border-t border-slate-100 mt-4">
-                    <label className="block text-sm font-bold text-slate-700 mb-2">정산 계좌 정보 (입금 계좌) <span className="text-rose-500">*</span></label>
-                    <div className="grid grid-cols-2 gap-3 mb-3">
-                      <div>
-                        <select 
-                          className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none focus:bg-white text-sm text-slate-700 font-medium"
-                          value={formData.bankName}
-                          onChange={e => setFormData({ ...formData, bankName: e.target.value })}
-                        >
-                          <option value="">은행 선택</option>
-                          <option value="국민은행">국민은행</option>
-                          <option value="신한은행">신한은행</option>
-                          <option value="우리은행">우리은행</option>
-                          <option value="하나은행">하나은행</option>
-                          <option value="기업은행">기업은행</option>
-                          <option value="농협은행">농협은행</option>
-                          <option value="카카오뱅크">카카오뱅크</option>
-                          <option value="토스뱅크">토스뱅크</option>
-                          <option value="새마을금고">새마을금고</option>
-                          <option value="우체국">우체국</option>
-                          <option value="신협">신협</option>
-                          <option value="수협">수협</option>
-                        </select>
-                      </div>
-                      <div>
-                        <input
-                          type="text"
-                          className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all focus:bg-white text-sm"
-                          placeholder="예금주명"
-                          value={formData.accountHolder}
-                          onChange={e => setFormData({ ...formData, accountHolder: e.target.value })}
-                        />
-                      </div>
-                    </div>
-                    <input
-                      type="text"
-                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all focus:bg-white text-sm"
-                      placeholder="계좌번호 (- 없이 숫자만 입력)"
-                      value={formData.accountNumber}
-                      onChange={e => setFormData({ ...formData, accountNumber: e.target.value.replace(/[^0-9]/g, '') })}
-                    />
-                  </div>
+
 
                   {/* 비밀번호 설정란 (휴대폰 번호 뒤 4자리 임시 비밀번호 설정) */}
                   <div className="pt-4 border-t border-slate-100 mt-4">
@@ -451,10 +402,7 @@ export default function PartnerSignup() {
                     disabled={
                       !formData.phone || 
                       (!formData.name && !formData.managerName) || 
-                      formData.region.length === 0 ||
-                      !formData.bankName ||
-                      !formData.accountNumber ||
-                      !formData.accountHolder
+                      formData.region.length === 0
                     }
                     className="flex-1 py-4 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300 disabled:cursor-not-allowed text-white font-bold rounded-xl shadow-lg active:scale-[0.98] transition-all"
                   >

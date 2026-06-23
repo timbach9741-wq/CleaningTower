@@ -18,6 +18,15 @@ service firebase.storage {
                    && request.resource.contentType.matches('image/.*');
     }
 
+    // B2B 사업자 등록증 — 누구나 읽기, 업로드 시 파일 크기·타입 검증
+    // 왜 비인증 허용? → B2B 가입은 Firebase Auth 없이 자체 로그인 시스템을 사용하기 때문
+    match /b2b_licenses/{fileName} {
+      allow read: if true;
+      allow write: if request.resource.size < 10 * 1024 * 1024
+                   && (request.resource.contentType.matches('image/.*')
+                       || request.resource.contentType == 'application/pdf');
+    }
+
     // 기타 모든 경로 차단
     match /{allPaths=**} {
       allow read, write: if false;

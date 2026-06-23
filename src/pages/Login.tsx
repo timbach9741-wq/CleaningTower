@@ -156,7 +156,7 @@ export default function Login() {
         // 파트너스는 loginId가 숫자만 있는 연락처일 수도 있고 phone 필드일 수도 있음
         q = query(usersRef, where('loginId', '==', numericLoginId), where('password', '==', password));
       } else {
-        usersRef = collection(db, 'b2b_partners');
+        usersRef = collection(db, 'b2bAccounts');
         q = query(usersRef, where('loginId', '==', loginId), where('password', '==', password), where('b2bPartnerType', '==', type));
       }
 

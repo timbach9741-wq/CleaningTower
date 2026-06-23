@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Check, ChevronRight, UserCircle, Smartphone, Lock, ArrowRight, CheckCircle2, FileUp, Loader2, Mail } from 'lucide-react';
+import { Check, ChevronRight, UserCircle, Smartphone, Lock, ArrowRight, CheckCircle2, FileUp, Loader2, Mail, Building2, Home } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
-import { db } from '../firebase';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { db, storage } from '../firebase';
 import { sendTelegramAlert } from '../telegramService';
 import DaumPostcode from 'react-daum-postcode';
 
@@ -58,6 +59,8 @@ export default function Signup() {
   const [isVerifying, setIsVerifying] = useState(false);
   const [isVerified, setIsVerified] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  // 가입 유형: 인테리어 업체 vs 부동산 (B2B 파트너 분류에 필수)
+  const [b2bPartnerType, setB2bPartnerType] = useState<'interior' | 'realestate' | ''>('');
 
   const termsContent = {
     terms: "제1조 (목적)\n본 약관은 데일리하우징(이하 '회사')이 제공하는 청소 서비스의 이용조건 및 절차, 회사와 회원 간의 권리, 의무 및 책임사항 등을 규정함을 목적으로 합니다.\n\n제2조 (서비스의 제공)\n회사는 고객의 의뢰에 따라 입주/이사 청소를 제공하며, 사이트 내 기준 및 사전에 협의된 견적에 따릅니다. 현장 오염도에 따라 당일 추가금이 발생할 수 있으며, 이에 대한 안내를 필수적으로 진행합니다.",
@@ -159,15 +162,32 @@ export default function Signup() {
           body: JSON.stringify(payload)
         });
       }
+
+      // 2. 사업자 등록증 이미지를 Firebase Storage에 업로드
+      let businessImageUrl = '';
+      if (formData.businessImage) {
+        try {
+          // 파일명 충돌 방지를 위해 연락처 + 타임스탬프 조합
+          const fileName = `${formData.phone}_${Date.now()}_${formData.businessImage.name}`;
+          const storageRef = ref(storage, `b2b_licenses/${fileName}`);
+          await uploadBytes(storageRef, formData.businessImage);
+          businessImageUrl = await getDownloadURL(storageRef);
+        } catch (uploadError) {
+          console.error("사업자등록증 업로드 오류:", uploadError);
+          // 이미지 업로드 실패 시에도 가입은 진행 (추후 관리자에게 재요청 가능)
+        }
+      }
       
-      // 2. Firebase Firestore에 파트너 정보 저장 (관리자 연동)
+      // 3. Firebase Firestore에 파트너 정보 저장 (관리자 연동)
       try {
         await addDoc(collection(db, "partners"), {
           isB2B: true,
+          b2bPartnerType: b2bPartnerType, // 인테리어 or 부동산 구분
           name: formData.name,
           phone: formData.phone,
           email: formData.email,
           businessNumber: formData.businessNumber,
+          businessImageUrl, // 사업자 등록증 이미지 URL
           companyName: formData.companyName,
           address: fullAddressString,
           status: 'active',
@@ -187,6 +207,8 @@ export default function Signup() {
           phone: formData.phone,
           email: formData.email,
           businessNumber: formData.businessNumber,
+          businessImageUrl, // 사업자 등록증 이미지 URL
+          b2bPartnerType: b2bPartnerType, // 인테리어 or 부동산 구분
           companyName: formData.companyName,
           address: formData.address,
           bankName: formData.bankName,
@@ -205,11 +227,14 @@ export default function Signup() {
       sessionStorage.setItem('b2b_bank_name', formData.bankName);
       sessionStorage.setItem('b2b_account_number', formData.accountNumber);
       sessionStorage.setItem('b2b_account_holder', formData.accountHolder);
+      sessionStorage.setItem('b2b_partner_type', b2bPartnerType); // 파트너 유형 세션 저장
 
       // 텔레그램 알림 발송 (비동기)
       try {
         const approvalText = "⚡ 즉시 자동 승인";
+        const partnerTypeLabel = b2bPartnerType === 'interior' ? '🏗️ 인테리어 업체' : '🏠 부동산';
         const message = `🔔 <b>[청소타워 B2B 가입 신청]</b>\n\n` +
+          `🏢 <b>파트너 유형:</b> ${partnerTypeLabel}\n` +
           `👤 <b>대표자명:</b> ${formData.name}\n` +
           `📱 <b>연락처:</b> ${formData.phone}\n` +
           `📧 <b>이메일:</b> ${formData.email}\n` +
@@ -355,6 +380,36 @@ export default function Signup() {
                 </div>
 
                 <div className="space-y-5 flex-1">
+                  {/* 가입 유형 선택 (인테리어 업체 vs 부동산) */}
+                  <div>
+                    <label className="block text-sm font-bold text-slate-700 mb-2">가입 유형 선택</label>
+                    <div className="grid grid-cols-2 gap-3">
+                      <button
+                        type="button"
+                        onClick={() => setB2bPartnerType('interior')}
+                        className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all ${
+                          b2bPartnerType === 'interior'
+                            ? 'border-purple-500 bg-purple-50 text-purple-700 shadow-sm'
+                            : 'border-slate-200 bg-white text-slate-500 hover:border-slate-300'
+                        }`}
+                      >
+                        <Building2 size={28} className={b2bPartnerType === 'interior' ? 'text-purple-500' : 'text-slate-400'} />
+                        <span className="font-bold text-sm">인테리어 업체</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setB2bPartnerType('realestate')}
+                        className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all ${
+                          b2bPartnerType === 'realestate'
+                            ? 'border-emerald-500 bg-emerald-50 text-emerald-700 shadow-sm'
+                            : 'border-slate-200 bg-white text-slate-500 hover:border-slate-300'
+                        }`}
+                      >
+                        <Home size={28} className={b2bPartnerType === 'realestate' ? 'text-emerald-500' : 'text-slate-400'} />
+                        <span className="font-bold text-sm">부동산</span>
+                      </button>
+                    </div>
+                  </div>
                   <div>
                     <label className="block text-sm font-bold text-slate-700 mb-2">사업자 등록번호</label>
                     <div className="flex gap-2">
@@ -415,7 +470,7 @@ export default function Signup() {
                   </button>
                   <button 
                     onClick={handleNext}
-                    disabled={!isVerified || !formData.businessImage}
+                    disabled={!isVerified || !formData.businessImage || !b2bPartnerType}
                     className="flex-1 py-4 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300 text-white font-bold rounded-xl shadow-lg active:scale-[0.98] transition-all flex items-center justify-center gap-2"
                   >
                     인증 완료 <ArrowRight size={18} />

@@ -99,6 +99,7 @@ export interface PartnerUser {
   isB2B?: boolean;
   email?: string;
   businessNumber?: string;
+  businessImageUrl?: string;
 }
 
 export interface Review {
@@ -2796,7 +2797,10 @@ export default function Admin() {
                               {partner.email || '-'}
                             </td>
                             <td className="p-3 text-sm font-mono text-gray-600 whitespace-nowrap">
-                              {partner.businessNumber || '-'}
+                              <div>{partner.businessNumber || '-'}</div>
+                              {partner.businessImageUrl && (
+                                <a href={partner.businessImageUrl} target="_blank" rel="noopener noreferrer" className="text-[10px] text-blue-500 hover:text-blue-700 underline underline-offset-2 font-bold mt-0.5 inline-block">📄 등록증 보기</a>
+                              )}
                             </td>
                             <td className="p-3 text-sm text-gray-600 whitespace-nowrap">
                               {partner.address || '-'}
@@ -2928,6 +2932,9 @@ export default function Admin() {
                               <div>
                                 <p className="text-[10px] text-slate-400 font-bold mb-0.5">사업자 번호</p>
                                 <p className="text-slate-800 font-bold font-mono">{partner.businessNumber || '-'}</p>
+                                {partner.businessImageUrl && (
+                                  <a href={partner.businessImageUrl} target="_blank" rel="noopener noreferrer" className="text-[10px] text-blue-500 hover:text-blue-700 underline underline-offset-2 font-bold mt-0.5 inline-block">📄 등록증 보기</a>
+                                )}
                               </div>
                               <div className="col-span-2">
                                 <p className="text-[10px] text-slate-400 font-bold mb-0.5">{activeTab === 'interiorPartners' ? '회사 주소' : '사무소 주소'}</p>

@@ -35,7 +35,13 @@ export default function InteriorDashboard() {
 
       <div className="max-w-3xl mx-auto px-4 sm:px-6 mt-8 space-y-6">
         {/* Quick Action */}
-        <button className="w-full bg-purple-600 hover:bg-purple-700 text-white p-6 rounded-2xl shadow-md transition-colors flex items-center justify-between group">
+        <button 
+          onClick={() => {
+            sessionStorage.setItem('b2b_partner_type', 'interior');
+            navigate('/b2b/quote');
+          }}
+          className="w-full bg-purple-600 hover:bg-purple-700 text-white p-6 rounded-2xl shadow-md transition-colors flex items-center justify-between group"
+        >
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
               <PlusCircle size={24} />

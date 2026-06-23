@@ -127,6 +127,7 @@ export default function Login() {
   const handlePartnerLogin = (e: React.FormEvent, type: TabType) => {
     e.preventDefault();
     // 로그인 모의 로직
+    sessionStorage.setItem('b2b_partner_type', type);
     switch (type) {
       case 'interior':
         navigate('/interior-dashboard');

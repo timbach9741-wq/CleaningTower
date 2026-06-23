@@ -3,11 +3,16 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { User, Briefcase, Building, Home, ArrowRight, Lock, Mail } from 'lucide-react';
 import { saveSocialUser } from '../lib/authHelpers';
+import { getDb } from '../firebase';
+import { collection, query, where, getDocs } from 'firebase/firestore';
 
 type TabType = 'consumer' | 'interior' | 'realestate' | 'cleaner';
 
 export default function Login() {
   const [activeTab, setActiveTab] = useState<TabType>('consumer');
+  const [loginId, setLoginId] = useState('');
+  const [password, setPassword] = useState('');
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -124,20 +129,83 @@ export default function Login() {
     }
   }, [navigate]);
 
-  const handlePartnerLogin = (e: React.FormEvent, type: TabType) => {
+  const handlePartnerLogin = async (e: React.FormEvent, type: TabType) => {
     e.preventDefault();
-    // 로그인 모의 로직
-    sessionStorage.setItem('b2b_partner_type', type);
-    switch (type) {
-      case 'interior':
-        navigate('/interior-dashboard');
-        break;
-      case 'realestate':
-        navigate('/realestate-dashboard');
-        break;
-      case 'cleaner':
-        navigate('/partner-dashboard');
-        break;
+
+    if (!loginId || !password) {
+      alert('아이디와 비밀번호를 입력해주세요.');
+      return;
+    }
+
+    setIsLoggingIn(true);
+    try {
+      const db = getDb();
+      if (!db) {
+        alert('데이터베이스 연결에 실패했습니다.');
+        setIsLoggingIn(false);
+        return;
+      }
+
+      let usersRef;
+      let q;
+
+      const numericLoginId = loginId.replace(/[^0-9]/g, '');
+
+      if (type === 'cleaner') {
+        usersRef = collection(db, 'partners');
+        // 파트너스는 loginId가 숫자만 있는 연락처일 수도 있고 phone 필드일 수도 있음
+        q = query(usersRef, where('loginId', '==', numericLoginId), where('password', '==', password));
+      } else {
+        usersRef = collection(db, 'b2b_partners');
+        q = query(usersRef, where('loginId', '==', loginId), where('password', '==', password), where('b2bPartnerType', '==', type));
+      }
+
+      let querySnapshot = await getDocs(q);
+
+      if (querySnapshot.empty) {
+        // 대체 검색 로직
+        if (type === 'cleaner') {
+          const fallbackQ = query(usersRef, where('phone', '==', loginId), where('password', '==', password));
+          querySnapshot = await getDocs(fallbackQ);
+        } else {
+          const fallbackQ = query(usersRef, where('loginId', '==', numericLoginId), where('password', '==', password), where('b2bPartnerType', '==', type));
+          querySnapshot = await getDocs(fallbackQ);
+        }
+
+        if (querySnapshot.empty) {
+          alert('아이디 또는 비밀번호가 일치하지 않습니다.');
+          setIsLoggingIn(false);
+          return;
+        }
+      }
+
+      // 승인 상태 확인 (가장 최근 가입 정보 기준)
+      const userDoc = querySnapshot.docs[0].data();
+      if (userDoc.status === 'pending') {
+        alert('가입 승인이 대기 중입니다. 승인 완료 후 로그인할 수 있습니다.');
+        setIsLoggingIn(false);
+        return;
+      }
+
+      sessionStorage.setItem('b2b_partner_type', type);
+      sessionStorage.setItem('partner_id', querySnapshot.docs[0].id);
+
+      switch (type) {
+        case 'interior':
+          navigate('/interior-dashboard');
+          break;
+        case 'realestate':
+          navigate('/realestate-dashboard');
+          break;
+        case 'cleaner':
+          navigate('/partner-dashboard');
+          break;
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      alert('로그인 처리 중 오류가 발생했습니다.');
+    } finally {
+      setIsLoggingIn(false);
     }
   };
 
@@ -282,6 +350,8 @@ export default function Login() {
                             type="text" 
                             placeholder="아이디를 입력해주세요"
                             required
+                            value={loginId}
+                            onChange={(e) => setLoginId(e.target.value)}
                             className="w-full pl-12 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all font-medium"
                           />
                         </div>
@@ -295,6 +365,8 @@ export default function Login() {
                             type="password" 
                             placeholder="비밀번호를 입력해주세요"
                             required
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
                             className="w-full pl-12 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all font-medium"
                           />
                         </div>
@@ -313,9 +385,10 @@ export default function Login() {
 
                     <button 
                       type="submit"
-                      className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl py-4 transition-colors flex items-center justify-center gap-2 mt-6"
+                      disabled={isLoggingIn}
+                      className="w-full bg-slate-900 hover:bg-slate-800 disabled:bg-slate-400 text-white font-bold rounded-xl py-4 transition-colors flex items-center justify-center gap-2 mt-6"
                     >
-                      로그인
+                      {isLoggingIn ? '로그인 중...' : '로그인'}
                       <ArrowRight className="w-4 h-4" />
                     </button>
                   </form>

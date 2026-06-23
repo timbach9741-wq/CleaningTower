@@ -253,6 +253,11 @@ export default function Signup() {
         <p className="mt-2 text-center text-sm text-slate-500 font-medium px-4">
           딱 1분이면 완료! 매번 정보 입력할 필요 없이<br/>더 빠른 견적과 예약을 경험하세요.
         </p>
+        <p className="mt-4 text-center">
+          <button onClick={() => navigate('/login')} className="text-sm font-bold text-blue-600 hover:text-blue-700 underline underline-offset-2">
+            이미 가입된 파트너이신가요? 로그인하기
+          </button>
+        </p>
       </div>
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">

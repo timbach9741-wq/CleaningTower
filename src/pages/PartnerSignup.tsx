@@ -178,6 +178,11 @@ export default function PartnerSignup() {
         <p className="mt-2 text-center text-sm text-slate-500 font-medium">
           {formData.plan === 'exclusive' ? '최상단 100% 독점 노출로 지역 내 압도적 1위를 달성하세요.' : '하루 평균 50건 이상의 오더, 안정적인 수익을 약속합니다.'}
         </p>
+        <p className="mt-4 text-center">
+          <button onClick={() => navigate('/login')} className="text-sm font-bold text-blue-600 hover:text-blue-700 underline underline-offset-2">
+            이미 가입된 파트너이신가요? 로그인하기
+          </button>
+        </p>
       </div>
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">

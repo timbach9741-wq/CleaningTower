@@ -327,10 +327,9 @@ export default function Admin() {
     // 수동 할인액
     const discountVal = Number(customDiscount) || 0;
     
-    // 합계 (VAT 제외 공급가액)
+    // 합계 (부가세 제거)
     const supplyTotal = baseCleanPrice + optionsTotal + contaminationSurcharge + elevatorSurcharge - discountVal;
-    const vat = Math.floor(supplyTotal * 0.1);
-    const grandTotal = supplyTotal + vat;
+    const grandTotal = supplyTotal;
     
     return {
       baseCleanPrice,
@@ -340,7 +339,7 @@ export default function Admin() {
       elevatorSurcharge,
       discountVal,
       supplyTotal,
-      vat,
+      vat: 0,
       grandTotal: grandTotal > 0 ? grandTotal : 0,
       selectedOptLabels,
     };
@@ -679,8 +678,12 @@ export default function Admin() {
     try {
       const selectedB2BPartner = manualOrderType !== 'general' ? partners.find(p => p.id === selectedB2BPartnerId) : null;
       
+      const numericPrice = parseInt(newQuoteForm.price.replace(/[^0-9]/g, ''), 10) || 0;
+      const finalPrice = Math.max(numericPrice - 50000, 0);
+
       const docData: any = {
         ...newQuoteForm,
+        finalPrice,
         house: newQuoteForm.houseSubType ? `${newQuoteForm.house} (${newQuoteForm.houseSubType})` : newQuoteForm.house,
         houseType: newQuoteForm.house,
         houseSubType: newQuoteForm.houseSubType,
@@ -4686,9 +4689,19 @@ export default function Admin() {
                           </div>
                         )}
                         
-                        <div className="border-t border-dashed border-slate-200 my-2 pt-2 flex justify-between items-center text-sm font-black text-slate-900">
-                          <span>최종 합계 (VAT 포함)</span>
-                          <span className="text-purple-700 text-base">{calcs.grandTotal.toLocaleString()}원</span>
+                        <div className="border-t border-dashed border-slate-200 my-2 pt-2 flex flex-col gap-1 text-sm font-black text-slate-900">
+                          <div className="flex justify-between items-center text-slate-500 text-xs font-semibold">
+                            <span>총 견적 금액</span>
+                            <span>{calcs.grandTotal.toLocaleString()}원</span>
+                          </div>
+                          <div className="flex justify-between items-center text-rose-500 text-xs font-semibold">
+                            <span>계약금 입금액</span>
+                            <span>-50,000원</span>
+                          </div>
+                          <div className="flex justify-between items-center mt-1">
+                            <span>현장 결제 잔금 (파트너 정산액)</span>
+                            <span className="text-purple-700 text-base">{Math.max(calcs.grandTotal - 50000, 0).toLocaleString()}원</span>
+                          </div>
                         </div>
                         
                         <button

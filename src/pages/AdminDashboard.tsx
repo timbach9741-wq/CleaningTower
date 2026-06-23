@@ -245,8 +245,7 @@ export default function Admin() {
     }
     
     const basePrice = sizeNum * pricePerPyeong;
-    const vat = Math.floor(basePrice * 0.1);
-    return basePrice + vat;
+    return basePrice;
   };
 
   const getWizardCalculations = () => {

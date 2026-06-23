@@ -2198,6 +2198,18 @@ export default function Quote() {
                            <span className="text-blue-600 text-base ml-1 font-bold">원</span>
                         </div>
                      </div>
+
+                     {sessionStorage.getItem('b2b_partner_type') !== 'interior' && (
+                       <div className="flex justify-between items-center pt-4 mt-3 border-t border-dashed border-slate-200">
+                          <span className="text-amber-600 text-[15px] font-bold flex items-center gap-1">
+                            <span className="material-symbols-outlined text-[18px]">redeem</span>
+                            페이백 금액 (10%)
+                          </span>
+                          <span className="text-amber-600 font-bold text-xl">
+                            {(totalPriceIncVat * 0.1).toLocaleString()}원
+                          </span>
+                       </div>
+                     )}
                    </div>
                 </div>
 

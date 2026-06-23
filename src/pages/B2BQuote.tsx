@@ -1129,14 +1129,6 @@ export default function Quote() {
                             소개 및 직접 의뢰 시 청소 계약 금액의 10%를 파트너사 마케팅 지원금(인센티브)으로 즉시 정산해 드립니다.
                           </p>
                         </div>
-                        {!isB2BLoggedIn && (
-                          <button
-                            onClick={() => navigate('/b2b/signup')}
-                            className="shrink-0 bg-white hover:bg-slate-100 text-blue-950 font-black text-xs md:text-sm px-6 py-3.5 rounded-xl shadow-md transition-all whitespace-nowrap hover:-translate-y-0.5 active:translate-y-0"
-                          >
-                            파트너 신청하기
-                          </button>
-                        )}
                       </div>
                     </div>
 
@@ -1456,20 +1448,6 @@ export default function Quote() {
                   </div>
                 </div>
 
-                {/* 하단 가입 유도 배너 */}
-                {!isB2BLoggedIn && (
-                  <div className="px-5 lg:px-8 mb-12 w-full">
-                    <div className="bg-gradient-to-br from-amber-50 to-yellow-100 border border-amber-200 rounded-3xl py-8 px-6 text-center max-w-4xl mx-auto shadow-md">
-                      <span className="text-2xl mb-2 block">⚡</span>
-                      <h3 className="text-lg md:text-xl lg:text-2xl font-black text-amber-950 mb-2 break-keep">
-                        지금 가입하고 우리 동네 프리미엄 오더와 혜택을 선점하세요!
-                      </h3>
-                      <p className="text-xs md:text-sm text-amber-850 font-bold mb-1 break-keep">
-                        하단 플로팅 바의 '파트너 신청' 버튼을 통해 즉시 가입하실 수 있습니다.
-                      </p>
-                    </div>
-                  </div>
-                )}
               </motion.div>
             )}
             
@@ -2315,17 +2293,9 @@ export default function Quote() {
               
               {step === 0 ? (
                 <div className="flex gap-2 w-full">
-                  {!isB2BLoggedIn && (
-                    <button
-                      onClick={() => navigate('/b2b/signup')}
-                      className="flex-1 bg-slate-900 hover:bg-slate-800 text-white font-bold py-4 rounded-xl text-[14px] md:text-base transition-all active:scale-[0.98] shadow-md whitespace-nowrap"
-                    >
-                      파트너 신청 (3초)
-                    </button>
-                  )}
                   <button
                     onClick={handleNext}
-                    className={`${isB2BLoggedIn ? 'w-full' : 'flex-[1.4]'} bg-gradient-to-r from-amber-500 to-amber-600 active:from-amber-600 active:to-amber-700 text-slate-900 font-bold py-4 rounded-xl text-[14px] md:text-base transition-all active:scale-[0.98] shadow-[0_8px_16px_rgba(245,158,11,0.3)] flex items-center justify-center gap-1 whitespace-nowrap`}
+                    className="w-full bg-gradient-to-r from-amber-500 to-amber-600 active:from-amber-600 active:to-amber-700 text-slate-900 font-bold py-4 rounded-xl text-[14px] md:text-base transition-all active:scale-[0.98] shadow-[0_8px_16px_rgba(245,158,11,0.3)] flex items-center justify-center gap-1 whitespace-nowrap"
                   >
                     견적 시작하기 →
                   </button>

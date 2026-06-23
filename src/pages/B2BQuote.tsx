@@ -1097,81 +1097,15 @@ export default function Quote() {
                   </div>
                 </div>
 
-                {/* (서브 섹션 2) B2B 파트너사를 위한 강력한 윈윈(Win-Win) 혜택 */}
-                <div className="px-5 lg:px-8 py-12 bg-slate-50 border-y border-slate-200/60 w-full">
-                  <div className="max-w-4xl mx-auto">
-                    <div className="text-center mb-8">
-                      <span className="text-xs font-black text-amber-600 bg-amber-50 border border-amber-200 px-3 py-1 rounded-full uppercase tracking-wider">
-                        BENEFITS
-                      </span>
-                      <h2 className="text-xl lg:text-3xl font-black text-slate-900 tracking-tight mt-3">
-                        2. B2B 파트너사를 위한 강력한 윈윈(Win-Win) 혜택
-                      </h2>
-                      <p className="text-xs lg:text-sm text-slate-500 font-semibold leading-relaxed mt-2.5 break-keep">
-                        청소타워는 파트너 사장님들의 현장 퀄리티를 높여드릴 뿐만 아니라, 확실한 추가 수익 기회까지 보장해 드립니다.
-                      </p>
-                    </div>
 
-                    {/* 10% 페이백 메인 배너 */}
-                    <div className="bg-gradient-to-br from-blue-900 to-slate-950 text-white rounded-3xl p-6 md:p-8 border border-blue-900 shadow-xl shadow-blue-950/20 mb-6 text-center md:text-left relative overflow-hidden">
-                      <div className="absolute top-0 right-0 w-80 h-80 bg-blue-500/10 rounded-full blur-[80px] pointer-events-none" />
-                      
-                      <div className="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-6">
-                        <div className="text-left">
-                          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-400 text-amber-950 text-[10px] md:text-xs font-black tracking-wider mb-3">
-                            💰 10% 파트너 인센티브 (페이백) 제도
-                          </div>
-                          <h3 className="text-lg md:text-2xl font-black leading-tight text-white break-keep">
-                            소개 및 직접 의뢰 시 계약 금액의 10% 지급
-                          </h3>
-                          <p className="text-xs md:text-sm text-slate-300 font-semibold mt-2.5 break-keep">
-                            소개 및 직접 의뢰 시 청소 계약 금액의 10%를 파트너사 마케팅 지원금(인센티브)으로 즉시 정산해 드립니다.
-                          </p>
-                        </div>
-                        {!isB2BLoggedIn && (
-                          <button
-                            onClick={() => navigate('/b2b/signup')}
-                            className="shrink-0 bg-white hover:bg-slate-100 text-blue-950 font-black text-xs md:text-sm px-6 py-3.5 rounded-xl shadow-md transition-all whitespace-nowrap hover:-translate-y-0.5 active:translate-y-0"
-                          >
-                            파트너 신청하기
-                          </button>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* 대상별 카드 2열 */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="bg-white border border-slate-100 p-5 rounded-2xl shadow-sm text-left">
-                        <div className="w-9 h-9 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center mb-3">
-                          <span className="material-symbols-outlined text-[20px]">real_estate_agent</span>
-                        </div>
-                        <h4 className="font-extrabold text-slate-800 text-sm md:text-base mb-1">부동산 대표님</h4>
-                        <p className="text-xs text-slate-500 leading-relaxed break-keep font-medium">
-                          이사/입주 앞둔 계약 고객을 소개만 해주셔도 고정 부가 수익 창출!
-                        </p>
-                      </div>
-
-                      <div className="bg-white border border-slate-100 p-5 rounded-2xl shadow-sm text-left">
-                        <div className="w-9 h-9 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center mb-3">
-                          <span className="material-symbols-outlined text-[20px]">chair</span>
-                        </div>
-                        <h4 className="font-extrabold text-slate-800 text-sm md:text-base mb-1">인테리어 사장님</h4>
-                        <p className="text-xs text-slate-500 leading-relaxed break-keep font-medium">
-                          마감 청소 비용 부담은 낮추고, 완벽한 검수로 잔금 회수율 100% 달성!
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* (서브 섹션 3) 안심하고 맡기는 3대 보장제 */}
+                {/* (서브 섹션 2) 안심하고 맡기는 3대 보장제 */}
                 <div className="px-5 lg:px-8 py-12 max-w-4xl mx-auto w-full">
                   <div className="text-center mb-8">
                     <span className="text-xs font-black text-emerald-600 bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-full uppercase tracking-wider">
                       TRUST
                     </span>
                     <h2 className="text-xl lg:text-3xl font-black text-slate-900 tracking-tight mt-3">
-                      3. 안심하고 맡기는 3대 보장제
+                      2. 안심하고 맡기는 3대 보장제
                     </h2>
                   </div>
 

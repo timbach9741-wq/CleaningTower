@@ -254,7 +254,7 @@ export default function Admin() {
     
     // 1. 기본 청소비
     let pricePerPyeong = 15000;
-    if (isManualB2B) {
+    if (manualOrderType !== 'general') {
       pricePerPyeong = 20000;
     } else if (newQuoteForm.type === '프리미엄 청소') {
       pricePerPyeong = 20000;
@@ -691,10 +691,11 @@ export default function Admin() {
         isUrgent: false,
       };
 
-      if (isManualB2B && selectedB2BPartner) {
+      if (manualOrderType !== 'general' && selectedB2BPartner) {
         const b2bLoginId = selectedB2BPartner.phone || selectedB2BPartner.loginId || '';
         const businessName = selectedB2BPartner.companyName || selectedB2BPartner.name || '';
         docData.isB2B = true;
+        docData.b2bPartnerType = manualOrderType;
         docData.b2bLoginId = b2bLoginId;
         docData.businessName = businessName;
         docData.customerName = businessName;
@@ -1599,7 +1600,7 @@ export default function Admin() {
                   <button 
                     onClick={() => {
                       setIsCreateQuoteModalOpen(true);
-                      setIsManualB2B(true);
+                      setManualOrderType('general');
                       setNewQuoteForm(prev => ({
                         ...prev,
                         type: '프리미엄 청소'
@@ -4239,33 +4240,68 @@ export default function Admin() {
               {/* B2B 의뢰 여부 선택 */}
               <div className="bg-slate-50 p-4 rounded-xl border border-slate-200/60 space-y-3">
                 <div className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    id="isManualB2B"
-                    checked={isManualB2B}
-                    onChange={(e) => {
-                      const checked = e.target.checked;
-                      setIsManualB2B(checked);
-                      if (!checked) {
-                        setSelectedB2BPartnerId('');
-                      }
-                      // B2B 의뢰 체크 시 서비스 종류를 '프리미엄 청소'로 자동 고정하여 단가(2만원) 일치시킴
-                      const nextType = checked ? '프리미엄 청소' : '일반 청소';
-                      const calculated = calculateEstimatedPrice(nextType, newQuoteForm.size, checked);
-                      setNewQuoteForm(prev => ({
-                        ...prev,
-                        type: nextType,
-                        price: calculated > 0 ? calculated.toLocaleString() + '원' : prev.price
-                      }));
-                    }}
-                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
-                  />
-                  <label htmlFor="isManualB2B" className="text-sm font-bold text-gray-700 cursor-pointer select-none">
-                    🏢 B2B (업체전용) 견적 의뢰로 등록
-                  </label>
+                  <div className="flex items-center gap-4 mt-1">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="manualOrderType"
+                        checked={manualOrderType === 'general'}
+                        onChange={() => {
+                          setManualOrderType('general');
+                          setSelectedB2BPartnerId('');
+                          const calculated = calculateEstimatedPrice('일반 청소', newQuoteForm.size, false);
+                          setNewQuoteForm(prev => ({
+                            ...prev,
+                            type: '일반 청소',
+                            price: calculated > 0 ? calculated.toLocaleString() + '원' : prev.price
+                          }));
+                        }}
+                        className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                      />
+                      <span className="text-sm font-medium text-gray-800">일반 고객</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="manualOrderType"
+                        checked={manualOrderType === 'interior'}
+                        onChange={() => {
+                          setManualOrderType('interior');
+                          setSelectedB2BPartnerId('');
+                          const calculated = calculateEstimatedPrice('프리미엄 청소', newQuoteForm.size, true);
+                          setNewQuoteForm(prev => ({
+                            ...prev,
+                            type: '프리미엄 청소',
+                            price: calculated > 0 ? calculated.toLocaleString() + '원' : prev.price
+                          }));
+                        }}
+                        className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                      />
+                      <span className="text-sm font-medium text-gray-800">인테리어 파트너</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="manualOrderType"
+                        checked={manualOrderType === 'realestate'}
+                        onChange={() => {
+                          setManualOrderType('realestate');
+                          setSelectedB2BPartnerId('');
+                          const calculated = calculateEstimatedPrice('프리미엄 청소', newQuoteForm.size, true);
+                          setNewQuoteForm(prev => ({
+                            ...prev,
+                            type: '프리미엄 청소',
+                            price: calculated > 0 ? calculated.toLocaleString() + '원' : prev.price
+                          }));
+                        }}
+                        className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                      />
+                      <span className="text-sm font-medium text-gray-800">부동산 파트너</span>
+                    </label>
+                  </div>
                 </div>
                 
-                {isManualB2B && (
+                {manualOrderType !== 'general' && (
                   <div className="animate-in fade-in slide-in-from-top-2 duration-200">
                     <label className="block text-xs font-bold text-gray-600 mb-1">B2B 파트너사 선택</label>
                     <select
@@ -4441,7 +4477,7 @@ export default function Admin() {
                   />
                   {calculateEstimatedPrice(newQuoteForm.type, newQuoteForm.size) > 0 && (
                     <p className="text-[10px] text-slate-500 mt-1 font-semibold">
-                      💡 마법사 권장가: <span className="text-blue-600 font-bold">{calculateEstimatedPrice(newQuoteForm.type, newQuoteForm.size).toLocaleString()}원</span> (부가세 포함)
+                      💡 마법사 권장가: <span className="text-blue-600 font-bold">{calculateEstimatedPrice(newQuoteForm.type, newQuoteForm.size).toLocaleString()}원</span> (총 결제 금액)
                     </p>
                   )}
                 </div>
@@ -4684,7 +4720,9 @@ export default function Admin() {
                             if (calcs.discountVal > 0) {
                               wizardSummary += `- 할인: 특별 할인 조정 (-${calcs.discountVal.toLocaleString()}원)\n`;
                             }
-                            wizardSummary += `- 최종 합계액: ${calcs.grandTotal.toLocaleString()}원 (부가세 포함)\n`;
+                            wizardSummary += `- 총 견적 금액: ${calcs.grandTotal.toLocaleString()}원\n`;
+                            wizardSummary += `- 계약금 입금: 50,000원\n`;
+                            wizardSummary += `- 현장 결제 잔금(파트너 정산액): ${Math.max(calcs.grandTotal - 50000, 0).toLocaleString()}원\n`;
                             wizardSummary += `--------------------------------------\n`;
                             
                             setNewQuoteForm(prev => ({

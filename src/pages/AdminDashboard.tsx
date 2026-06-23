@@ -15,6 +15,8 @@ import {
   MessageSquare,
   FileText,
   Star,
+  Paintbrush,
+  Home,
 } from 'lucide-react';
 import { db } from '../firebase';
 import { collection, onSnapshot, doc, updateDoc, addDoc, deleteDoc, setDoc, query, where, getDocs } from 'firebase/firestore';
@@ -1333,11 +1335,18 @@ export default function Admin() {
             <span className="font-medium">청소 파트너 관리</span>
           </button>
           <button 
-            onClick={() => { setActiveTab('b2bPartners'); setIsMobileMenuOpen(false); }}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'b2bPartners' ? 'bg-blue-600 text-white' : 'text-slate-300 hover:bg-slate-800'}`}
+            onClick={() => { setActiveTab('interiorPartners'); setIsMobileMenuOpen(false); }}
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'interiorPartners' ? 'bg-blue-600 text-white' : 'text-slate-300 hover:bg-slate-800'}`}
           >
-            <Building2 size={20} />
-            <span className="font-medium">B2B 파트너 관리</span>
+            <Paintbrush size={20} />
+            <span className="font-medium">인테리어 파트너 관리</span>
+          </button>
+          <button 
+            onClick={() => { setActiveTab('realestatePartners'); setIsMobileMenuOpen(false); }}
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'realestatePartners' ? 'bg-blue-600 text-white' : 'text-slate-300 hover:bg-slate-800'}`}
+          >
+            <Home size={20} />
+            <span className="font-medium">부동산 파트너 관리</span>
           </button>
           <button 
             onClick={() => { setActiveTab('customers'); setIsMobileMenuOpen(false); }}
@@ -2690,12 +2699,16 @@ export default function Admin() {
             </div>
           )}
 
-          {activeTab === 'b2bPartners' && (
+          {(activeTab === 'interiorPartners' || activeTab === 'realestatePartners') && (
             <div className="space-y-6">
               <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
                 <div>
-                  <h2 className="text-2xl font-bold border-b border-purple-600 inline-block pb-1">B2B 파트너 관리</h2>
-                  <p className="text-gray-500 mt-2">업체 전용 페이지를 통해 가입한 인테리어/부동산 비즈니스 파트너들을 관리합니다.</p>
+                  <h2 className="text-2xl font-bold border-b border-purple-600 inline-block pb-1">
+                    {activeTab === 'interiorPartners' ? '인테리어 파트너 관리' : '부동산 파트너 관리'}
+                  </h2>
+                  <p className="text-gray-500 mt-2">
+                    {activeTab === 'interiorPartners' ? '업체 전용 페이지를 통해 가입한 인테리어 파트너들을 관리합니다.' : '업체 전용 페이지를 통해 가입한 부동산 비즈니스 파트너들을 관리합니다.'}
+                  </p>
                 </div>
               </div>
               
@@ -2745,14 +2758,14 @@ export default function Admin() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100">
-                      {filteredB2BPartnersList.length === 0 ? (
+                      {filteredB2BPartnersList.filter(p => p.b2bPartnerType === (activeTab === 'interiorPartners' ? 'interior' : 'realestate')).length === 0 ? (
                         <tr>
                           <td colSpan={8} className="p-12 text-center text-gray-400">
-                            등록되거나 대기 중인 B2B 파트너가 없습니다.
+                            등록되거나 대기 중인 {activeTab === 'interiorPartners' ? '인테리어' : '부동산'} 파트너가 없습니다.
                           </td>
                         </tr>
                       ) : (
-                        filteredB2BPartnersList.map((partner) => (
+                        filteredB2BPartnersList.filter(p => p.b2bPartnerType === (activeTab === 'interiorPartners' ? 'interior' : 'realestate')).map((partner) => (
                           <tr key={partner.id} className="hover:bg-slate-50 transition-colors">
                             <td className="p-4 text-sm whitespace-nowrap">
                               <div className="flex flex-col">
@@ -2851,10 +2864,10 @@ export default function Admin() {
 
                   {/* 모바일 뷰: B2B 파트너 카드 */}
                   <div className="lg:hidden divide-y divide-gray-100">
-                    {filteredB2BPartnersList.length === 0 ? (
-                      <div className="p-12 text-center text-gray-400 font-medium">대기 중인 B2B 파트너가 없습니다.</div>
+                    {filteredB2BPartnersList.filter(p => p.b2bPartnerType === (activeTab === 'interiorPartners' ? 'interior' : 'realestate')).length === 0 ? (
+                      <div className="p-12 text-center text-gray-400 font-medium">대기 중인 {activeTab === 'interiorPartners' ? '인테리어' : '부동산'} 파트너가 없습니다.</div>
                     ) : (
-                      filteredB2BPartnersList.map(partner => (
+                      filteredB2BPartnersList.filter(p => p.b2bPartnerType === (activeTab === 'interiorPartners' ? 'interior' : 'realestate')).map(partner => (
                         <div key={partner.id} className="p-4 flex flex-col gap-3 hover:bg-slate-50 transition-colors">
                           <div className="flex justify-between items-start">
                             <div>
@@ -2862,7 +2875,7 @@ export default function Admin() {
                                 <span className="font-bold text-gray-900 text-lg leading-none">
                                   {partner.companyName || partner.name}
                                 </span>
-                                <span className="flex items-center gap-1 text-[10px] text-purple-600 bg-purple-50 px-1.5 py-0.5 rounded font-bold border border-purple-100">B2B 파트너</span>
+                                  <span className="flex items-center gap-1 text-[10px] text-purple-600 bg-purple-50 px-1.5 py-0.5 rounded font-bold border border-purple-100">{activeTab === 'interiorPartners' ? '인테리어 파트너' : '부동산 파트너'}</span>
                               </div>
                               <p className="text-xs text-slate-400 font-medium">
                                 가입일: {partner.createdAt ? new Date(partner.createdAt).toLocaleDateString() : '-'}

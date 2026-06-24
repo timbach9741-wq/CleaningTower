@@ -2230,8 +2230,10 @@ export default function Quote() {
                     <strong className="text-rose-600 font-bold">
                       계약금 {depositAmount.toLocaleString()}원
                     </strong>
-                    을 아래 방법으로 입금해 주시면 예약이 최종 확정됩니다.<br/>
-                    <strong className="text-blue-600 mt-1 block">※ 청소 완료 후 잔금 전액은 본사 계좌로 입금 바랍니다. (청소 반장님 직접 수금 불가)</strong>
+                    을 아래 방법으로 입금해 주시면 예약이 최종 확정됩니다.
+                    {sessionStorage.getItem('b2b_partner_type') === 'realestate' && (
+                      <><br/><strong className="text-blue-600 mt-1 block">※ 청소 완료 후 잔금 전액은 본사 계좌로 입금 바랍니다. (청소 반장님 직접 수금 불가)</strong></>
+                    )}
                   </p>
 
                   {/* 간편 송금 버튼 제거됨 */}

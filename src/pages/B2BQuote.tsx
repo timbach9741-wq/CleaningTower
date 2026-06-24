@@ -1941,11 +1941,11 @@ export default function Quote() {
                   <div>
                     <label className={`block text-sm font-semibold mb-2 flex items-center gap-1.5 ${cleaningType === '프리미엄' ? 'text-amber-600/90' : 'text-slate-600'}`}>
                       <span className="material-symbols-outlined text-[16px]">business_center</span>
-                      업체명 (인테리어 사업자 등)
+                      {sessionStorage.getItem('b2b_partner_type') === 'realestate' ? '부동산 업체명' : '업체명 (인테리어 사업자 등)'}
                     </label>
                     <input
                       type="text"
-                      placeholder="예) 인테리어 디자인하우스"
+                      placeholder={sessionStorage.getItem('b2b_partner_type') === 'realestate' ? '예) ○○공인중개사사무소' : '예) 인테리어 디자인하우스'}
                       value={businessName}
                       onChange={(e) => setBusinessName(e.target.value)}
                       className={`w-full rounded-xl px-4 py-4 text-base text-slate-900 placeholder-slate-400 focus:outline-none transition-all ${
@@ -1957,7 +1957,7 @@ export default function Quote() {
                   </div>
 
                   <div>
-                    <label className="block text-slate-700 text-sm font-semibold mb-2">📞 담당자 연락처 <span className="text-rose-400">*</span></label>
+                    <label className="block text-slate-700 text-sm font-semibold mb-2">📞 {sessionStorage.getItem('b2b_partner_type') === 'realestate' ? '소비자 연락처' : '담당자 연락처'} <span className="text-rose-400">*</span></label>
                     <input
                       type="tel"
                       placeholder="예) 010-0000-0000"

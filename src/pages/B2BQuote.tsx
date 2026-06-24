@@ -333,6 +333,7 @@ export default function Quote() {
   
   const [selectedOptions, setSelectedOptions] = useState<Record<string, number>>({});
   const [isBetweenCleaning, setIsBetweenCleaning] = useState(false);
+  const [isLivingInCleaning, setIsLivingInCleaning] = useState(false);
   const [isAgreedPersonalInfo, setIsAgreedPersonalInfo] = useState(false);
   const [showPrivacyModal, setShowPrivacyModal] = useState(false);
   const [activeRepairCard, setActiveRepairCard] = useState<string | null>(null);
@@ -373,6 +374,10 @@ export default function Quote() {
 
     if (isBetweenCleaning) {
       total += 100000;
+    }
+
+    if (isLivingInCleaning) {
+      total += currentSize * 5000;
     }
 
     Object.entries(selectedOptions).forEach(([optId, count]) => {
@@ -472,6 +477,7 @@ export default function Quote() {
     }).filter(Boolean) as string[];
     
     if (isBetweenCleaning) optionLabels.push('당일 이사 (사이청소)');
+    if (isLivingInCleaning) optionLabels.push('거주중 청소 (평당 +5,000원)');
 
     if (elevator === '없음' && isHighFloorWithoutElevator) optionLabels.push('엘리베이터 없음 (3층 이상)');
 
@@ -1549,7 +1555,36 @@ export default function Quote() {
                         </span>
                       </button>
 
-                      {/* 거주 청소는 상단 청소 종류 선택으로 이관되어 여기서는 노출하지 않습니다. */}
+                      {/* 거주중 청소 - 부동산 파트너 전용 */}
+                      {sessionStorage.getItem('b2b_partner_type') === 'realestate' && (
+                        <button
+                          onClick={() => setIsLivingInCleaning(!isLivingInCleaning)}
+                          className={`w-full p-4 rounded-xl text-sm font-bold transition-all active:scale-[0.98] flex items-center justify-between border ${
+                            isLivingInCleaning 
+                            ? 'bg-blue-600/20 shadow-sm shadow-blue-500/20 border-blue-500' 
+                            : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
+                          }`}
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className={`w-5 h-5 rounded flex items-center justify-center border transition-colors ${
+                              isLivingInCleaning ? 'bg-blue-500 border-blue-500' : 'bg-transparent border-slate-500'
+                            }`}>
+                              {isLivingInCleaning && <span className="material-symbols-outlined text-white text-[14px] font-bold">check</span>}
+                            </div>
+                            <div className="flex flex-col text-left -mt-0.5">
+                              <span className={`${isLivingInCleaning ? 'text-blue-700' : 'text-slate-600'} text-[14px]`}>
+                                거주중 청소
+                              </span>
+                              <span className={`${isLivingInCleaning ? 'text-blue-500' : 'text-slate-500'} text-[11px] font-normal mt-0.5`}>
+                                (세입자 거주 상태에서 청소 진행)
+                              </span>
+                            </div>
+                          </div>
+                          <span className={isLivingInCleaning ? 'text-blue-600 font-bold' : 'text-slate-500'}>
+                            평당 +5,000원
+                          </span>
+                        </button>
+                      )}
                     </div>
                   </div>
 

@@ -37,12 +37,12 @@ export default function HeroSection({ onOpenQuote }) {
             {/* Badge */}
             <div className="inline-flex items-center gap-1.5 px-4 py-1.5 mb-6 text-sm font-bold bg-blue-100 text-blue-700 rounded-full">
               <ShieldCheck className="w-4 h-4" />
-              프리미엄 입주 케어
+              프리미엄 청소 플랫폼 · 청소타워
             </div>
             
             {/* Headline */}
             <h1 className="text-4xl sm:text-5xl lg:text-[54px] xl:text-6xl font-black mb-6 leading-[1.25] tracking-tight text-slate-900 break-keep">
-              <span className="sr-only">청소타워 | </span>
+              <span className="text-sm sm:text-base block text-blue-600 font-bold mb-2 tracking-widest uppercase">Cheongso Tower</span>
               이사 앞두고<br/>
               고민 많으셨죠? <br/>
               <span className="text-blue-600">설렘만 남겨드릴게요.</span>
@@ -51,7 +51,7 @@ export default function HeroSection({ onOpenQuote }) {
             {/* Subtext */}
             <p className="text-lg sm:text-xl text-slate-600 font-medium mb-8 max-w-xl leading-relaxed break-keep">
               입주청소, 새집증후군, 가전 분해청소, 정기청소까지.<br />
-              <strong className="font-bold text-slate-800">분야별 전문 팀</strong>이 당신의 새로운 시작과 일상을 완벽하게 관리합니다.
+              <strong className="font-bold text-slate-800">청소타워 분야별 전문 팀</strong>이 당신의 새로운 시작과 일상을 완벽하게 관리합니다.
             </p>
 
             {/* Checkpoints */}
@@ -72,7 +72,7 @@ export default function HeroSection({ onOpenQuote }) {
                 onClick={() => navigate('/partners')}
                 className="w-full px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white text-lg font-bold rounded-xl shadow-lg shadow-blue-600/30 transition-all hover:-translate-y-1 flex items-center justify-center shrink-0"
               >
-                바로 전문가 찾기
+                청소타워 전문가 찾기
               </button>
               
             </div>

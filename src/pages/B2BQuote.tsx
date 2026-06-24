@@ -66,22 +66,13 @@ const getPartnerPayout = (quote: Order) => {
   const customerPrice = parseInt(String(quote.price).replace(/[^0-9]/g, ''), 10) || 0;
   
   // 파트너 예상 지급액 계산
-  let unitPrice = 10000;
-  const isPremium = quote.type?.includes('프리미엄') || false;
-  const isOccupied = quote.options?.includes('거주 청소 (짐 있음)') || false;
-  const isBetween = quote.options?.includes('당일 이사 (사이청소)') || false;
-  
-  if (isPremium) {
-    unitPrice = 14000;
-  } else if (isOccupied) {
-    unitPrice = 12000;
-  }
-  
+  let unitPrice = 15000; // 전면 15,000원 고정
   const size = typeof quote.size === 'number' ? quote.size : parseInt(quote.size || '0', 10) || 0;
   let partnerPrice = unitPrice * size;
   
+  const isBetween = quote.options?.includes('당일 이사 (사이청소)') || false;
   if (isBetween) {
-    partnerPrice += 70000;
+    partnerPrice += 100000; // 100% 지급
   }
   
   const optionsPriceMap: Record<string, number> = {
@@ -110,9 +101,9 @@ const getPartnerPayout = (quote: Order) => {
         if (optionsPriceMap[baseLabel] !== undefined) {
           const optPrice = optionsPriceMap[baseLabel];
           if (baseLabel === '거실바닥 친환경 (평당)' || baseLabel === '피톤치드 연무소독 (평당)') {
-            partnerPrice += (optPrice * size * count) * 0.7;
+            partnerPrice += (optPrice * size * count);
           } else {
-            partnerPrice += (optPrice * count) * 0.7;
+            partnerPrice += (optPrice * count);
           }
         }
       }
@@ -498,11 +489,13 @@ export default function Quote() {
     try {
       if (db) {
         const loggedInPhone = sessionStorage.getItem('b2b_login_id') || contactInfo;
-        const b2bPartnerType = sessionStorage.getItem('b2b_partner_type') || 'realestate';
+        const currentPartnerType = sessionStorage.getItem('b2b_partner_type') || 'realestate'; // 기본값 부동산으로 둠
+        const b2bPartnerType = currentPartnerType; // 알림톡 호환용
         
         const docRef = await addDoc(collection(db, 'quotes'), {
           isB2B: true, // 사업자 전용 앱 주문 플래그
-          b2bPartnerType, // interior 또는 realestate 구분
+          partnerType: currentPartnerType, // 파트너 종류 (정산 분기용)
+          b2bPartnerType, // interior 또는 realestate 구분 (기존 호환성)
           b2bLoginId: loggedInPhone,
           date: cleaningDate || '미정',
           time: cleaningTime || '시간협의',
@@ -513,6 +506,8 @@ export default function Quote() {
           size: size || 0,
           location: address ? `${address} ${detailAddress}`.trim() : '주소 미상',
           price: totalPriceIncVat.toLocaleString() + '원',
+          finalPrice: Math.max(0, totalPriceIncVat - depositAmount), // 현장 결제 잔금 (인테리어/일반용 폴백)
+          depositAmount: depositAmount,
           detail: finalDetail,
           options: optionLabels,
           status: '대기중',
@@ -2230,7 +2225,8 @@ export default function Quote() {
                     <strong className="text-rose-600 font-bold">
                       계약금 {depositAmount.toLocaleString()}원
                     </strong>
-                    을 입금해 주시면 예약이 최종 확정됩니다.
+                    을 아래 방법으로 입금해 주시면 예약이 최종 확정됩니다.<br/>
+                    <strong className="text-blue-600 mt-1 block">※ 청소 완료 후 잔금 전액은 본사 계좌로 입금 바랍니다. (청소 반장님 직접 수금 불가)</strong>
                   </p>
 
                   {/* 간편 송금 버튼 제거됨 */}

@@ -512,42 +512,67 @@ export default function Partner() {
   const getPartnerPrice = (order: Order | null) => {
     if (!order) return "0";
     
-    // 신규 버전 (현장 결제 예상 잔금이 finalPrice에 저장됨)
+    // 1. 부동산 파트너 B2B 오더 (본사 결제/에스크로): 본사에서 평당 15,000원 + 옵션 100% 반영해서 지급
+    if (order.isB2B && (order.partnerType === 'real_estate' || order.b2bType === 'real_estate' || !order.partnerType)) {
+      let unitPrice = 15000;
+      const size = parseInt(order.size || '0', 10) || 0;
+      let partnerPrice = unitPrice * size;
+      
+      const isBetween = order.options?.includes('당일 이사 (사이청소)') || false;
+      if (isBetween) {
+        partnerPrice += 100000; // 100% 지급
+      }
+      
+      const optionsPriceMap: Record<string, number> = {
+        '냉장고': 30000,
+        '세탁기': 30000,
+        '에어컨': 30000,
+        '식기세척기': 30000,
+        '오븐': 30000,
+        '곰팡이 제거 (공간당)': 40000,
+        '스티커 제거 (공간당)': 40000,
+        '단열재 제거 (공간당)': 40000,
+        '거실 비확장형 베란다 청소': 40000,
+        '엘리베이터 없음 (3층 이상)': 30000,
+        '피톤치드 연무소독 (평당)': 1000,
+      };
+
+      if (order.options && Array.isArray(order.options)) {
+        order.options.forEach((optLabel: string) => {
+          const match = optLabel.match(/^(.*?)(?:\s*\((\d+)개\))?$/);
+          if (match) {
+            const baseLabel = match[1].trim();
+            const count = match[2] ? parseInt(match[2], 10) : 1;
+            
+            if (optionsPriceMap[baseLabel] !== undefined) {
+              const optPrice = optionsPriceMap[baseLabel];
+              if (baseLabel === '피톤치드 연무소독 (평당)') {
+                partnerPrice += (optPrice * size * count); // 100% 지급
+              } else {
+                partnerPrice += (optPrice * count); // 100% 지급
+              }
+            }
+          }
+        });
+      }
+      return (Math.ceil(partnerPrice / 1000) * 1000).toLocaleString();
+    }
+
+    // 2. 일반/인테리어 오더 (현장 결제): 현장에서 파트너가 수금하는 잔금 전액이 파트너 수익
     if (order.finalPrice !== undefined) {
       return order.finalPrice.toLocaleString();
     }
 
-    // 구버전 호환: 견적 마법사에서 넘어온 총 결제 금액(부가세 포함)을 기반으로 계산
+    // 구버전 호환 폴백 (finalPrice가 없는 일반 오더)
     if (order.price) {
       const numericPrice = parseInt(order.price.replace(/[^0-9]/g, ''), 10);
       if (!isNaN(numericPrice)) {
-        const supplyPrice = Math.round(numericPrice / 1.1);
-        const partnerPrice = Math.ceil((supplyPrice * 0.7) / 1000) * 1000;
-        return partnerPrice.toLocaleString();
+        // 구버전은 계약금 5만 원 제외액으로 가정 (본사 매칭비)
+        return Math.max(0, numericPrice - 50000).toLocaleString();
       }
     }
 
-    // 구버전 데이터나 price 필드가 없는 경우의 Fallback
-    let unitPrice = 10000;
-    const isPremium = order.type?.includes('프리미엄') || false;
-    const isOccupied = order.options?.includes('거주 청소 (짐 있음)') || false;
-    const isBetween = order.options?.includes('당일 이사 (사이청소)') || false;
-    
-    if (isPremium) {
-      unitPrice = 14000;
-    } else if (isOccupied) {
-      unitPrice = 12000;
-    }
-    
-    const size = parseInt(order.size || '0', 10) || 0;
-    let partnerPrice = unitPrice * size;
-    
-    if (isBetween) {
-      partnerPrice += 70000;
-    }
-    
-    const roundedPrice = Math.ceil(partnerPrice / 1000) * 1000;
-    return roundedPrice.toLocaleString();
+    return "0";
   };
 
   // ★ 정산 내역: 실제 완료된 오더 기반으로 계산

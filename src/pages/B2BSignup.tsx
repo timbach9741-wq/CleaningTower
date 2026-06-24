@@ -25,6 +25,7 @@ export default function Signup() {
     companyName: '',
     address: '',
     detailAddress: '',
+    partnerType: 'cleaner', // 파트너 유형 추가
   });
 
   const [isPostcodeOpen, setIsPostcodeOpen] = useState(false);
@@ -182,7 +183,8 @@ export default function Signup() {
       try {
         await addDoc(collection(db, "partners"), {
           isB2B: true,
-          b2bPartnerType: b2bPartnerType, // 인테리어 or 부동산 구분
+          partnerType: formData.partnerType, // 인테리어, 부동산, 청소 파트너 구분
+          b2bPartnerType: formData.partnerType, // 기존 코드 호환성용 유지
           name: formData.name,
           phone: formData.phone,
           email: formData.email,
@@ -204,6 +206,7 @@ export default function Signup() {
           password: formData.password,
           businessName: formData.companyName, // 대표자명이 아닌 상호로 저장
           representativeName: formData.name, // 대표자 성함 분리 저장
+          partnerType: formData.partnerType, // 파트너 유형 추가
           phone: formData.phone,
           email: formData.email,
           businessNumber: formData.businessNumber,
@@ -224,6 +227,7 @@ export default function Signup() {
       sessionStorage.setItem('b2b_logged_in', 'true');
       sessionStorage.setItem('b2b_business_name', formData.name);
       sessionStorage.setItem('b2b_login_id', formData.phone);
+      sessionStorage.setItem('b2b_partner_type', formData.partnerType);
       sessionStorage.setItem('b2b_bank_name', formData.bankName);
       sessionStorage.setItem('b2b_account_number', formData.accountNumber);
       sessionStorage.setItem('b2b_account_holder', formData.accountHolder);
@@ -492,6 +496,17 @@ export default function Signup() {
                 </div>
 
                 <div className="space-y-5 flex-1">
+                  <div>
+                    <label className="block text-sm font-bold text-slate-700 mb-2 flex items-center gap-1">
+                      <span className="material-symbols-outlined text-[16px]">category</span> 파트너 유형 선택
+                    </label>
+                    <div className="grid grid-cols-3 gap-2">
+                      <button type="button" onClick={() => setFormData({...formData, partnerType: 'cleaner'})} className={`py-3 rounded-xl border font-bold text-sm transition-all ${formData.partnerType === 'cleaner' ? 'border-blue-600 bg-blue-50 text-blue-700 shadow-inner' : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'}`}>청소업체</button>
+                      <button type="button" onClick={() => setFormData({...formData, partnerType: 'interior'})} className={`py-3 rounded-xl border font-bold text-sm transition-all ${formData.partnerType === 'interior' ? 'border-blue-600 bg-blue-50 text-blue-700 shadow-inner' : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'}`}>인테리어</button>
+                      <button type="button" onClick={() => setFormData({...formData, partnerType: 'real_estate'})} className={`py-3 rounded-xl border font-bold text-sm transition-all ${formData.partnerType === 'real_estate' ? 'border-blue-600 bg-blue-50 text-blue-700 shadow-inner' : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'}`}>부동산</button>
+                    </div>
+                  </div>
+
                   <div>
                     <label className="block text-sm font-bold text-slate-700 mb-2 flex items-center gap-1">
                       <UserCircle size={16} /> 대표자 성함

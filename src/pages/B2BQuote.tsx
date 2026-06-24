@@ -936,11 +936,11 @@ export default function Quote() {
                 transition={{ duration: 0.4 }}
                 className="flex flex-col"
               >
-                {/* Hero Banner - 마케팅 이미지 */}
+                {/* Hero Banner - 파트너 유형별 마케팅 이미지 */}
                 <div className="w-full">
                   <img 
-                    src="/b2b_hero_banner.png" 
-                    alt="청소타워 - 소비자가 보기 전에 하자를 먼저 잡아드립니다" 
+                    src={sessionStorage.getItem('b2b_partner_type') === 'realestate' ? '/b2b_hero_realestate.jpg' : '/b2b_hero_banner.png'}
+                    alt={sessionStorage.getItem('b2b_partner_type') === 'realestate' ? '부동산 제휴 - 소개만 해도 매월 고정 수익' : '청소타워 - 소비자가 보기 전에 하자를 먼저 잡아드립니다'}
                     className="w-full h-auto"
                   />
                 </div>

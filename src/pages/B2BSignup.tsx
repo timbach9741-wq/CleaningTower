@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Check, ChevronRight, UserCircle, Smartphone, Lock, ArrowRight, CheckCircle2, FileUp, Loader2, Mail, Building2, Home } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { db, storage } from '../firebase';
@@ -10,6 +10,8 @@ import DaumPostcode from 'react-daum-postcode';
 
 export default function Signup() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const typeFromUrl = searchParams.get('type') as 'interior' | 'realestate' | null;
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
     name: '',
@@ -60,8 +62,8 @@ export default function Signup() {
   const [isVerifying, setIsVerifying] = useState(false);
   const [isVerified, setIsVerified] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  // 가입 유형: 인테리어 업체 vs 부동산 (B2B 파트너 분류에 필수)
-  const [b2bPartnerType, setB2bPartnerType] = useState<'interior' | 'realestate' | ''>('');
+  // 가입 유형: URL에서 전달받은 값이 있으면 자동 설정, 없으면 수동 선택
+  const [b2bPartnerType, setB2bPartnerType] = useState<'interior' | 'realestate' | ''>(typeFromUrl || '');
 
   const termsContent = {
     terms: "제1조 (목적)\n본 약관은 데일리하우징(이하 '회사')이 제공하는 청소 서비스의 이용조건 및 절차, 회사와 회원 간의 권리, 의무 및 책임사항 등을 규정함을 목적으로 합니다.\n\n제2조 (서비스의 제공)\n회사는 고객의 의뢰에 따라 입주/이사 청소를 제공하며, 사이트 내 기준 및 사전에 협의된 견적에 따릅니다. 현장 오염도에 따라 당일 추가금이 발생할 수 있으며, 이에 대한 안내를 필수적으로 진행합니다.",
@@ -384,7 +386,8 @@ export default function Signup() {
                 </div>
 
                 <div className="space-y-5 flex-1">
-                  {/* 가입 유형 선택 (인테리어 업체 vs 부동산) */}
+                  {/* 가입 유형 선택 - URL에서 전달받은 경우 자동 설정되어 숨김 */}
+                  {!typeFromUrl && (
                   <div>
                     <label className="block text-sm font-bold text-slate-700 mb-2">가입 유형 선택</label>
                     <div className="grid grid-cols-2 gap-3">
@@ -414,6 +417,15 @@ export default function Signup() {
                       </button>
                     </div>
                   </div>
+                  )}
+                  {typeFromUrl && (
+                    <div className="flex items-center gap-3 p-4 rounded-xl border-2 border-blue-500 bg-blue-50">
+                      {typeFromUrl === 'interior' ? <Building2 size={24} className="text-purple-500" /> : <Home size={24} className="text-emerald-500" />}
+                      <span className="font-bold text-slate-800">
+                        {typeFromUrl === 'interior' ? '인테리어 업체' : '부동산'} 파트너 가입
+                      </span>
+                    </div>
+                  )}
                   <div>
                     <label className="block text-sm font-bold text-slate-700 mb-2">사업자 등록번호</label>
                     <div className="flex gap-2">

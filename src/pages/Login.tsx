@@ -407,7 +407,7 @@ export default function Login() {
                     <button 
                       onClick={() => {
                         if (activeTab === 'interior' || activeTab === 'realestate') {
-                          navigate('/b2b/signup');
+                          navigate(`/b2b/signup?type=${activeTab}`);
                         } else {
                           navigate('/partners/register');
                         }

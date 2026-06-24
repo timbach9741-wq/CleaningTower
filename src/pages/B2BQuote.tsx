@@ -2196,10 +2196,13 @@ export default function Quote() {
                      </div>
 
                      <div className="flex justify-between items-end pt-2">
-                        <span className="text-blue-600 text-base font-bold mb-1">최종 예상 결제액</span>
+                        <div className="flex flex-col">
+                          <span className="text-blue-600 text-base font-bold mb-0.5">최종 예상 결제액</span>
+                          <span className="text-[11px] text-slate-400 font-medium">(견적 금액 - 계약금 {depositAmount.toLocaleString()}원)</span>
+                        </div>
                         <div className="text-right">
                            <span className="text-[32px] font-black text-slate-900 leading-none">
-                             {totalPriceIncVat.toLocaleString()}
+                             {Math.max(0, totalPriceIncVat - depositAmount).toLocaleString()}
                            </span>
                            <span className="text-blue-600 text-base ml-1 font-bold">원</span>
                         </div>

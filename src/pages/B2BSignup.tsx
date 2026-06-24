@@ -98,9 +98,7 @@ export default function Signup() {
 
     setIsVerifying(true);
     
-    // TODO: 실 서비스 시 아래 코드 주석을 해제하고 공공데이터포털의 국세청 API 키를 넣어주세요.
-    /*
-    const API_KEY = "여기에_공공데이터포털_API_인코딩_키입력";
+    const API_KEY = "20c3851e70849d3950d8ee973760bef78277a14468d58170472cdb26ae4c1ea6";
     const url = `https://api.odcloud.kr/api/nts-businessman/v1/status?serviceKey=${API_KEY}`;
     try {
       const response = await fetch(url, {
@@ -109,29 +107,20 @@ export default function Signup() {
         body: JSON.stringify({ b_no: [formData.businessNumber] })
       });
       const result = await response.json();
-      if (result.data[0].b_stt_cd === '01') { // 01: 계속사업자
+      if (result && result.data && result.data[0] && result.data[0].b_stt_cd === '01') { // 01: 계속사업자
         setIsVerified(true);
         alert("✅ 국세청 정상 사업자로 확인되었습니다.");
       } else {
+        setIsVerified(false);
         alert("휴/폐업 상태 등 유효하지 않은 사업자입니다.");
       }
     } catch (e) {
+      console.error(e);
       alert("홈택스 조회를 실패했습니다.");
-    }
-    */
-
-    // 현재는 API 키가 없으므로 1.5초 후 무조건 승인되는 모킹 로직입니다.
-    // 임시 테스트: 1234567890 입력 시 에러 테스트
-    setTimeout(() => {
-      if (formData.businessNumber === '1234567890') {
-        alert("휴/폐업 상태 등 유효하지 않은 사업자입니다.");
-        setIsVerified(false);
-      } else {
-        alert("✅ 국세청 정상 사업자로 확인되었습니다.");
-        setIsVerified(true);
-      }
+      setIsVerified(false);
+    } finally {
       setIsVerifying(false);
-    }, 1500);
+    }
   };
 
   const handleSubmit = async () => {

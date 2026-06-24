@@ -64,6 +64,7 @@ export default function Signup() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   // 가입 유형: URL에서 전달받은 값이 있으면 자동 설정, 없으면 수동 선택
   const [b2bPartnerType, setB2bPartnerType] = useState<'interior' | 'realestate' | ''>(typeFromUrl || '');
+  const [businessType, setBusinessType] = useState<'business' | 'non_business' | ''>('');
 
   const termsContent = {
     terms: "제1조 (목적)\n본 약관은 데일리하우징(이하 '회사')이 제공하는 청소 서비스의 이용조건 및 절차, 회사와 회원 간의 권리, 의무 및 책임사항 등을 규정함을 목적으로 합니다.\n\n제2조 (서비스의 제공)\n회사는 고객의 의뢰에 따라 입주/이사 청소를 제공하며, 사이트 내 기준 및 사전에 협의된 견적에 따릅니다. 현장 오염도에 따라 당일 추가금이 발생할 수 있으며, 이에 대한 안내를 필수적으로 진행합니다.",
@@ -382,7 +383,12 @@ export default function Signup() {
                     <div className="grid grid-cols-2 gap-3">
                       <button
                         type="button"
-                        onClick={() => setB2bPartnerType('interior')}
+                        onClick={() => {
+                          setB2bPartnerType('interior');
+                          setBusinessType('');
+                          setIsVerified(false);
+                          setFormData(prev => ({ ...prev, businessNumber: '', businessImage: null }));
+                        }}
                         className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all ${
                           b2bPartnerType === 'interior'
                             ? 'border-purple-500 bg-purple-50 text-purple-700 shadow-sm'
@@ -394,7 +400,12 @@ export default function Signup() {
                       </button>
                       <button
                         type="button"
-                        onClick={() => setB2bPartnerType('realestate')}
+                        onClick={() => {
+                          setB2bPartnerType('realestate');
+                          setBusinessType('');
+                          setIsVerified(false);
+                          setFormData(prev => ({ ...prev, businessNumber: '', businessImage: null }));
+                        }}
                         className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all ${
                           b2bPartnerType === 'realestate'
                             ? 'border-emerald-500 bg-emerald-50 text-emerald-700 shadow-sm'
@@ -415,55 +426,98 @@ export default function Signup() {
                       </span>
                     </div>
                   )}
-                  <div>
-                    <label className="block text-sm font-bold text-slate-700 mb-2">사업자 등록번호</label>
-                    <div className="flex gap-2">
-                      <input
-                        type="text"
-                        maxLength={10}
-                        className={`flex-1 px-4 py-3 bg-slate-50 border rounded-xl focus:ring-2 outline-none transition-all ${isVerified ? 'border-emerald-500 text-emerald-700 bg-emerald-50 focus:border-emerald-500 focus:ring-emerald-500' : 'border-slate-200 focus:border-blue-500 focus:ring-blue-500'}`}
-                        placeholder="숫자 10자리 입력 (- 제외)"
-                        value={formData.businessNumber}
-                        readOnly={isVerified}
-                        onChange={e => {
-                          setFormData({ ...formData, businessNumber: e.target.value.replace(/[^0-9]/g, '') });
-                          setIsVerified(false); // 번호가 수정되면 인증 초기화
-                        }}
-                      />
-                      <button 
-                        onClick={verifyBusinessNumber}
-                        disabled={isVerifying || isVerified || formData.businessNumber.length !== 10}
-                        className="px-4 bg-slate-800 text-white font-bold text-sm rounded-xl whitespace-nowrap hover:bg-slate-700 disabled:bg-slate-300 disabled:cursor-not-allowed active:scale-95 transition-all flex items-center justify-center min-w-[90px]"
-                      >
-                        {isVerifying ? <Loader2 size={18} className="animate-spin" /> : isVerified ? '확인완료' : '진위확인'}
-                      </button>
-                    </div>
-                    {isVerified && <p className="text-xs text-emerald-600 font-bold mt-2 pl-1">✓ 국세청 정상 사업자 상태가 확인되었습니다.</p>}
-                  </div>
 
-                  <div>
-                    <label className="block text-sm font-bold text-slate-700 mb-2">사업자 등록증 사진 올리기</label>
-                    <div className="relative border-2 border-dashed border-slate-300 rounded-xl bg-slate-50 hover:bg-blue-50 hover:border-blue-400 transition-colors group cursor-pointer overflow-hidden min-h-[120px] flex items-center justify-center">
-                      <input
-                        type="file"
-                        accept="image/png, image/jpeg, image/jpg, application/pdf"
-                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                        onChange={e => {
-                          const file = e.target.files?.[0];
-                          if (file) setFormData({ ...formData, businessImage: file });
-                        }}
-                      />
-                      <div className="flex flex-col items-center justify-center p-6 text-slate-500 group-hover:text-blue-600 transition-colors text-center">
-                        <FileUp size={32} className="mb-3" />
-                        <span className="font-bold text-sm">
-                          {formData.businessImage ? formData.businessImage.name : "눌러서 파일 선택"}
-                        </span>
-                        <span className="text-xs text-slate-400 mt-1">
-                          {formData.businessImage ? "수정하려면 다시 누르세요" : "또는 사업자 등록증 사진을 찾아 드래그"}
-                        </span>
+                  {b2bPartnerType && (
+                    <div className="pt-1">
+                      <label className="block text-sm font-bold text-slate-700 mb-2">상세 구분</label>
+                      <div className="grid grid-cols-2 gap-3">
+                        <button
+                          type="button"
+                          onClick={() => setBusinessType('business')}
+                          className={`py-3 rounded-xl border-2 font-bold text-sm transition-all ${
+                            businessType === 'business'
+                              ? b2bPartnerType === 'interior'
+                                ? 'border-purple-500 bg-purple-50 text-purple-700 shadow-sm'
+                                : 'border-emerald-500 bg-emerald-50 text-emerald-700 shadow-sm'
+                              : 'border-slate-200 bg-white text-slate-500 hover:border-slate-300'
+                          }`}
+                        >
+                          사업자 가입
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setBusinessType('non_business');
+                            setIsVerified(false);
+                            setFormData(prev => ({ ...prev, businessNumber: '', businessImage: null }));
+                          }}
+                          className={`py-3 rounded-xl border-2 font-bold text-sm transition-all ${
+                            businessType === 'non_business'
+                              ? b2bPartnerType === 'interior'
+                                ? 'border-purple-500 bg-purple-50 text-purple-700 shadow-sm'
+                                : 'border-emerald-500 bg-emerald-50 text-emerald-700 shadow-sm'
+                              : 'border-slate-200 bg-white text-slate-500 hover:border-slate-300'
+                          }`}
+                        >
+                          {b2bPartnerType === 'interior' ? '비사업자 가입' : '실장님 전용'}
+                        </button>
                       </div>
                     </div>
-                  </div>
+                  )}
+
+                  {b2bPartnerType && businessType === 'business' && (
+                    <>
+                      <div>
+                        <label className="block text-sm font-bold text-slate-700 mb-2">사업자 등록번호</label>
+                        <div className="flex gap-2">
+                          <input
+                            type="text"
+                            maxLength={10}
+                            className={`flex-1 px-4 py-3 bg-slate-50 border rounded-xl focus:ring-2 outline-none transition-all ${isVerified ? 'border-emerald-500 text-emerald-700 bg-emerald-50 focus:border-emerald-500 focus:ring-emerald-500' : 'border-slate-200 focus:border-blue-500 focus:ring-blue-500'}`}
+                            placeholder="숫자 10자리 입력 (- 제외)"
+                            value={formData.businessNumber}
+                            readOnly={isVerified}
+                            onChange={e => {
+                              setFormData({ ...formData, businessNumber: e.target.value.replace(/[^0-9]/g, '') });
+                              setIsVerified(false); // 번호가 수정되면 인증 초기화
+                            }}
+                          />
+                          <button 
+                            onClick={verifyBusinessNumber}
+                            disabled={isVerifying || isVerified || formData.businessNumber.length !== 10}
+                            className="px-4 bg-slate-800 text-white font-bold text-sm rounded-xl whitespace-nowrap hover:bg-slate-700 disabled:bg-slate-300 disabled:cursor-not-allowed active:scale-95 transition-all flex items-center justify-center min-w-[90px]"
+                          >
+                            {isVerifying ? <Loader2 size={18} className="animate-spin" /> : isVerified ? '확인완료' : '진위확인'}
+                          </button>
+                        </div>
+                        {isVerified && <p className="text-xs text-emerald-600 font-bold mt-2 pl-1">✓ 국세청 정상 사업자 상태가 확인되었습니다.</p>}
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-bold text-slate-700 mb-2">사업자 등록증 사진 올리기</label>
+                        <div className="relative border-2 border-dashed border-slate-300 rounded-xl bg-slate-50 hover:bg-blue-50 hover:border-blue-400 transition-colors group cursor-pointer overflow-hidden min-h-[120px] flex items-center justify-center">
+                          <input
+                            type="file"
+                            accept="image/png, image/jpeg, image/jpg, application/pdf"
+                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                            onChange={e => {
+                              const file = e.target.files?.[0];
+                              if (file) setFormData({ ...formData, businessImage: file });
+                            }}
+                          />
+                          <div className="flex flex-col items-center justify-center p-6 text-slate-500 group-hover:text-blue-600 transition-colors text-center">
+                            <FileUp size={32} className="mb-3" />
+                            <span className="font-bold text-sm">
+                              {formData.businessImage ? formData.businessImage.name : "눌러서 파일 선택"}
+                            </span>
+                            <span className="text-xs text-slate-400 mt-1">
+                              {formData.businessImage ? "수정하려면 다시 누르세요" : "또는 사업자 등록증 사진을 찾아 드래그"}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </>
+                  )}
                 </div>
 
                 <div className="mt-8 flex gap-3">
@@ -475,10 +529,10 @@ export default function Signup() {
                   </button>
                   <button 
                     onClick={handleNext}
-                    disabled={!isVerified || !formData.businessImage || !b2bPartnerType}
+                    disabled={!b2bPartnerType || !businessType || (businessType === 'business' && (!isVerified || !formData.businessImage))}
                     className="flex-1 py-4 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300 text-white font-bold rounded-xl shadow-lg active:scale-[0.98] transition-all flex items-center justify-center gap-2"
                   >
-                    인증 완료 <ArrowRight size={18} />
+                    {businessType === 'business' ? '인증 완료' : '다음 단계'} <ArrowRight size={18} />
                   </button>
                 </div>
               </motion.div>

@@ -195,6 +195,8 @@ export default function Quote() {
       sessionStorage.setItem('b2b_bank_name', accountData.bankName || '');
       sessionStorage.setItem('b2b_account_number', accountData.accountNumber || '');
       sessionStorage.setItem('b2b_account_holder', accountData.accountHolder || '');
+      sessionStorage.setItem('b2b_partner_type', accountData.b2bPartnerType || accountData.partnerType || '');
+      sessionStorage.setItem('b2b_business_type', accountData.businessType || 'business');
       setBusinessName(accountData.businessName || accountData.name || '');
       setIsB2BLoggedIn(true);
       setShowB2BLoginModal(false);
@@ -1149,7 +1151,7 @@ export default function Quote() {
                         <div className="w-9 h-9 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center mb-3">
                           <span className="material-symbols-outlined text-[20px]">real_estate_agent</span>
                         </div>
-                        <h4 className="font-extrabold text-slate-800 text-sm md:text-base mb-1">부동산 대표님</h4>
+                        <h4 className="font-extrabold text-slate-800 text-sm md:text-base mb-1">{sessionStorage.getItem('b2b_business_type') === 'non_business' ? '부동산 실장님' : '부동산 대표님'}</h4>
                         <p className="text-xs text-slate-500 leading-relaxed break-keep font-medium">
                           이사/입주 앞둔 계약 고객을 소개만 해주셔도 고정 부가 수익 창출!
                         </p>

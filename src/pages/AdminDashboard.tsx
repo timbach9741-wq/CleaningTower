@@ -65,7 +65,7 @@ export interface PartnerUser {
   totalOrders?: number;
   totalPayback?: number;
   b2bPartnerType?: 'interior' | 'realestate';
-  businessType?: 'business' | 'freelancer';
+  businessType?: 'business' | 'freelancer' | 'non_business';
   companyName?: string;
   managerName?: string;
   name?: string;
@@ -2788,7 +2788,18 @@ export default function Admin() {
                               </div>
                             </td>
                             <td className="p-3 font-bold text-gray-800 whitespace-nowrap">
-                              <span>{partner.companyName || partner.name}</span>
+                              <div className="flex items-center gap-1.5">
+                                <span>{partner.companyName || partner.name}</span>
+                                {partner.businessType === 'non_business' && (
+                                  <span className={`px-1.5 py-0.5 text-[9px] rounded font-extrabold ${
+                                    partner.b2bPartnerType === 'interior' 
+                                      ? 'bg-purple-100 text-purple-700 border-purple-200' 
+                                      : 'bg-emerald-100 text-emerald-700 border-emerald-200'
+                                  }`}>
+                                    {partner.b2bPartnerType === 'interior' ? '비사업자' : '실장님'}
+                                  </span>
+                                )}
+                              </div>
                             </td>
                             <td className="p-3 text-sm font-medium text-gray-600 tracking-wide whitespace-nowrap">
                               {partner.phone}
@@ -2906,7 +2917,16 @@ export default function Admin() {
                                 <span className="font-bold text-gray-900 text-lg leading-none">
                                   {partner.companyName || partner.name}
                                 </span>
-                                  <span className="flex items-center gap-1 text-[10px] text-purple-600 bg-purple-50 px-1.5 py-0.5 rounded font-bold border border-purple-100">{activeTab === 'interiorPartners' ? '인테리어 파트너' : '부동산 파트너'}</span>
+                                {partner.businessType === 'non_business' && (
+                                  <span className={`px-1.5 py-0.5 text-[9px] rounded font-extrabold border ${
+                                    partner.b2bPartnerType === 'interior' 
+                                      ? 'bg-purple-100 text-purple-700 border-purple-200' 
+                                      : 'bg-emerald-100 text-emerald-700 border-emerald-200'
+                                  }`}>
+                                    {partner.b2bPartnerType === 'interior' ? '비사업자' : '실장님'}
+                                  </span>
+                                )}
+                                <span className="flex items-center gap-1 text-[10px] text-purple-600 bg-purple-50 px-1.5 py-0.5 rounded font-bold border border-purple-100">{activeTab === 'interiorPartners' ? '인테리어 파트너' : '부동산 파트너'}</span>
                               </div>
                               <p className="text-xs text-slate-400 font-medium">
                                 가입일: {partner.createdAt ? new Date(partner.createdAt).toLocaleDateString() : '-'}

@@ -1471,7 +1471,7 @@ export default function Quote() {
                     <div className="p-4 rounded-xl bg-blue-50 border-2 border-blue-500 shadow-lg shadow-blue-200/30 flex items-center justify-between mb-6">
                       <div className="flex flex-col">
                         <span className="text-[15px] font-bold text-blue-700">프리미엄 입주청소</span>
-                        <span className="text-[11px] mt-0.5 text-blue-500/80">인테리어 공사완료 후 분진이 많은 현장 · 무상 보수 포함</span>
+                        <span className="text-[11px] mt-0.5 text-blue-500/80">{sessionStorage.getItem('b2b_partner_type') === 'realestate' ? '매매·전세·월세 계약 후 입주 전 완벽 청소 · 무상 보수 포함' : '인테리어 공사완료 후 분진이 많은 현장 · 무상 보수 포함'}</span>
                       </div>
                       <span className="text-xs font-bold px-3 py-1.5 rounded-lg bg-blue-600 text-white shadow-sm">평당 2.0만</span>
                     </div>

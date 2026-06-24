@@ -619,7 +619,8 @@ export default function Signup() {
                     />
                   </div>
 
-                  {/* 페이백(인센티브) 수령 계좌 정보 */}
+                  {/* 페이백(인센티브) 수령 계좌 - 부동산 파트너만 표시 */}
+                  {b2bPartnerType === 'realestate' && (
                   <div className="pt-4 border-t border-slate-100">
                     <label className="block text-sm font-bold text-slate-700 mb-4 flex items-center gap-1">
                       <span className="text-amber-500">💰</span> 페이백(인센티브) 수령 계좌
@@ -671,6 +672,7 @@ export default function Signup() {
                       />
                     </div>
                   </div>
+                  )}
 
                   <div className="pt-4 border-t border-slate-100">
                     <label className="block text-sm font-bold text-slate-700 mb-2 flex items-center gap-1">

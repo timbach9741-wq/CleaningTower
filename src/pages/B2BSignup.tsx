@@ -510,17 +510,6 @@ export default function Signup() {
                 <div className="space-y-5 flex-1">
                   <div>
                     <label className="block text-sm font-bold text-slate-700 mb-2 flex items-center gap-1">
-                      <span className="material-symbols-outlined text-[16px]">category</span> 파트너 유형 선택
-                    </label>
-                    <div className="grid grid-cols-3 gap-2">
-                      <button type="button" onClick={() => setFormData({...formData, partnerType: 'cleaner'})} className={`py-3 rounded-xl border font-bold text-sm transition-all ${formData.partnerType === 'cleaner' ? 'border-blue-600 bg-blue-50 text-blue-700 shadow-inner' : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'}`}>청소업체</button>
-                      <button type="button" onClick={() => setFormData({...formData, partnerType: 'interior'})} className={`py-3 rounded-xl border font-bold text-sm transition-all ${formData.partnerType === 'interior' ? 'border-blue-600 bg-blue-50 text-blue-700 shadow-inner' : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'}`}>인테리어</button>
-                      <button type="button" onClick={() => setFormData({...formData, partnerType: 'real_estate'})} className={`py-3 rounded-xl border font-bold text-sm transition-all ${formData.partnerType === 'real_estate' ? 'border-blue-600 bg-blue-50 text-blue-700 shadow-inner' : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'}`}>부동산</button>
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-bold text-slate-700 mb-2 flex items-center gap-1">
                       <UserCircle size={16} /> 대표자 성함
                     </label>
                     <input

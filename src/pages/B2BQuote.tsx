@@ -720,7 +720,7 @@ export default function Quote() {
                   : 'border-transparent text-slate-500 hover:text-slate-700'
               }`}
             >
-              의뢰 및 페이백 내역 ({b2bQuotes.length})
+              의뢰 {sessionStorage.getItem('b2b_partner_type') === 'realestate' ? '및 페이백 ' : ''}내역 ({b2bQuotes.length})
             </button>
           </div>
         </div>
@@ -787,6 +787,8 @@ export default function Quote() {
                 transition={{ duration: 0.3 }}
                 className="flex flex-col h-full space-y-6 pt-2 pb-12"
               >
+                {/* 나의 정산 계좌 - 부동산 파트너만 표시 */}
+                {sessionStorage.getItem('b2b_partner_type') === 'realestate' && (
                 <div className="bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-100 rounded-2xl p-4 shadow-sm text-left">
                   <h3 className="font-extrabold text-blue-900 text-base mb-1.5 flex items-center gap-1.5">
                     <span className="material-symbols-outlined text-[20px]">account_balance_wallet</span>
@@ -801,8 +803,10 @@ export default function Quote() {
                     ※ 계좌 변경은 청소타워 고객센터(031-499-9509)로 연락해 주세요.
                   </p>
                 </div>
+                )}
 
-                {/* 정산 안내 배너 */}
+                {/* 정산 안내 배너 - 부동산 파트너만 표시 */}
+                {sessionStorage.getItem('b2b_partner_type') === 'realestate' && (
                 <div className="bg-amber-50/80 border border-amber-200/60 rounded-2xl p-4 shadow-sm text-left">
                   <h3 className="font-extrabold text-amber-950 text-[14px] mb-2 flex items-center gap-1.5">
                     <span className="material-symbols-outlined text-[18px]">info</span>
@@ -814,6 +818,7 @@ export default function Quote() {
                     <li>• 공휴일 등의 영향으로 입금일이 다소 지연될 경우 별도 안내해 드립니다.</li>
                   </ul>
                 </div>
+                )}
 
                 {/* 의뢰 목록 */}
                 <div className="space-y-4">

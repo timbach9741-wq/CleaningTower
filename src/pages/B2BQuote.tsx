@@ -1138,8 +1138,7 @@ export default function Quote() {
                       </div>
                     </div>
 
-                    {/* 대상별 카드 2열 */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 gap-4 max-w-md mx-auto">
                       <div className="bg-white border border-slate-100 p-5 rounded-2xl shadow-sm text-left">
                         <div className="w-9 h-9 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center mb-3">
                           <span className="material-symbols-outlined text-[20px]">real_estate_agent</span>
@@ -1147,16 +1146,6 @@ export default function Quote() {
                         <h4 className="font-extrabold text-slate-800 text-sm md:text-base mb-1">부동산 대표님</h4>
                         <p className="text-xs text-slate-500 leading-relaxed break-keep font-medium">
                           이사/입주 앞둔 계약 고객을 소개만 해주셔도 고정 부가 수익 창출!
-                        </p>
-                      </div>
-
-                      <div className="bg-white border border-slate-100 p-5 rounded-2xl shadow-sm text-left">
-                        <div className="w-9 h-9 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center mb-3">
-                          <span className="material-symbols-outlined text-[20px]">chair</span>
-                        </div>
-                        <h4 className="font-extrabold text-slate-800 text-sm md:text-base mb-1">인테리어 사장님</h4>
-                        <p className="text-xs text-slate-500 leading-relaxed break-keep font-medium">
-                          마감 청소 비용 부담은 낮추고, 완벽한 검수로 잔금 회수율 100% 달성!
                         </p>
                       </div>
                     </div>

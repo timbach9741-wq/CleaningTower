@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Check, ChevronRight, UserCircle, Smartphone, Lock, ArrowRight, CheckCircle2, FileUp, Loader2, Mail, Building2, Home } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, query, where, getDocs } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { db, storage } from '../firebase';
 import { sendTelegramAlert } from '../telegramService';
@@ -99,7 +99,12 @@ export default function Signup() {
 
     setIsVerifying(true);
     
-    const API_KEY = "20c3851e70849d3950d8ee973760bef78277a14468d58170472cdb26ae4c1ea6";
+    const API_KEY = import.meta.env.VITE_NTS_API_KEY || '';
+    if (!API_KEY) {
+      alert('국세청 API 키가 설정되어 있지 않습니다. 관리자에게 문의해주세요.');
+      setIsVerifying(false);
+      return;
+    }
     const url = `https://api.odcloud.kr/api/nts-businessman/v1/status?serviceKey=${API_KEY}`;
     try {
       const response = await fetch(url, {
@@ -125,9 +130,26 @@ export default function Signup() {
   };
 
   const handleSubmit = async () => {
+    // 비밀번호 최소 길이 검증
+    if (formData.password.length < 6) {
+      alert('비밀번호는 6자리 이상이어야 합니다.');
+      return;
+    }
+
     setIsSubmitting(true);
     
     try {
+      // 중복 가입 방지: 동일 전화번호로 이미 가입된 계정이 있는지 확인
+      const existingQuery = query(
+        collection(db, 'b2bAccounts'),
+        where('loginId', '==', formData.phone)
+      );
+      const existingSnapshot = await getDocs(existingQuery);
+      if (!existingSnapshot.empty) {
+        alert('이미 동일한 연락처로 가입된 계정이 있습니다. 로그인 페이지에서 로그인해주세요.');
+        setIsSubmitting(false);
+        return;
+      }
       // 1. Google Sheets(Apps Script)로 데이터 전송
       // TODO: 발급받은 구글 앱스스크립트(Web App) URL을 입력하세요.
       const GOOGLE_SCRIPT_URL = import.meta.env.VITE_GOOGLE_SHEET_URL || "YOUR_GOOGLE_SCRIPT_URL_HERE";
@@ -175,8 +197,9 @@ export default function Signup() {
       try {
         await addDoc(collection(db, "partners"), {
           isB2B: true,
-          partnerType: formData.partnerType, // 인테리어, 부동산, 청소 파트너 구분
-          b2bPartnerType: formData.partnerType, // 기존 코드 호환성용 유지
+          partnerType: b2bPartnerType, // 인테리어 or 부동산
+          b2bPartnerType: b2bPartnerType, // 기존 코드 호환성용 유지
+          businessType: businessType, // 사업자 or 비사업자 구분
           name: formData.name,
           phone: formData.phone,
           email: formData.email,
@@ -198,12 +221,13 @@ export default function Signup() {
           password: formData.password,
           businessName: formData.companyName, // 대표자명이 아닌 상호로 저장
           representativeName: formData.name, // 대표자 성함 분리 저장
-          partnerType: formData.partnerType, // 파트너 유형 추가
+          partnerType: b2bPartnerType, // 파트너 유형 (인테리어 or 부동산)
           phone: formData.phone,
           email: formData.email,
           businessNumber: formData.businessNumber,
           businessImageUrl, // 사업자 등록증 이미지 URL
           b2bPartnerType: b2bPartnerType, // 인테리어 or 부동산 구분
+          businessType: businessType, // 사업자 or 비사업자 구분
           companyName: formData.companyName,
           address: formData.address,
           bankName: formData.bankName,
@@ -219,11 +243,11 @@ export default function Signup() {
       sessionStorage.setItem('b2b_logged_in', 'true');
       sessionStorage.setItem('b2b_business_name', formData.name);
       sessionStorage.setItem('b2b_login_id', formData.phone);
-      sessionStorage.setItem('b2b_partner_type', formData.partnerType);
+      sessionStorage.setItem('b2b_partner_type', b2bPartnerType); // 파트너 유형 세션 저장
+      sessionStorage.setItem('b2b_business_type', businessType); // 사업자/비사업자 구분 세션 저장
       sessionStorage.setItem('b2b_bank_name', formData.bankName);
       sessionStorage.setItem('b2b_account_number', formData.accountNumber);
       sessionStorage.setItem('b2b_account_holder', formData.accountHolder);
-      sessionStorage.setItem('b2b_partner_type', b2bPartnerType); // 파트너 유형 세션 저장
 
       // 텔레그램 알림 발송 (비동기)
       try {
@@ -772,7 +796,7 @@ export default function Signup() {
                   </button>
                   <button 
                     onClick={handleSubmit}
-                    disabled={!formData.name || !formData.companyName || !formData.address || !formData.phone || !formData.email || !formData.password || formData.password !== formData.passwordConfirm || isSubmitting}
+                    disabled={!formData.name || !formData.companyName || !formData.address || !formData.phone || !formData.email || !formData.password || formData.password.length < 6 || formData.password !== formData.passwordConfirm || isSubmitting}
                     className="flex-1 py-4 bg-slate-900 hover:bg-slate-800 disabled:bg-slate-300 disabled:cursor-not-allowed text-white font-bold rounded-xl shadow-xl active:scale-[0.98] transition-all flex items-center justify-center"
                   >
                     {isSubmitting ? <Loader2 size={18} className="animate-spin" /> : '가입 완료'}

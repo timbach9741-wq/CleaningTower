@@ -4,7 +4,8 @@ import { Check, ChevronRight, UserCircle, Smartphone, Lock, ArrowRight, CheckCir
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { collection, addDoc, serverTimestamp, query, where, getDocs } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { db, storage } from '../firebase';
+import { db, storage, auth } from '../firebase';
+import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { sendTelegramAlert } from '../telegramService';
 import DaumPostcode from 'react-daum-postcode';
 
@@ -195,6 +196,18 @@ export default function Signup() {
       
       // 3. Firebase Firestore에 파트너 정보 저장 (관리자 연동)
       try {
+        const authEmail = `${formData.phone}@cheongsotower.kr`;
+        try {
+          await createUserWithEmailAndPassword(auth, authEmail, formData.password);
+        } catch (authErr: any) {
+          if (authErr.code === 'auth/email-already-in-use') {
+            console.warn('Firebase Auth user already exists, proceeding to save Firestore data');
+          } else {
+            console.error('Firebase Auth signup failed:', authErr);
+            throw authErr;
+          }
+        }
+
         await addDoc(collection(db, "partners"), {
           isB2B: true,
           partnerType: b2bPartnerType, // 인테리어 or 부동산
@@ -218,7 +231,6 @@ export default function Signup() {
         // B2B 전용 로그인 계정 저장 (연락처 = 로그인ID)
         await addDoc(collection(db, "b2bAccounts"), {
           loginId: formData.phone,
-          password: formData.password,
           businessName: formData.companyName, // 대표자명이 아닌 상호로 저장
           representativeName: formData.name, // 대표자 성함 분리 저장
           partnerType: b2bPartnerType, // 파트너 유형 (인테리어 or 부동산)
@@ -237,6 +249,9 @@ export default function Signup() {
         });
       } catch (fbError) {
         console.error("Firebase 저장 중 오류:", fbError);
+        alert("계정 생성 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.");
+        setIsSubmitting(false);
+        return;
       }
 
       // B2B 세션 로그인 처리

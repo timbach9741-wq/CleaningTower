@@ -12,17 +12,23 @@ export default function ScrollToAnchor() {
       const isPathChanged = prevPathnameRef.current !== pathname;
       
       const checkAndScroll = () => {
-        const element = document.querySelector(hash);
-        if (element) {
-          const headerOffset = 80; // 고정 헤더 높이 여백
-          const elementPosition = element.getBoundingClientRect().top;
-          const offsetPosition = elementPosition + window.scrollY - headerOffset;
+        try {
+          if (hash.includes('=')) return false; // Ignore OAuth token fragments
           
-          window.scrollTo({
-            top: offsetPosition,
-            behavior: isPathChanged ? 'instant' : 'smooth'
-          });
-          return true;
+          const element = document.querySelector(hash);
+          if (element) {
+            const headerOffset = 80; // 고정 헤더 높이 여백
+            const elementPosition = element.getBoundingClientRect().top;
+            const offsetPosition = elementPosition + window.scrollY - headerOffset;
+            
+            window.scrollTo({
+              top: offsetPosition,
+              behavior: isPathChanged ? 'instant' : 'smooth'
+            });
+            return true;
+          }
+        } catch (error) {
+          console.warn('ScrollToAnchor: Invalid selector', hash);
         }
         return false;
       };

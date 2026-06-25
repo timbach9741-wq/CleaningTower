@@ -2047,31 +2047,34 @@ export default function Partner() {
                     MEMBERSHIP
                   </span>
                   <span className="text-xs font-bold text-slate-300">
-                    3개월 무료 체험 중
+                    {currentUser?.plan === 'basic' ? '기본 플랜' : '활성화 됨'}
                   </span>
                 </div>
                 <h3 className="text-lg font-black text-white mb-1">
                   {currentUser?.plan === 'premium' ? '프리미엄 파트너' : currentUser?.plan === 'exclusive' ? '지역 독점 파트너' : '일반 파트너'}
                 </h3>
                 <p className="text-xs text-slate-300 leading-relaxed font-medium mb-4">
-                  현재 신규 파트너 3개월 무료 프로모션 혜택을 받고 계십니다. 무료 혜택 기간 동안 오더 매칭을 제한 없이 이용하실 수 있습니다.
+                  {currentUser?.plan === 'basic' 
+                    ? '현재 일반 파트너로 가입되어 있습니다. 매월 안정적인 오더를 원하신다면 프리미엄 요금제로 업그레이드 해보세요!' 
+                    : '결제하신 요금제 혜택(상위 노출, 전담 매니저 등)이 정상적으로 적용 중입니다.'}
                 </p>
                 <div className="h-px bg-slate-700 w-full mb-4"></div>
-                <div className="flex justify-between items-center text-xs">
-                  <span className="text-slate-400 font-bold">체험 만료 예정일</span>
-                  <span className="font-extrabold text-amber-300">
-                    {currentUser?.createdAt ? (
-                      (() => {
-                        const date = new Date(currentUser.createdAt);
-                        date.setMonth(date.getMonth() + 3);
-                        return `${date.getFullYear()}년 ${date.getMonth() + 1}월 ${date.getDate()}일`;
-                      })()
-                    ) : '가입일로부터 3개월 후'}
-                  </span>
-                </div>
-                <div className="mt-4 bg-slate-800/80 p-3 rounded-xl border border-slate-700 text-[11px] text-slate-300 leading-relaxed font-medium">
-                  💡 무료 체험 기간 종료 시점에 카드를 등록하고 결제를 갱신하실 수 있도록 별도 안내해 드립니다. (토스페이먼츠 심사 완료 후 적용 예정)
-                </div>
+                {currentUser?.plan === 'basic' && (
+                  <button
+                    onClick={() => navigate('/partners/join')}
+                    className="w-full py-3 bg-gradient-to-r from-amber-400 to-yellow-500 hover:from-amber-300 hover:to-yellow-400 text-amber-950 font-black rounded-xl text-sm transition-all shadow-md active:scale-[0.98]"
+                  >
+                    프리미엄 요금제로 업그레이드 하기
+                  </button>
+                )}
+                {currentUser?.plan !== 'basic' && (
+                  <div className="flex justify-between items-center text-xs">
+                    <span className="text-slate-400 font-bold">다음 결제 예정일</span>
+                    <span className="font-extrabold text-amber-300">
+                      매니저 별도 안내
+                    </span>
+                  </div>
+                )}
               </div>
 
               <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 mb-4">

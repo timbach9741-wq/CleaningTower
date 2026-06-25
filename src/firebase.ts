@@ -59,9 +59,12 @@ export async function getMessagingInstance(): Promise<Messaging | null> {
   return _messaging;
 }
 
+import { getAuth } from 'firebase/auth';
+
 // 기존 코드와의 호환성을 위해 즉시 초기화된 export도 유지
 // 점진적으로 getDb(), getStorageInstance()로 마이그레이션 권장
 const db = getFirestore(app);
 const storage = getStorage(app);
+const auth = getAuth(app);
 
-export { app, db, storage };
+export { app, db, storage, auth };

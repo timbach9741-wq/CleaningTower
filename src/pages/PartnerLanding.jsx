@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { getCurrentUser } from '../lib/authHelpers';
 import Header from '../components/cleaning/Header';
 import { partnerQnaData } from '../data/partnerQnaData';
 
@@ -29,7 +30,7 @@ const planData = {
     ],
     pricing: {
       '1month': { monthly: '150,000', total: '150,000', discount: 0 },
-      '3month': { monthly: '130,000', total: '390,000', discount: 13 },
+      '3month': { monthly: '135,000', total: '405,000', discount: 10 },
       '6month': { monthly: '120,000', total: '720,000', discount: 20, isBest: true }
     }
   },
@@ -51,6 +52,7 @@ const planData = {
 };
 
 export default function PartnerLanding() {
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState('전체');
   const [expandedIndex, setExpandedIndex] = useState(null);
@@ -59,6 +61,17 @@ export default function PartnerLanding() {
     premium: '6month',
     exclusive: '6month'
   });
+
+  const handlePlanClick = (e, plan) => {
+    e.preventDefault();
+    const user = getCurrentUser();
+    if (user && user.role === 'partner') {
+      navigate('/partners/checkout', { state: { plan, partnerId: user.id } });
+    } else {
+      navigate('/partners/register', { state: { plan } });
+    }
+  };
+
   const faqSectionRef = useRef(null);
 
   const handleCycleChange = (planKey, cycle) => {
@@ -117,27 +130,24 @@ export default function PartnerLanding() {
               대한민국 1등 입주청소 플랫폼 '청소타워'과 함께 확실한 매출 성장을 경험하세요.
             </p>
             <div className="flex flex-col sm:flex-row flex-wrap justify-center gap-3 md:gap-4 mt-8">
-              <Link 
-                to="/partners/register" 
-                state={{ plan: 'basic' }}
+              <button 
+                onClick={(e) => handlePlanClick(e, 'basic')}
                 className="inline-block bg-white/10 backdrop-blur-md border border-white/20 text-white font-bold py-3 px-8 md:py-4 md:px-10 rounded-full text-base md:text-lg hover:bg-white/20 hover:-translate-y-1 transition-all text-center"
               >
                 일반 파트너 가입
-              </Link>
-              <Link 
-                to="/partners/register" 
-                state={{ plan: 'premium' }}
+              </button>
+              <button 
+                onClick={(e) => handlePlanClick(e, 'premium')}
                 className="inline-block bg-blue-600 text-white font-bold py-3 px-8 md:py-4 md:px-10 rounded-full text-base md:text-lg hover:bg-blue-500 hover:-translate-y-1 transition-all shadow-[0_0_15px_rgba(37,99,235,0.4)] text-center"
               >
                 프리미엄 입점 신청
-              </Link>
-              <Link 
-                to="/partners/register" 
-                state={{ plan: 'exclusive' }}
+              </button>
+              <button 
+                onClick={(e) => handlePlanClick(e, 'exclusive')}
                 className="inline-block bg-gradient-to-r from-amber-400 to-yellow-500 text-amber-950 font-bold py-3 px-8 md:py-4 md:px-10 rounded-full text-base md:text-lg hover:from-amber-300 hover:to-yellow-400 hover:-translate-y-1 transition-all shadow-[0_0_20px_rgba(251,191,36,0.5)] text-center"
               >
                 지역 독점 상담 신청
-              </Link>
+              </button>
             </div>
             <div className="mt-8 flex justify-center">
               <a 
@@ -262,7 +272,7 @@ export default function PartnerLanding() {
                       <span className={`text-xs font-bold ${isPremium ? 'text-slate-400' : 'text-slate-500'}`}>가입 기간 선택</span>
                       <div className={`grid grid-cols-3 gap-1 p-1 rounded-xl ${isPremium ? 'bg-slate-800' : 'bg-slate-100'}`}>
                         {['1month', '3month', '6month'].map((cycle) => {
-                          const discountText = cycle === '1month' ? '정상가' : cycle === '3month' ? (key === 'premium' ? '13% 할인' : '10% 할인') : '20% 할인';
+                          const discountText = cycle === '1month' ? '정상가' : cycle === '3month' ? '10% 할인' : '20% 할인';
                           const isSelected = billingCycle === cycle;
                           
                           // 선택 여부 및 플랜 종류에 따른 서브 텍스트(할인 정보) 색상 지정
@@ -343,13 +353,12 @@ export default function PartnerLanding() {
                         )}
                       </div>
 
-                      <Link 
-                        to="/partners/register" 
-                        state={{ plan: key, cycle: billingCycle }} 
-                        className={buttonClass}
+                      <button 
+                        onClick={(e) => handlePlanClick(e, key)}
+                        className={`w-full py-4 rounded-xl font-black text-sm md:text-base transition-all active:scale-[0.98] ${buttonClass}`}
                       >
-                        {billingCycle === '6month' ? '6개월 특별 혜택가 신청' : '가입 신청하기'}
-                      </Link>
+                        {key === 'basic' ? '일반 파트너로 시작하기' : `${plan.name} 신청하기`}
+                      </button>
                     </div>
                   </div>
                 );

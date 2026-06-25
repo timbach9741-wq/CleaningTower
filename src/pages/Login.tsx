@@ -3,7 +3,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { User, Briefcase, Building, Home, ArrowRight, Lock, Mail } from 'lucide-react';
 import { saveSocialUser } from '../lib/authHelpers';
-import { getDb } from '../firebase';
+import { getDb, auth } from '../firebase';
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 
 type TabType = 'consumer' | 'interior' | 'realestate' | 'cleaner';
@@ -17,7 +18,7 @@ export default function Login() {
 
   useEffect(() => {
     const naver = (window as any).naver;
-    if (naver && !(window as any).naverLoginInitialized) {
+    if (naver) {
       const naverLogin = new naver.LoginWithNaverId({
         clientId: 'gFD6VZbxXIFFXTy81OB0',
         callbackUrl: window.location.origin + '/login',
@@ -25,28 +26,32 @@ export default function Login() {
         loginButton: { color: "green", type: 3, height: 60 }
       });
       naverLogin.init();
-      (window as any).naverLoginInitialized = true;
 
       naverLogin.getLoginStatus(async function (status: boolean) {
         if (status) {
-          const email = naverLogin.user.getEmail();
-          const name = naverLogin.user.getName() || naverLogin.user.getNickname();
-          const profileImage = naverLogin.user.getProfileImage();
-          const id = naverLogin.user.getId();
-          
-          if (id) {
-            const user = {
-              id: `naver_${id}`,
-              name: name || '네이버 유저',
-              email: email || '',
-              provider: 'naver' as const,
-              profileImage: profileImage || '',
-            };
-            const success = await saveSocialUser(user);
-            if (success) {
-              navigate('/consumer-dashboard');
-            } else {
-              alert('회원가입/로그인 처리 중 오류가 발생했습니다.');
+          // 콜백으로 돌아왔을 때만(해시에 토큰이 있을 때만) 자동 로그인 처리
+          if (window.location.hash.includes('access_token')) {
+            const email = naverLogin.user.getEmail();
+            const name = naverLogin.user.getName() || naverLogin.user.getNickname();
+            const profileImage = naverLogin.user.getProfileImage();
+            const id = naverLogin.user.getId();
+            
+            if (id) {
+              const user = {
+                id: `naver_${id}`,
+                name: name || '네이버 유저',
+                email: email || '',
+                provider: 'naver' as const,
+                profileImage: profileImage || '',
+              };
+              const success = await saveSocialUser(user);
+              if (success) {
+                // 해시 제거 및 리다이렉트
+                window.history.replaceState(null, '', window.location.pathname);
+                navigate('/consumer-dashboard');
+              } else {
+                alert('회원가입/로그인 처리 중 오류가 발생했습니다.');
+              }
             }
           }
         }
@@ -150,14 +155,26 @@ export default function Login() {
       let q;
 
       const numericLoginId = loginId.replace(/[^0-9]/g, '');
+      const authEmail = `${numericLoginId || loginId}@cheongsotower.kr`;
+
+      let authSuccess = false;
+      try {
+        await signInWithEmailAndPassword(auth, authEmail, password);
+        authSuccess = true;
+      } catch (err: any) {
+        console.warn('Firebase Auth login failed, checking Firestore fallback...');
+      }
 
       if (type === 'cleaner') {
         usersRef = collection(db, 'partners');
-        // 파트너스는 loginId가 숫자만 있는 연락처일 수도 있고 phone 필드일 수도 있음
-        q = query(usersRef, where('loginId', '==', numericLoginId), where('password', '==', password));
+        q = authSuccess 
+          ? query(usersRef, where('loginId', '==', numericLoginId))
+          : query(usersRef, where('loginId', '==', numericLoginId), where('password', '==', password));
       } else {
         usersRef = collection(db, 'b2bAccounts');
-        q = query(usersRef, where('loginId', '==', loginId), where('password', '==', password), where('b2bPartnerType', '==', type));
+        q = authSuccess
+          ? query(usersRef, where('loginId', '==', loginId), where('b2bPartnerType', '==', type))
+          : query(usersRef, where('loginId', '==', loginId), where('password', '==', password), where('b2bPartnerType', '==', type));
       }
 
       let querySnapshot = await getDocs(q);
@@ -165,10 +182,14 @@ export default function Login() {
       if (querySnapshot.empty) {
         // 대체 검색 로직
         if (type === 'cleaner') {
-          const fallbackQ = query(usersRef, where('phone', '==', loginId), where('password', '==', password));
+          const fallbackQ = authSuccess
+            ? query(usersRef, where('phone', '==', loginId))
+            : query(usersRef, where('phone', '==', loginId), where('password', '==', password));
           querySnapshot = await getDocs(fallbackQ);
         } else {
-          const fallbackQ = query(usersRef, where('loginId', '==', numericLoginId), where('password', '==', password), where('b2bPartnerType', '==', type));
+          const fallbackQ = authSuccess
+            ? query(usersRef, where('loginId', '==', numericLoginId), where('b2bPartnerType', '==', type))
+            : query(usersRef, where('loginId', '==', numericLoginId), where('password', '==', password), where('b2bPartnerType', '==', type));
           querySnapshot = await getDocs(fallbackQ);
         }
 
@@ -176,6 +197,16 @@ export default function Login() {
           alert('아이디 또는 비밀번호가 일치하지 않습니다.');
           setIsLoggingIn(false);
           return;
+        }
+      }
+
+      if (!authSuccess) {
+        // Legacy login succeeded, migrate to Firebase Auth
+        try {
+          await createUserWithEmailAndPassword(auth, authEmail, password);
+          console.log('Legacy user migrated to Firebase Auth successfully.');
+        } catch (migErr) {
+          console.warn('Could not migrate user to Auth:', migErr);
         }
       }
 

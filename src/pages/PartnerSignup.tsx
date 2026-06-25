@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Building2, User, Upload, ArrowRight, CheckCircle, ShieldCheck, Sparkles } from 'lucide-react';
-import { getDb } from '../firebase';
+import { getDb, auth } from '../firebase';
 import { collection, addDoc, query, where, getDocs } from 'firebase/firestore';
+import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { sendTelegramAlert } from '../telegramService';
 import PartnerGuideModal from '../components/common/PartnerGuideModal';
@@ -106,7 +107,6 @@ export default function PartnerSignup() {
         mainServices: formData.mainServices,
         status: formData.plan === 'exclusive' ? 'pending' : 'active', // 지역독점은 승인 대기, 나머지는 자동 승인
         loginId: formData.phone.replace(/[^0-9]/g, ''), // 연락처(숫자만)를 아이디로 사용
-        password: formData.password === '휴대폰 뒤 4자리' ? formData.phone.replace(/[^0-9]/g, '').slice(-4) : formData.password,
         isNotificationEnabled: true,
         notificationRegions: finalRegionArray,
         image: randomImage, // 신규 가입 시 랜덤 기본 이미지 배정
@@ -128,6 +128,22 @@ export default function PartnerSignup() {
           alert('이미 해당 연락처로 가입된 계정이 존재합니다.\n파트너스 페이지에서 기존 계정으로 로그인해주세요.');
           return;
         }
+
+        const authEmail = `${firestoreData.loginId}@cheongsotower.kr`;
+        const initialPassword = formData.password === '휴대폰 뒤 4자리' ? firestoreData.loginId.slice(-4) : formData.password;
+        
+        try {
+          await createUserWithEmailAndPassword(auth, authEmail, initialPassword);
+        } catch (authErr: any) {
+          if (authErr.code === 'auth/email-already-in-use') {
+            console.warn('Firebase Auth user already exists, proceeding to save Firestore data');
+          } else {
+            console.error('Firebase Auth signup failed:', authErr);
+            alert(`계정 생성 중 오류가 발생했습니다: ${authErr.message}`);
+            return;
+          }
+        }
+
         const docRef = await addDoc(collection(dbInstance, 'partners'), firestoreData);
         docId = docRef.id;
 
@@ -615,12 +631,21 @@ export default function PartnerSignup() {
                   >
                     홈으로
                   </button>
-                  <button 
-                    onClick={() => navigate('/partner-dashboard', { state: { showLogin: true } })}
-                    className="flex-1 py-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-lg shadow-blue-600/20 active:scale-[0.98] transition-transform"
-                  >
-                    파트너스 로그인하러 가기
-                  </button>
+                  {formData.plan !== 'basic' ? (
+                    <button 
+                      onClick={() => navigate('/partners/checkout', { state: { partnerId: formData.phone.replace(/[^0-9]/g, ''), plan: formData.plan } })}
+                      className="flex-1 py-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-lg shadow-blue-600/20 active:scale-[0.98] transition-transform"
+                    >
+                      요금제 결제 진행하기
+                    </button>
+                  ) : (
+                    <button 
+                      onClick={() => navigate('/partner-dashboard', { state: { showLogin: true } })}
+                      className="flex-1 py-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-lg shadow-blue-600/20 active:scale-[0.98] transition-transform"
+                    >
+                      파트너스 로그인하러 가기
+                    </button>
+                  )}
                 </div>
               </motion.div>
             )}

@@ -24,6 +24,7 @@ export default function Header({ onOpenQuote, theme = 'light', hideQuoteButton =
     { name: '전문가 찾기', href: '/partners' },
     { name: '파트너스 지원하기', href: '/partners/join' },
     { name: '서비스 안내', href: '/service' },
+    { name: '청소 꿀팁', href: '/magazine' },
     { name: '실제 후기', href: '#reviews' },
     { name: '부가서비스 안내', href: '#services' },
   ];

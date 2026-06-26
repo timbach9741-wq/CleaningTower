@@ -23,6 +23,8 @@ const ServiceGuide = lazy(() => import('./pages/ServiceGuide'));
 const B2BQuote = lazy(() => import('./pages/B2BQuote'));
 const B2BSignup = lazy(() => import('./pages/B2BSignup'));
 const ReviewWrite = lazy(() => import('./pages/ReviewWrite'));
+const MagazineList = lazy(() => import('./pages/MagazineList'));
+const MagazineDetail = lazy(() => import('./pages/MagazineDetail'));
 const LocalSEO = lazy(() => import('./pages/LocalSEO'));
 const PaymentSuccess = lazy(() => import('./pages/PaymentSuccess'));
 const PaymentFail = lazy(() => import('./pages/PaymentFail'));
@@ -97,8 +99,10 @@ function App() {
 
           {/* 고객용 알림톡 전용 라우트 - 헤더/푸터 메뉴 노출 안됨 */}
           <Route path="/review-write/:orderId" element={<ReviewWrite />} />
+          <Route path="/magazine" element={<MagazineList />} />
+          <Route path="/magazine/:id" element={<MagazineDetail />} />
 
-          {/* Programmatic SEO 지역별 랜딩 페이지 (모든 고정 라우트 매칭 실패 시 최종 매칭) */}
+          {/* Programmatic SEO 페이지 (가장 마지막에 배치) */}
           <Route path="/:regionKey" element={<LocalSEO />} />
         </Routes>
       </Suspense>

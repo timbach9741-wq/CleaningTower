@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '../components/cleaning/Header';
+import Footer from '../components/cleaning/Footer';
+import SEO from '../components/common/SEO';
 import HeroSection from '../components/cleaning/HeroSection';
 import StatsBannerSection from '../components/cleaning/StatsBannerSection';
 import FlipCardSection from '../components/cleaning/FlipCardSection';
@@ -8,7 +10,6 @@ import CoreServicesSection from '../components/cleaning/CoreServicesSection';
 import PromisesSection from '../components/cleaning/PromisesSection';
 import ReviewSection from '../components/cleaning/ReviewSection';
 import FloatingCTA from '../components/cleaning/FloatingCTA';
-import Footer from '../components/cleaning/Footer';
 
 export default function CleaningHome() {
   const navigate = useNavigate();
@@ -23,6 +24,11 @@ export default function CleaningHome() {
 
   return (
     <div className="min-h-screen bg-white text-slate-800 font-sans relative snap-scroll-mobile">
+      <SEO 
+        title="청소타워 - 원룸 이사청소 및 입주청소 전문가 매칭" 
+        description="믿을 수 있는 이사청소, 입주청소! 청소타워에서 1분 만에 무료 견적을 받아보세요. 전문 청소팀 매칭부터 100% A/S 보장까지." 
+        keywords="청소타워, 원룸이사청소비용, 입주청소, 이사청소, 청소업체, 사무실청소, 거주청소"
+      />
       <Header onOpenQuote={openQuoteModal} />
       <HeroSection onOpenQuote={openQuoteModal} />
       <StatsBannerSection />

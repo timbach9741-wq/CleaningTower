@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '../components/cleaning/Header';
 import Footer from '../components/cleaning/Footer';
+import SEO from '../components/common/SEO';
 import FloatingCTA from '../components/cleaning/FloatingCTA';
 import CTASection from '../components/cleaning/CTASection';
 import ReviewSection from '../components/cleaning/ReviewSection';
@@ -100,6 +101,11 @@ export default function ServiceGuide() {
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800 font-sans relative">
+      <SEO 
+        title="청소타워 - 서비스 안내 및 요금표" 
+        description="입주청소, 원룸 이사청소, 거주청소, 상가청소의 서비스 범위와 기준 요금표를 확인하세요. 새집증후군 제거, 피톤치드 시공 등 부가서비스까지 투명하게 공개합니다." 
+        keywords="이사청소비용, 입주청소단가, 원룸청소요금, 청소업체견적, 새집증후군시공, 피톤치드청소"
+      />
       <Header onOpenQuote={openQuoteModal} theme="dark" />
 
       {/* 1. 도입부 (Hero Section) */}

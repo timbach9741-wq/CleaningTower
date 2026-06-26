@@ -2,6 +2,8 @@ import React, { useState, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { getCurrentUser } from '../lib/authHelpers';
 import Header from '../components/cleaning/Header';
+import Footer from '../components/cleaning/Footer';
+import SEO from '../components/common/SEO';
 import { partnerQnaData } from '../data/partnerQnaData';
 
 const planData = {
@@ -105,6 +107,11 @@ export default function PartnerLanding() {
 
   return (
     <div className="bg-slate-50 min-h-screen text-slate-900 font-sans flex flex-col overflow-x-hidden">
+      <SEO 
+        title="청소타워 파트너스 - 청소 업체 가입 및 매출 증대" 
+        description="가입비, 중개수수료 0원! 청소타워 파트너스로 가입하고 안정적인 오더를 받아보세요. 입주청소, 이사청소 전문업체 상시 모집." 
+        keywords="청소타워파트너스, 청소업체모집, 입주청소가맹점, 이사청소협력업체, 사무실청소대행"
+      />
       {/* 
         주의: 사업자 페이지 전용 헤더가 필요할 수 있으나, 
         일단 기존 Header를 사용하고 나중에 분리 가능합니다. 

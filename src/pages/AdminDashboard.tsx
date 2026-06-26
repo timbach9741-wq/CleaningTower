@@ -17,6 +17,8 @@ import {
   Star,
   Paintbrush,
   Home,
+  CreditCard,
+  CheckCircle,
 } from 'lucide-react';
 import { db } from '../firebase';
 import { collection, onSnapshot, doc, updateDoc, addDoc, deleteDoc, setDoc, query, where, getDocs } from 'firebase/firestore';
@@ -117,6 +119,18 @@ export interface Review {
   isHidden?: boolean;
 }
 
+export interface PartnerPayment {
+  id: string;
+  partnerId?: string;
+  plan?: string;
+  cycle?: string;
+  monthlyAmount?: number;
+  totalAmount?: number;
+  depositorName?: string;
+  status?: string;
+  createdAt?: any;
+}
+
 export default function Admin() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -126,6 +140,8 @@ export default function Admin() {
   const [quotes, setQuotes] = useState<Order[]>([]);
   const [partners, setPartners] = useState<PartnerUser[]>([]);
   const [reviews, setReviews] = useState<Review[]>([]);
+  const [partnerPayments, setPartnerPayments] = useState<PartnerPayment[]>([]);
+  const [partnerPaymentsFilter, setPartnerPaymentsFilter] = useState('pending');
   const [selectedQuoteDetail, setSelectedQuoteDetail] = useState<Order | null>(null);
   const [selectedPartnerDetail, setSelectedPartnerDetail] = useState<PartnerUser | null>(null);
   const [isEditingContract, setIsEditingContract] = useState(false);
@@ -430,12 +446,28 @@ export default function Admin() {
       }
     });
 
+    const unsubscribePayments = onSnapshot(collection(db, 'partner_payments'), (snapshot) => {
+      const data = snapshot.docs.map(d => ({ id: d.id, ...d.data() })) as PartnerPayment[];
+      data.sort((a, b) => {
+        const getTimestamp = (v: any) => {
+          if (!v) return 0;
+          if (v.toDate) return v.toDate().getTime();
+          if (v.seconds) return v.seconds * 1000;
+          if (typeof v === 'string') return new Date(v).getTime();
+          return 0;
+        };
+        return getTimestamp(b.createdAt) - getTimestamp(a.createdAt);
+      });
+      setPartnerPayments(data);
+    });
+
     return () => {
       unsubscribe();
       unsubscribePartners();
       unsubscribeReviews();
       unsubscribeCustomers();
       unsubscribeSettings();
+      unsubscribePayments();
     };
   }, []);
 
@@ -446,6 +478,29 @@ export default function Admin() {
       setAdminMemoInput('');
     }
   }, [selectedQuoteDetail]);
+
+  const handleApprovePayment = async (paymentId: string, partnerId: string, plan: string) => {
+    if (!db) return;
+    if (!window.confirm('해당 결제(입금)를 승인하고 파트너 요금제를 활성화하시겠습니까?')) return;
+    try {
+      await updateDoc(doc(db, 'partner_payments', paymentId), {
+        status: 'approved',
+        approvedAt: new Date().toISOString()
+      });
+      if (partnerId) {
+        await updateDoc(doc(db, 'partners', partnerId), {
+          plan: plan,
+          paymentStatus: 'paid',
+          status: 'active',
+          subscriptionStartDate: new Date().toISOString()
+        });
+      }
+      alert('승인 및 요금제 변경이 완료되었습니다.');
+    } catch (error) {
+      console.error('Error approving payment:', error);
+      alert('승인 처리 중 오류가 발생했습니다.');
+    }
+  };
 
   const handleDeleteReview = async (id: string) => {
     if (!db) return;
@@ -1376,6 +1431,13 @@ export default function Admin() {
           >
             <Wallet size={20} />
             <span className="font-medium">재무/출금 관리</span>
+          </button>
+          <button 
+            onClick={() => { setActiveTab('payments'); setIsMobileMenuOpen(false); }}
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'payments' ? 'bg-blue-600 text-white' : 'text-slate-300 hover:bg-slate-800'}`}
+          >
+            <CreditCard size={20} />
+            <span className="font-medium">결제/승인 관리</span>
           </button>
           <button 
             onClick={() => { setActiveTab('notifications'); setIsMobileMenuOpen(false); }}
@@ -3155,6 +3217,88 @@ export default function Admin() {
                           </tr>
                         );
                       })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'payments' && (
+            <div className="space-y-6">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <h2 className="text-xl lg:text-2xl font-bold text-gray-800 border-b border-indigo-600 inline-block pb-1">결제/승인 관리</h2>
+                <div className="flex gap-2">
+                  <button onClick={() => setPartnerPaymentsFilter('all')} className={`px-4 py-2 rounded-lg text-sm font-bold transition-colors ${partnerPaymentsFilter === 'all' ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>전체</button>
+                  <button onClick={() => setPartnerPaymentsFilter('pending')} className={`px-4 py-2 rounded-lg text-sm font-bold transition-colors ${partnerPaymentsFilter === 'pending' ? 'bg-orange-500 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>승인 대기</button>
+                  <button onClick={() => setPartnerPaymentsFilter('approved')} className={`px-4 py-2 rounded-lg text-sm font-bold transition-colors ${partnerPaymentsFilter === 'approved' ? 'bg-emerald-500 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>승인 완료</button>
+                </div>
+              </div>
+
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left border-collapse min-w-[800px]">
+                    <thead>
+                      <tr className="bg-gray-50 border-b border-gray-200 text-sm text-gray-600">
+                        <th className="p-4 font-bold whitespace-nowrap">요청일</th>
+                        <th className="p-4 font-bold whitespace-nowrap">파트너/연락처</th>
+                        <th className="p-4 font-bold whitespace-nowrap">입금자명</th>
+                        <th className="p-4 font-bold whitespace-nowrap">플랜/주기</th>
+                        <th className="p-4 font-bold whitespace-nowrap">입금예정액</th>
+                        <th className="p-4 font-bold whitespace-nowrap">상태</th>
+                        <th className="p-4 font-bold whitespace-nowrap text-right">관리</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {partnerPayments
+                        .filter(p => partnerPaymentsFilter === 'all' ? true : p.status === partnerPaymentsFilter)
+                        .map(payment => {
+                          const partner = partners.find(pt => pt.id === payment.partnerId);
+                          const dateStr = payment.createdAt ? (payment.createdAt.toDate ? payment.createdAt.toDate().toLocaleDateString() : new Date(payment.createdAt).toLocaleDateString()) : '-';
+                          const isPending = payment.status === 'pending';
+                          
+                          return (
+                            <tr key={payment.id} className="hover:bg-slate-50 transition-colors">
+                              <td className="p-4 text-sm text-gray-500 whitespace-nowrap">{dateStr}</td>
+                              <td className="p-4 whitespace-nowrap">
+                                <p className="font-bold text-gray-800">{partner?.companyName || partner?.name || '알 수 없음'}</p>
+                                <p className="text-xs text-gray-500">{partner?.phone || '-'}</p>
+                              </td>
+                              <td className="p-4 font-bold text-gray-800 whitespace-nowrap">{payment.depositorName || '-'}</td>
+                              <td className="p-4 whitespace-nowrap">
+                                <span className={`inline-block px-2 py-1 rounded text-xs font-bold ${payment.plan === 'exclusive' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'}`}>
+                                  {payment.plan === 'exclusive' ? '독점 플랜' : '프리미엄'}
+                                </span>
+                                <span className="text-xs text-gray-500 ml-2">{payment.cycle === 'yearly' ? '1년' : '1개월'}</span>
+                              </td>
+                              <td className="p-4 font-bold text-indigo-600 whitespace-nowrap">{payment.totalAmount?.toLocaleString() || payment.monthlyAmount?.toLocaleString()}원</td>
+                              <td className="p-4 whitespace-nowrap">
+                                {isPending ? (
+                                  <span className="text-orange-500 font-bold text-sm bg-orange-50 px-2 py-1 rounded">대기중</span>
+                                ) : (
+                                  <span className="text-emerald-500 font-bold text-sm bg-emerald-50 px-2 py-1 rounded flex items-center gap-1 w-max">
+                                    <CheckCircle size={14} /> 승인됨
+                                  </span>
+                                )}
+                              </td>
+                              <td className="p-4 text-right whitespace-nowrap">
+                                {isPending && (
+                                  <button
+                                    onClick={() => handleApprovePayment(payment.id, payment.partnerId || '', payment.plan || '')}
+                                    className="px-3 py-1.5 bg-indigo-600 text-white text-xs font-bold rounded-lg hover:bg-indigo-700 shadow-sm transition-colors"
+                                  >
+                                    입금 확인/승인
+                                  </button>
+                                )}
+                              </td>
+                            </tr>
+                          );
+                      })}
+                      {partnerPayments.filter(p => partnerPaymentsFilter === 'all' ? true : p.status === partnerPaymentsFilter).length === 0 && (
+                        <tr>
+                          <td colSpan={7} className="p-8 text-center text-gray-400">조회된 결제/승인 내역이 없습니다.</td>
+                        </tr>
+                      )}
                     </tbody>
                   </table>
                 </div>

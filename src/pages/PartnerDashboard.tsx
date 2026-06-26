@@ -126,6 +126,7 @@ export default function Partner() {
   const [completionNote, setCompletionNote] = useState('');
   const [cancelReason, setCancelReason] = useState('');
   const [quotes, setQuotes] = useState<Order[]>([]);
+  const [reviews, setReviews] = useState<any[]>([]); // 파트너의 리뷰 내역
   const [currentUser, setCurrentUser] = useState<PartnerUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   // ★ partnerId를 상태로 관리하여, 로그인 시 onSnapshot 리스너가 자동으로 재부착되도록 함
@@ -137,6 +138,10 @@ export default function Partner() {
   // 홍보 정보 수정 모달 상태
   const [showEditProfileModal, setShowEditProfileModal] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
+  const [replyInput, setReplyInput] = useState<{ [key: string]: string }>({});
+  
+  // 캘린더 상태 (하단에 선언됨)
+
   const [editProfileForm, setEditProfileForm] = useState({
     companyName: '',
     managerName: '',
@@ -389,7 +394,22 @@ export default function Partner() {
         }
         setIsLoading(false);
       });
-      return () => unsubscribeUser();
+      
+      const unsubscribeReviews = onSnapshot(query(collection(db, 'reviews'), where('partnerId', '==', partnerId)), (snapshot) => {
+        const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as any));
+        // 최신순 정렬
+        data.sort((a, b) => {
+           const timeA = a.createdAt?.toMillis ? a.createdAt.toMillis() : 0;
+           const timeB = b.createdAt?.toMillis ? b.createdAt.toMillis() : 0;
+           return timeB - timeA;
+        });
+        setReviews(data);
+      });
+
+      return () => {
+        unsubscribeUser();
+        unsubscribeReviews();
+      };
     } else {
       setTimeout(() => setIsLoading(false), 0);
     }
@@ -417,6 +437,26 @@ export default function Partner() {
       return timeB - timeA;
     });
     
+  // 이번 달 요약 데이터 계산
+  const thisMonth = new Date().getMonth();
+  const thisYear = new Date().getFullYear();
+  
+  const partnerAllJobs = quotes.filter(o => !(o.isB2B && o.b2bPartnerType === 'realestate') && o.assignedTo === currentUser?.id);
+  const thisMonthJobs = partnerAllJobs.filter(job => {
+    const jobDate = new Date(job.date || job.cleaningDate || 0);
+    return jobDate.getMonth() === thisMonth && jobDate.getFullYear() === thisYear;
+  });
+  
+  const completedJobsCount = thisMonthJobs.filter(j => j.status === '작업완료').length;
+  const scheduledJobsCount = thisMonthJobs.filter(j => j.status === '상담완료').length;
+  const thisMonthRevenue = thisMonthJobs
+    .filter(j => j.status === '작업완료')
+    .reduce((sum, job) => sum + (job.finalPrice || job.totalPrice || 0), 0);
+  const newReviewsCount = reviews.filter(r => {
+    const d = r.createdAt?.toDate ? r.createdAt.toDate() : new Date(0);
+    return d.getMonth() === thisMonth && d.getFullYear() === thisYear;
+  }).length;
+
   // 대기중인 오더: 긴급 오더 최우선, 그 다음 최신 생성일 순
   const remainingOrders = [...quotes]
     .filter(o => {
@@ -1115,7 +1155,24 @@ export default function Partner() {
     setCustomService('');
   };
 
-  // 신규 작업 현장 등록용 상태
+  const handleReplySubmit = async (reviewId: string) => {
+    if (!replyInput[reviewId]?.trim()) return;
+    try {
+      await updateDoc(doc(db, 'reviews', reviewId), {
+        partnerReply: {
+          text: replyInput[reviewId],
+          createdAt: new Date().toISOString()
+        }
+      });
+      alert('답글이 등록되었습니다.');
+      setReplyInput(prev => ({ ...prev, [reviewId]: '' }));
+    } catch (e) {
+      console.error(e);
+      alert('답글 등록 중 오류가 발생했습니다.');
+    }
+  };
+
+  // 신규 작업 사례 추가 모달등록용 상태
   const [showAddCaseModal, setShowAddCaseModal] = useState(false);
   const [newCaseTitle, setNewCaseTitle] = useState('');
   const [newCaseDate, setNewCaseDate] = useState(new Date().toISOString().split('T')[0]);
@@ -1710,6 +1767,34 @@ export default function Partner() {
               exit={{ opacity: 0, x: 10 }}
               className="space-y-5"
             >
+              {/* 이달의 수익 및 실적 요약 위젯 */}
+              <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm">
+                <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-1.5">
+                  <Sparkles size={18} className="text-amber-400" />
+                  {thisMonth + 1}월 파트너 실적 요약
+                </h3>
+                <div className="grid grid-cols-2 gap-3 mb-3">
+                  <div className="bg-slate-50 rounded-xl p-3">
+                    <p className="text-xs text-slate-500 font-medium mb-1">완료한 오더</p>
+                    <p className="text-lg font-black text-slate-900">{completedJobsCount}건</p>
+                  </div>
+                  <div className="bg-slate-50 rounded-xl p-3">
+                    <p className="text-xs text-slate-500 font-medium mb-1">예정된 오더</p>
+                    <p className="text-lg font-black text-slate-900">{scheduledJobsCount}건</p>
+                  </div>
+                </div>
+                <div className="bg-blue-50/50 rounded-xl p-4 border border-blue-100 flex justify-between items-end">
+                  <div>
+                    <p className="text-xs text-blue-600 font-bold mb-1">이번 달 누적/예상 수익</p>
+                    <p className="text-2xl font-black text-blue-700">{thisMonthRevenue.toLocaleString()}원</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-[10px] text-slate-400 mb-1">새 리뷰</p>
+                    <p className="text-sm font-bold text-slate-700">+{newReviewsCount}건</p>
+                  </div>
+                </div>
+              </div>
+
               <div className="bg-gradient-to-r from-blue-600 to-indigo-700 p-4 rounded-2xl flex items-start gap-3 shadow-lg shadow-blue-600/20 text-white">
                 <Info size={24} className="shrink-0 text-blue-200 mt-0.5" />
                 <div>
@@ -2973,6 +3058,78 @@ export default function Partner() {
                     placeholder="예) 피톤치드 살균 소독 무료 제공! (이번달 한정)"
                     className="w-full border border-slate-200 rounded-xl p-3 text-sm outline-none focus:border-blue-500 min-h-[80px]"
                   />
+                </div>
+
+                {/* 받은 리뷰 내역 */}
+                <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
+                  <h3 className="font-bold text-slate-900 mb-2 flex items-center gap-1.5">
+                    ⭐ 받은 리뷰 내역 ({reviews.length}건)
+                  </h3>
+                  <div className="flex flex-col gap-3 mt-3">
+                    {reviews.length === 0 ? (
+                      <p className="text-sm text-slate-400 w-full text-center py-6 bg-slate-50 rounded-xl border border-dashed border-slate-200">
+                        아직 받은 리뷰가 없습니다.
+                      </p>
+                    ) : (
+                      reviews.map((review, i) => (
+                        <div key={review.id || i} className="p-4 bg-slate-50 rounded-xl border border-slate-100">
+                          <div className="flex justify-between items-start mb-2">
+                            <div>
+                              <div className="flex items-center gap-1 mb-1">
+                                {[...Array(5)].map((_, idx) => (
+                                  <span key={idx} className={`text-sm ${idx < (review.rating || 5) ? 'text-yellow-400' : 'text-slate-200'}`}>★</span>
+                                ))}
+                              </div>
+                              <span className="font-bold text-slate-900 text-sm">{review.customerName || '고객님'}</span>
+                              <span className="text-xs text-slate-400 ml-2">
+                                {review.createdAt?.toDate ? review.createdAt.toDate().toLocaleDateString() : '최근'}
+                              </span>
+                            </div>
+                            <span className="text-[10px] bg-slate-200 text-slate-600 px-2 py-0.5 rounded font-bold">
+                              {review.serviceType || '일반청소'}
+                            </span>
+                          </div>
+                          <p className="text-sm text-slate-600 mt-2 whitespace-pre-wrap">{review.content || '리뷰 내용이 없습니다.'}</p>
+                          {review.images && review.images.length > 0 && (
+                            <div className="flex gap-2 mt-3 overflow-x-auto pb-1">
+                              {review.images.map((img: string, idx: number) => (
+                                <img key={idx} src={img} alt="리뷰 이미지" className="w-16 h-16 object-cover rounded-lg flex-shrink-0 border border-slate-200" />
+                              ))}
+                            </div>
+                          )}
+                          
+                          {/* 사장님 답글 영역 */}
+                          {review.partnerReply ? (
+                            <div className="mt-4 bg-blue-50/50 rounded-xl p-4 border border-blue-100">
+                              <div className="flex items-center gap-1.5 mb-2">
+                                <span className="text-xs font-black text-blue-700 bg-blue-100 px-2 py-0.5 rounded-md">사장님 답글</span>
+                                <span className="text-[10px] text-slate-400">
+                                  {new Date(review.partnerReply.createdAt).toLocaleDateString()}
+                                </span>
+                              </div>
+                              <p className="text-sm text-slate-700 whitespace-pre-wrap">{review.partnerReply.text}</p>
+                            </div>
+                          ) : (
+                            <div className="mt-4 flex gap-2">
+                              <input 
+                                type="text" 
+                                value={replyInput[review.id] || ''} 
+                                onChange={(e) => setReplyInput({...replyInput, [review.id]: e.target.value})}
+                                placeholder="고객님께 감사 답글을 남겨보세요!" 
+                                className="flex-1 border border-slate-200 rounded-xl p-2.5 text-sm outline-none focus:border-blue-500 bg-white"
+                              />
+                              <button 
+                                onClick={() => handleReplySubmit(review.id)}
+                                className="px-4 py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl text-sm transition-colors shrink-0"
+                              >
+                                등록
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      ))
+                    )}
+                  </div>
                 </div>
 
                 {/* 포트폴리오 */}

@@ -5,6 +5,7 @@ import DaumPostcode from 'react-daum-postcode';
 import { db } from '../firebase';
 import { collection, addDoc, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
 import { sendTelegramAlert } from '../telegramService';
+import { getCurrentUser } from '../lib/authHelpers';
 
 const optionCategories = [
   {
@@ -353,6 +354,7 @@ export default function Quote() {
       totalPrice: estimatedPrice,
       status: '대기중',
       createdAt: new Date(),
+      userId: getCurrentUser()?.id || null,
 
       // ★ PartnerDashboard 호환용 alias 필드
       type: `${cleaningType} 청소`,                              // Dashboard: order.type

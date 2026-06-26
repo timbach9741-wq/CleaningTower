@@ -246,6 +246,12 @@ exports.notifyAdminOnNewOrder = functions.firestore
           } else {
             console.log(`[푸시 알림 보류] ${partnerName} 파트너의 FCM 토큰이 없습니다.`);
           }
+          
+          // 파트너 카카오 알림톡 발송
+          const partnerPhone = partner.loginId || partner.phone || '';
+          if (partnerPhone) {
+            await sendCustomerKakaoNotification(partnerPhone, 'NEW_ORDER_ASSIGNED', partnerMsg);
+          }
         }
       } else {
         // [케이스 2] 특정 파트너가 지정되지 않은 경우 -> 조건(지역)에 맞는 파트너들에게 발송
@@ -272,6 +278,12 @@ exports.notifyAdminOnNewOrder = functions.firestore
                 await sendPushNotification(tokens, '새로운 청소 의뢰 도착!', partnerMsg);
               } else {
                 console.log(`[푸시 알림 보류] ${partnerName} 파트너의 FCM 토큰이 없어 앱 푸시를 보낼 수 없습니다.`);
+              }
+              
+              // 파트너 카카오 알림톡 발송
+              const partnerPhone = partner.loginId || partner.phone || '';
+              if (partnerPhone) {
+                await sendCustomerKakaoNotification(partnerPhone, 'NEW_ORDER_AREA', partnerMsg);
               }
             }
           }

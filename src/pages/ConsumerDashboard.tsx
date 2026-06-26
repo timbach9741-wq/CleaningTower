@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Home, Receipt, Edit3, MessageSquare, LogOut, ChevronRight, Sparkles, AlertCircle, Clock, MapPin, Building2, CalendarSync, Gift, Copy, X, Calendar } from 'lucide-react';
+import { Home, Receipt, Edit3, MessageSquare, LogOut, ChevronRight, Sparkles, AlertCircle, Clock, MapPin, Building2, CalendarSync, Gift, Copy, X, Calendar, Bell } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getCurrentUser, type SocialUser, logoutUser } from '../lib/authHelpers';
@@ -10,6 +10,7 @@ export default function ConsumerDashboard() {
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
   const [isRefundAgreed, setIsRefundAgreed] = useState(false);
   const [isReferralModalOpen, setIsReferralModalOpen] = useState(false);
+  const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
   
   const [myReferralCode, setMyReferralCode] = useState('');
@@ -75,13 +76,19 @@ export default function ConsumerDashboard() {
               </div>
             </div>
           </div>
-          <button 
-            onClick={handleLogout}
-            className="flex items-center gap-2 px-3 sm:px-4 py-2 text-xs sm:text-sm font-bold text-slate-500 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 rounded-full transition-colors"
-          >
-            <LogOut size={16} />
-            <span className="hidden sm:inline">로그아웃</span>
-          </button>
+          <div className="flex items-center gap-3 sm:gap-4">
+            <button className="relative p-2 text-slate-500 hover:text-blue-600 bg-slate-100 hover:bg-blue-50 rounded-full transition-colors">
+              <Bell size={20} />
+              <span className="absolute top-0 right-0 w-2.5 h-2.5 bg-red-500 border-2 border-white rounded-full"></span>
+            </button>
+            <button 
+              onClick={handleLogout}
+              className="flex items-center gap-2 px-3 sm:px-4 py-2 text-xs sm:text-sm font-bold text-slate-500 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 rounded-full transition-colors"
+            >
+              <LogOut size={16} />
+              <span className="hidden sm:inline">로그아웃</span>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -191,7 +198,7 @@ export default function ConsumerDashboard() {
               </div>
             </div>
             
-            <div className="bg-white p-5 sm:p-6 rounded-3xl shadow-sm border border-slate-100 flex flex-col justify-between group hover:border-emerald-200 transition-colors cursor-pointer" onClick={() => navigate('/review-write/123')}>
+            <div className="bg-white p-5 sm:p-6 rounded-3xl shadow-sm border border-slate-100 flex flex-col justify-between group hover:border-emerald-200 transition-colors cursor-pointer" onClick={() => setIsReviewModalOpen(true)}>
               <div className="flex items-center justify-between mb-4">
                 <div className="w-10 h-10 bg-emerald-50 rounded-full flex items-center justify-center">
                   <Edit3 size={20} className="text-emerald-600" />
@@ -442,6 +449,57 @@ export default function ConsumerDashboard() {
           </div>
         )}
       </AnimatePresence>
+
+      {/* 작성 가능한 리뷰 목록 모달 */}
+      <AnimatePresence>
+        {isReviewModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="bg-white rounded-[2rem] w-full max-w-md shadow-2xl overflow-hidden relative border border-slate-100"
+            >
+              <div className="p-6 pb-0 flex justify-between items-start">
+                <div className="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center mb-4">
+                  <Edit3 size={28} />
+                </div>
+                <button onClick={() => setIsReviewModalOpen(false)} className="p-2 text-slate-400 hover:bg-slate-100 rounded-full transition-colors">
+                  <X size={24} />
+                </button>
+              </div>
+              
+              <div className="p-6 pt-2">
+                <h2 className="text-2xl font-black text-slate-900 tracking-tight mb-2">작성 가능한 리뷰</h2>
+                <p className="text-slate-500 font-medium text-sm mb-6">청소 서비스는 만족스러우셨나요? 소중한 리뷰를 남겨주시면 파트너에게 큰 힘이 됩니다!</p>
+                
+                <div className="space-y-4">
+                  {/* Dummy Completed Order */}
+                  <div className="bg-slate-50 border border-slate-100 rounded-2xl p-5 flex flex-col gap-3">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <span className="bg-slate-200 text-slate-600 text-xs font-bold px-2 py-1 rounded-md mb-2 inline-block">완료됨</span>
+                        <h4 className="font-bold text-slate-900">서울 강남구 역삼동 푸르지오</h4>
+                        <p className="text-xs text-slate-500 font-medium mt-1">2026. 06. 10 (수) • 프리미엄 입주청소</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm font-bold text-slate-700">김청소 파트너</p>
+                      </div>
+                    </div>
+                    <button 
+                      onClick={() => navigate('/review-write/123')}
+                      className="w-full mt-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl transition-colors shadow-sm"
+                    >
+                      리뷰 작성하기
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
     </div>
   );
 }

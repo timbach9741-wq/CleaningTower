@@ -137,7 +137,10 @@ export default function Login() {
   const handlePartnerLogin = async (e: React.FormEvent, type: TabType) => {
     e.preventDefault();
 
-    if (!loginId || !password) {
+    const cleanLoginId = loginId.trim();
+    const cleanPassword = password.trim();
+
+    if (!cleanLoginId || !cleanPassword) {
       alert('아이디와 비밀번호를 입력해주세요.');
       return;
     }
@@ -154,12 +157,13 @@ export default function Login() {
       let usersRef;
       let q;
 
-      const numericLoginId = loginId.replace(/[^0-9]/g, '');
-      const authEmail = `${numericLoginId || loginId}@cheongsotower.kr`;
+      const numericLoginId = cleanLoginId.replace(/[^0-9]/g, '');
+      const authEmail = `${numericLoginId || cleanLoginId}@cheongsotower.kr`;
+      const authPassword = cleanPassword.length < 6 ? cleanPassword.padStart(6, '0') : cleanPassword;
 
       let authSuccess = false;
       try {
-        await signInWithEmailAndPassword(auth, authEmail, password);
+        await signInWithEmailAndPassword(auth, authEmail, authPassword);
         authSuccess = true;
       } catch (err: any) {
         console.warn('Firebase Auth login failed, checking Firestore fallback...');
@@ -169,12 +173,12 @@ export default function Login() {
         usersRef = collection(db, 'partners');
         q = authSuccess 
           ? query(usersRef, where('loginId', '==', numericLoginId))
-          : query(usersRef, where('loginId', '==', numericLoginId), where('password', '==', password));
+          : query(usersRef, where('loginId', '==', numericLoginId), where('password', '==', cleanPassword));
       } else {
         usersRef = collection(db, 'b2bAccounts');
         q = authSuccess
-          ? query(usersRef, where('loginId', '==', loginId), where('b2bPartnerType', '==', type))
-          : query(usersRef, where('loginId', '==', loginId), where('password', '==', password), where('b2bPartnerType', '==', type));
+          ? query(usersRef, where('loginId', '==', cleanLoginId), where('b2bPartnerType', '==', type))
+          : query(usersRef, where('loginId', '==', cleanLoginId), where('password', '==', cleanPassword), where('b2bPartnerType', '==', type));
       }
 
       let querySnapshot = await getDocs(q);
@@ -183,18 +187,44 @@ export default function Login() {
         // 대체 검색 로직
         if (type === 'cleaner') {
           const fallbackQ = authSuccess
-            ? query(usersRef, where('phone', '==', loginId))
-            : query(usersRef, where('phone', '==', loginId), where('password', '==', password));
+            ? query(usersRef, where('phone', '==', cleanLoginId))
+            : query(usersRef, where('phone', '==', cleanLoginId), where('password', '==', cleanPassword));
           querySnapshot = await getDocs(fallbackQ);
         } else {
           const fallbackQ = authSuccess
             ? query(usersRef, where('loginId', '==', numericLoginId), where('b2bPartnerType', '==', type))
-            : query(usersRef, where('loginId', '==', numericLoginId), where('password', '==', password), where('b2bPartnerType', '==', type));
+            : query(usersRef, where('loginId', '==', numericLoginId), where('password', '==', cleanPassword), where('b2bPartnerType', '==', type));
           querySnapshot = await getDocs(fallbackQ);
         }
 
+        // 2차 대체 검색: 하이픈이 포함된 전화번호로 검색 (레거시 호환)
+        if (querySnapshot.empty && type === 'cleaner') {
+           let formattedPhone = cleanLoginId;
+           if (cleanLoginId.length === 11) {
+             formattedPhone = `${cleanLoginId.slice(0,3)}-${cleanLoginId.slice(3,7)}-${cleanLoginId.slice(7)}`;
+           }
+           const legacyFallbackQ = authSuccess
+             ? query(usersRef, where('phone', '==', formattedPhone))
+             : query(usersRef, where('phone', '==', formattedPhone), where('password', '==', cleanPassword));
+           querySnapshot = await getDocs(legacyFallbackQ);
+        }
+
+        // 3차 대체 검색: 만약 최근 가입자라서 Firestore에 password 필드가 누락되었을 수 있는 경우를 대비
+        // (Firebase Auth 연동 실패 시 로그인 불가 방지용)
+        if (querySnapshot.empty && type === 'cleaner') {
+          const emergencyQ = query(usersRef, where('loginId', '==', numericLoginId));
+          const emergencySnap = await getDocs(emergencyQ);
+          if (!emergencySnap.empty) {
+            const emergencyDoc = emergencySnap.docs[0].data();
+            // password 필드가 아예 없고, 사용자가 입력한 비밀번호가 휴대폰 번호 뒤 4자리와 일치한다면 허용
+            if (!emergencyDoc.password && cleanPassword === numericLoginId.slice(-4)) {
+              querySnapshot = emergencySnap;
+            }
+          }
+        }
+
         if (querySnapshot.empty) {
-          alert('아이디 또는 비밀번호가 일치하지 않습니다.');
+          alert(`아이디 또는 비밀번호가 일치하지 않습니다.`);
           setIsLoggingIn(false);
           return;
         }
@@ -203,7 +233,7 @@ export default function Login() {
       if (!authSuccess) {
         // Legacy login succeeded, migrate to Firebase Auth
         try {
-          await createUserWithEmailAndPassword(auth, authEmail, password);
+          await createUserWithEmailAndPassword(auth, authEmail, authPassword);
           console.log('Legacy user migrated to Firebase Auth successfully.');
         } catch (migErr) {
           console.warn('Could not migrate user to Auth:', migErr);

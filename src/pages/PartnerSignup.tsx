@@ -111,6 +111,7 @@ export default function PartnerSignup() {
         notificationRegions: finalRegionArray,
         image: randomImage, // 신규 가입 시 랜덤 기본 이미지 배정
         createdAt: new Date().toISOString(),
+        password: formData.phone.replace(/[^0-9]/g, '').slice(-4) || '0000', // Firestore legacy/fallback 로그인용 비밀번호 저장
         ...(location.state?.snsProfile?.provider === 'kakao' ? { kakaoId: location.state.snsProfile.id } : {}),
         ...(location.state?.snsProfile?.provider === 'naver' ? { naverId: location.state.snsProfile.id } : {})
       };
@@ -131,9 +132,10 @@ export default function PartnerSignup() {
 
         const authEmail = `${firestoreData.loginId}@cheongsotower.kr`;
         const initialPassword = formData.password === '휴대폰 뒤 4자리' ? firestoreData.loginId.slice(-4) : formData.password;
+        const authPassword = initialPassword.length < 6 ? initialPassword.padStart(6, '0') : initialPassword;
         
         try {
-          await createUserWithEmailAndPassword(auth, authEmail, initialPassword);
+          await createUserWithEmailAndPassword(auth, authEmail, authPassword);
         } catch (authErr: any) {
           if (authErr.code === 'auth/email-already-in-use') {
             console.warn('Firebase Auth user already exists, proceeding to save Firestore data');

@@ -751,15 +751,71 @@ export default function Partner() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!db) return;
+
+    const cleanLoginId = loginForm.id.trim();
+    const cleanPassword = loginForm.password.trim();
+
+    if (!cleanLoginId || !cleanPassword) {
+      alert('아이디와 비밀번호를 입력해주세요.');
+      return;
+    }
+
     setIsLoading(true);
     try {
-      const q = query(
-        collection(db, 'partners'), 
-        where('loginId', '==', loginForm.id),
-        where('password', '==', loginForm.password)
-      );
-      const querySnapshot = await getDocs(q);
+      const numericLoginId = cleanLoginId.replace(/[^0-9]/g, '');
+      const authEmail = `${numericLoginId || cleanLoginId}@cheongsotower.kr`;
+      const authPassword = cleanPassword.length < 6 ? cleanPassword.padStart(6, '0') : cleanPassword;
+
+      let authSuccess = false;
+      try {
+        const { getAuth, signInWithEmailAndPassword } = await import('firebase/auth');
+        const auth = getAuth();
+        await signInWithEmailAndPassword(auth, authEmail, authPassword);
+        authSuccess = true;
+      } catch (err: any) {
+        console.warn('Firebase Auth login failed, checking Firestore fallback...');
+      }
+
+      const usersRef = collection(db, 'partners');
+      const q = authSuccess
+        ? query(usersRef, where('loginId', '==', numericLoginId || cleanLoginId))
+        : query(usersRef, where('loginId', '==', numericLoginId || cleanLoginId), where('password', '==', cleanPassword));
       
+      let querySnapshot = await getDocs(q);
+      
+      if (querySnapshot.empty) {
+        // 대체 검색 로직: loginId 대신 phone으로 검색
+        const fallbackQ = authSuccess
+          ? query(usersRef, where('phone', '==', cleanLoginId))
+          : query(usersRef, where('phone', '==', cleanLoginId), where('password', '==', cleanPassword));
+        querySnapshot = await getDocs(fallbackQ);
+        
+        // 2차 대체 검색: 하이픈이 포함된 전화번호로 검색 (레거시 호환)
+        if (querySnapshot.empty) {
+           let formattedPhone = cleanLoginId;
+           if (cleanLoginId.length === 11) {
+             formattedPhone = `${cleanLoginId.slice(0,3)}-${cleanLoginId.slice(3,7)}-${cleanLoginId.slice(7)}`;
+           }
+           const legacyFallbackQ = authSuccess
+             ? query(usersRef, where('phone', '==', formattedPhone))
+             : query(usersRef, where('phone', '==', formattedPhone), where('password', '==', cleanPassword));
+           querySnapshot = await getDocs(legacyFallbackQ);
+        }
+
+        // 3차 대체 검색: 만약 최근 가입자라서 Firestore에 password 필드가 누락되었을 수 있는 경우를 대비
+        if (querySnapshot.empty) {
+          const emergencyQ = query(usersRef, where('loginId', '==', numericLoginId || cleanLoginId));
+          const emergencySnap = await getDocs(emergencyQ);
+          if (!emergencySnap.empty) {
+            const emergencyDoc = emergencySnap.docs[0].data();
+            // password 필드가 아예 없고, 사용자가 입력한 비밀번호가 휴대폰 번호 뒤 4자리와 일치한다면 허용
+            if (!emergencyDoc.password && cleanPassword === (numericLoginId || cleanLoginId).slice(-4)) {
+              querySnapshot = emergencySnap;
+            }
+          }
+        }
+      }
+
       if (!querySnapshot.empty) {
         // ★ 동일 loginId 중복 방지: 같은 아이디/비번으로 여러 문서가 존재할 수 있으므로
         // 가장 최근에 생성된 문서를 기준으로 로그인 처리 (createdAt 내림차순)

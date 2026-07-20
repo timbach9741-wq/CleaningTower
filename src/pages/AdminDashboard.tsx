@@ -610,8 +610,13 @@ export default function Admin() {
   const handleDeletePartner = async (id: string) => {
     if (!db) return;
     if (confirm("정말 이 파트너를 거절/삭제하시겠습니까?\n삭제 후에는 복구할 수 없습니다.")) {
-      await deleteDoc(doc(db, 'partners', id));
-      alert("파트너가 삭제되었습니다.");
+      try {
+        await deleteDoc(doc(db, 'partners', id));
+        alert("파트너가 삭제되었습니다.");
+      } catch (err: any) {
+        console.error(err);
+        alert(`삭제 실패: ${err.message}\n(Firebase Security Rules 권한 문제일 수 있습니다.)`);
+      }
     }
   };
 
@@ -1180,9 +1185,9 @@ export default function Admin() {
           }
         }
         alert("B2B 파트너 및 로그인 계정이 모두 성공적으로 삭제되었습니다.");
-      } catch (err) {
+      } catch (err: any) {
         console.error("B2B 파트너 삭제 오류:", err);
-        alert("삭제 중 오류가 발생했습니다.");
+        alert(`삭제 중 오류가 발생했습니다: ${err.message}\n(Firebase Security Rules 권한 문제일 수 있습니다.)`);
       }
     }
   };

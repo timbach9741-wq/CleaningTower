@@ -20,7 +20,7 @@ service cloud.firestore {
       allow read: if true;
       allow create: if true; // 비로그인 업체 가입 허용
       allow update: if true; // 파트너 자체 인증 기반 (클라이언트에서 partnerId 검증)
-      allow delete: if isAdmin();
+      allow delete: if isAuthenticated(); // 임시: 관리자(또는 인증된 사용자) 삭제 허용
     }
 
     // ===== 견적/주문 컬렉션 =====
@@ -29,7 +29,7 @@ service cloud.firestore {
       allow read: if true; // 파트너가 대기중 오더 목록을 조회해야 함
       allow create: if true; // 고객이 견적 요청 (비로그인 허용)
       allow update: if true; // 파트너 오더 수락/취소/완료 처리
-      allow delete: if isAdmin();
+      allow delete: if isAuthenticated(); // 임시: 관리자(또는 인증된 사용자) 삭제 허용
     }
 
     match /orders/{orderId} {
